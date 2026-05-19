@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Users, BookOpen, Activity, RefreshCw } from 'lucide-react'
-import './Home.css'
+import '../styles/global/Global.css'
 
 export default function Home() {
   const navigate = useNavigate()

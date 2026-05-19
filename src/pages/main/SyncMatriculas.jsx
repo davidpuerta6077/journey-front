@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
-import './SyncMatriculas.css'
+import '../../styles/main/SyncMatriculas.css'
 
 const COLUMNS = [
   { key: 'codigo_journey', label: 'Código Journey' },
