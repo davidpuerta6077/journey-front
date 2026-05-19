@@ -1,21 +1,21 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout'
-import './components/Layout.css'
+import SideNavMain from './components/SideNavMain'
+import './styles/global/Layout.css'
 import Home from './pages/Home'
-import SyncUsuariosP from './pages/SyncUsuariosP'
-import SyncCursos from './pages/SyncCursos'
-import SyncMatriculas from './pages/SyncMatriculas'
-import CargaUsuarios from './pages/CargaUsuarios'
-import CargaMatriculas from './pages/CargaMatriculas'
-import CargaNovedades from './pages/CargaNovedades'
-import CargaDesmatriculas from './pages/CargaDesmatriculas'
-import Configuracion from './pages/Configuracion'
+import SyncUsuariosP from './pages/main/SyncUsuariosP'
+import SyncCursos from './pages/main/SyncCursos'
+import SyncMatriculas from './pages/main/SyncMatriculas'
+import CargaUsuarios from './pages/main/CargaUsuarios'
+import CargaMatriculas from './pages/main/CargaMatriculas'
+import CargaNovedades from './pages/main/CargaNovedades'
+import CargaDesmatriculas from './pages/main/CargaDesmatriculas'
+import Configuracion from './pages/main/Configuracion'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Layout />}>
+        <Route path="/" element={<SideNavMain />}>
           <Route index element={<Home />} />
           <Route path="sync/usuarios" element={<SyncUsuariosP />} />
           <Route path="sync/cursos" element={<SyncCursos />} />
