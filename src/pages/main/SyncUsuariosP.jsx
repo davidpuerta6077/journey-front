@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, Filter } from 'lucide-react'
-import './SyncUsuariosP.css'
+import '../../styles/main/SyncUsuariosP.css'
 
 const COLUMNS = [
   { key: 'nombre', label: 'Nombre' },
