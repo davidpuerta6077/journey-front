@@ -3,7 +3,6 @@ import config from '../../config'
 
 const BASE = config.api_domain.url_base
 
-// TODO: implementar endpoint /health en el backend
 export const fetchApiStatus = async () => {
   try {
     const res = await axios.get(`${BASE}/health`)
