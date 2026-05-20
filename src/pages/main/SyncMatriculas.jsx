@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
-import { fetchEnrollments, syncEnrollments } from '../../services/matriculasService'
+import { fetchEnrollments } from '../../services/matriculas/fetchEnrollments'
+import { syncEnrollments } from '../../services/matriculas/syncEnrollments'
 import '../../styles/main/SyncMatriculas.css'
 
 const COLUMNS = [

@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
-import axios from 'axios'
+import { useEffect, useState, useCallback } from 'react'
 import { Users, BookOpen, Activity, RefreshCw } from 'lucide-react'
+import { fetchIndicadorUsuarios } from '../services/home/fetchIndicadorUsuarios'
+import { fetchIndicadorCursos } from '../services/home/fetchIndicadorCursos'
+import { fetchApiStatus } from '../services/home/fetchApiStatus'
 import '../styles/global/Global.css'
 
 export default function Home() {
@@ -12,26 +14,20 @@ export default function Home() {
     apiStatus: 'Verificando...'
   })
 
-  useEffect(() => {
-    const cargarIndicadores = async () => {
-      try {
-        const [usersRes, coursesRes] = await Promise.all([
-          axios.get('/sync/preview/students'),
-          axios.get('/sync/preview/courses')
-        ])
-        const users = usersRes.data?.body || []
-        const courses = coursesRes.data?.body || []
-        setIndicadores({
-          usuarios: users.length,
-          cursos: courses.length,
-          apiStatus: 'Activa'
-        })
-      } catch {
-        setIndicadores(prev => ({ ...prev, apiStatus: 'Error' }))
-      }
+  const cargarIndicadores = useCallback(async () => {
+    try {
+      const [usuarios, cursos, apiStatus] = await Promise.all([
+        fetchIndicadorUsuarios(),
+        fetchIndicadorCursos(),
+        fetchApiStatus()
+      ])
+      setIndicadores({ usuarios, cursos, apiStatus })
+    } catch {
+      setIndicadores(prev => ({ ...prev, apiStatus: 'Error' }))
     }
-    cargarIndicadores()
   }, [])
+
+  useEffect(() => { cargarIndicadores() }, [cargarIndicadores])
 
   const acciones = [
     { label: 'Usuarios Plataforma', icon: Users, path: '/sync/usuarios' },

@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
-import { fetchUsers, syncUsers, deleteUser, updateUser } from '../../services/usuariosService'
+import { fetchUsers } from '../../services/usuarios/fetchUsers'
+import { syncUsers } from '../../services/usuarios/syncUsers'
+import { deleteUser } from '../../services/usuarios/deleteUser'
+import { updateUser } from '../../services/usuarios/updateUser'
 import '../../styles/main/SyncUsuariosP.css'
 
 const COLUMNS = [
