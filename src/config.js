@@ -1,11 +1,8 @@
-module.exports = {
+const config = {
     api_domain: {
-        url_base:
-            VITE_URL_BASE ||
-            "https://ywjmda93pu.us-east-1.awsapprunner.com/",
+        url_base: import.meta.env.VITE_URL_BASE,
+        url_apigateway: import.meta.env.VITE_URL_APIGATEWAY,
+    }
+}
 
-        url_apigateway:
-            VITE_URL_APIGATEWAY ||
-            "https://ywjmda93pu.us-east-1.awsapprunner.com/",
-    },
-};
+export default config

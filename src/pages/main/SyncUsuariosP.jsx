@@ -1,6 +1,9 @@
-import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
-import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, Filter } from 'lucide-react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
+import { fetchUsers } from '../../services/usuarios/fetchUsers'
+import { syncUsers } from '../../services/usuarios/syncUsers'
+import { deleteUser } from '../../services/usuarios/deleteUser'
+import { updateUser } from '../../services/usuarios/updateUser'
 import '../../styles/main/SyncUsuariosP.css'
 
 const COLUMNS = [
@@ -27,7 +30,7 @@ function EditModal({ user, onClose, onSave }) {
 
   const handleSubmit = async () => {
     try {
-      await axios.put(`/journey/usuarios/${user.id}`, form)
+      await updateUser(user.id, form)
       onSave()
       onClose()
     } catch (e) {
@@ -129,24 +132,18 @@ export default function SyncUsuariosP() {
   const [page, setPage] = useState(1)
   const PER_PAGE = 15
 
-  const fetchUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await axios.get('/sync/preview/students')
-      const items = res.data?.body || []
-      setUsers(items.map(u => ({
-        ...u,
-        nombre: `${u.firstname || ''} ${u.lastname || ''}`.trim(),
-        departamento: u.departamento_academico || '-',
-        _syncStatus: u._syncStatus || { inDB: false, inMoodle: false }
-      })))
+      const data = await fetchUsers()
+      setUsers(data)
     } catch (e) {
       console.error('Error cargando usuarios:', e.message)
     }
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { fetchUsers() }, [])
+  useEffect(() => { loadUsers() }, [loadUsers])
 
   const filtered = useMemo(() => {
     let data = [...users]
@@ -191,9 +188,9 @@ export default function SyncUsuariosP() {
     if (selectedUsers.length === 0) return
     setSyncing(true)
     try {
-      await axios.post('/sync/students', { items: selectedUsers })
+      await syncUsers(selectedUsers)
       setSelected({})
-      await fetchUsers()
+      await loadUsers()
     } catch (e) {
       console.error('Error sincronizando:', e.message)
     }
@@ -203,8 +200,8 @@ export default function SyncUsuariosP() {
   const handleDelete = async (user) => {
     if (!confirm(`¿Eliminar a ${user.nombre} de Journey?`)) return
     try {
-      await axios.delete(`/journey/usuarios/${user.id}`)
-      await fetchUsers()
+      await deleteUser(user.id)
+      await loadUsers()
     } catch (e) {
       console.error('Error eliminando:', e.message)
     }
@@ -352,7 +349,7 @@ export default function SyncUsuariosP() {
       )}
 
       {editUser && (
-        <EditModal user={editUser} onClose={() => setEditUser(null)} onSave={fetchUsers} />
+        <EditModal user={editUser} onClose={() => setEditUser(null)} onSave={loadUsers} />
       )}
     </div>
   )

@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
-import './SyncMatriculas.css'
+import { fetchEnrollments } from '../../services/matriculas/fetchEnrollments'
+import { syncEnrollments } from '../../services/matriculas/syncEnrollments'
+import '../../styles/main/SyncMatriculas.css'
 
 const COLUMNS = [
   { key: 'codigo_journey', label: 'Código Journey' },
@@ -36,26 +37,21 @@ export default function SyncMatriculas() {
   const [page, setPage] = useState(1)
   const PER_PAGE = 15
 
-  const fetchEnrollments = async () => {
+  const loadEnrollments = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await axios.get('/enrollments/preview')
-      const items = res.data?.body || []
-      setEnrollments(items.map(e => ({
-        ...e,
-        nombre: `${e.firstname || ''} ${e.lastname || ''}`.trim()
-      })))
+      const data = await fetchEnrollments()
+      setEnrollments(data)
     } catch (err) {
       console.error('Error cargando matrículas:', err.message)
     }
     setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { fetchEnrollments() }, [])
+  useEffect(() => { loadEnrollments() }, [loadEnrollments])
 
   const filtered = useMemo(() => {
     let data = [...enrollments]
-
     if (search) {
       const q = search.toLowerCase()
       data = data.filter(e =>
@@ -67,13 +63,11 @@ export default function SyncMatriculas() {
     if (filterEstado) data = data.filter(e => e.estado === filterEstado)
     if (filterSync === 'sincronizado') data = data.filter(e => e.moodle_enrollment_id)
     if (filterSync === 'pendiente') data = data.filter(e => !e.moodle_enrollment_id)
-
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
       return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
     })
-
     return data
   }, [enrollments, search, filterPeriodo, filterPrograma, filterEstado, filterSync, sortKey, sortDir])
 
@@ -105,9 +99,9 @@ export default function SyncMatriculas() {
     if (selectedItems.length === 0) return
     setSyncing(true)
     try {
-      await axios.post('/sync/enrollments', { items: selectedItems })
+      await syncEnrollments(selectedItems)
       setSelected({})
-      await fetchEnrollments()
+      await loadEnrollments()
     } catch (err) {
       console.error('Error sincronizando:', err.message)
     }
