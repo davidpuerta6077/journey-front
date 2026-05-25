@@ -6,6 +6,9 @@ import { fetchIndicadorCursos } from '../services/home/fetchIndicadorCursos'
 import { fetchApiStatus } from '../services/home/fetchApiStatus'
 import '../styles/global/Global.css'
 
+import config from "../config"
+const BASE = config.api_domain.url_base
+
 export default function Home() {
   const navigate = useNavigate()
   const [indicadores, setIndicadores] = useState({
@@ -14,13 +17,26 @@ export default function Home() {
     apiStatus: 'Verificando...'
   })
 
+  const [test, setTests] = useState('Verificando API')
+
   const cargarIndicadores = useCallback(async () => {
     try {
+
+    const testRes = await fetchApiStatus()
+ 
+    console.log(testRes)
+    console.log(BASE)
+
+    setTests(testRes)
+
+
       const [usuarios, cursos, apiStatus] = await Promise.all([
         fetchIndicadorUsuarios(),
         fetchIndicadorCursos(),
-        fetchApiStatus()
       ])
+
+
+
       setIndicadores({ usuarios, cursos, apiStatus })
     } catch {
       setIndicadores(prev => ({ ...prev, apiStatus: 'Error' }))
@@ -82,7 +98,9 @@ export default function Home() {
           </div>
           <div className="indicator-card">
             <Activity size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value indicator-status">{indicadores.apiStatus}</span>
+            <span className="indicator-value indicator-status">
+              {test}
+            </span>
             <span className="indicator-label">Estado API</span>
           </div>
         </div>
