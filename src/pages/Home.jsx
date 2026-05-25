@@ -101,7 +101,7 @@ export default function Home() {
             <span className="indicator-value indicator-status">
               {test}
             </span>
-            <span className="indicator-label">Estado API</span>
+            <span className="indicator-label">Estado API Test</span>
           </div>
         </div>
       </div>
