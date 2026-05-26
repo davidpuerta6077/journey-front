@@ -1,1 +1,4 @@
-export default function CargaMatriculas() { return <h2 style={{color:'#fff'}}>Carga Matrículas</h2> }
+import EnConstruccion from '../../components/EnConstruccion'
+export default function CargaMatriculas() {
+  return <EnConstruccion titulo="Carga Masiva — Matrículas" />
+}

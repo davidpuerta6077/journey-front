@@ -1,1 +1,4 @@
-export default function SyncCursos() { return <h2 style={{color:'#fff'}}>Sync Cursos</h2> }
+import EnConstruccion from '../../components/EnConstruccion'
+export default function SyncCursos() {
+  return <EnConstruccion titulo="Sincronización — Cursos" />
+}

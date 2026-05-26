@@ -1,1 +1,4 @@
-export default function CargaNovedades() { return <h2 style={{color:'#fff'}}>Carga Novedades</h2> }
+import EnConstruccion from '../../components/EnConstruccion'
+export default function CargaNovedades() {
+  return <EnConstruccion titulo="Carga Masiva — Novedades" />
+}

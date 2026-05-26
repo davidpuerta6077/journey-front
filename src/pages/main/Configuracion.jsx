@@ -1,1 +1,4 @@
-export default function Configuracion() { return <h2 style={{color:'#fff'}}>Configuración</h2> }
+import EnConstruccion from '../../components/EnConstruccion'
+export default function Configuracion() {
+  return <EnConstruccion titulo="Configuración" />
+}
