@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
 import { fetchUsers } from '../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../services/usuarios/syncUsers'
@@ -17,7 +17,7 @@ const COLUMNS = [
 function StatusBadge({ row }) {
   if (row._status === 'error') return <span className="badge badge-error">Error</span>
   if (row._status === 'success') return <span className="badge badge-success">Creado</span>
-  if (row._syncStatus?.inDB && row._syncStatus?.inMoodle) return <span className="badge badge-synced">Sincronizado</span>
+  if (row._synced || (row._syncStatus?.inDB && row._syncStatus?.inMoodle)) return <span className="badge badge-synced">Sincronizado</span>
   if (row._syncStatus?.inDB) return <span className="badge badge-db">Solo en BD</span>
   if (row._syncStatus?.inMoodle) return <span className="badge badge-moodle">Solo en Moodle</span>
   return <span className="badge badge-pending">Pendiente</span>
@@ -152,8 +152,8 @@ export default function SyncUsuariosP() {
       data = data.filter(u => Object.values(u).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
     }
     if (filterJornada) data = data.filter(u => u.jornada === filterJornada)
-    if (filterEstado === 'sincronizado') data = data.filter(u => u._syncStatus?.inDB && u._syncStatus?.inMoodle)
-    else if (filterEstado === 'solo_bd') data = data.filter(u => u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
+    if (filterEstado === 'sincronizado') data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
+    else if (filterEstado === 'solo_bd') data = data.filter(u => !u._synced && u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
     else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inDB)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
@@ -189,8 +189,15 @@ export default function SyncUsuariosP() {
     setSyncing(true)
     try {
       await syncUsers(selectedUsers)
+
+      // Actualizar estado visual sin recargar — usuarios sincronizados permanecen en tabla
+      const syncedIds = new Set(selectedUsers.map(u => u.id))
+      setUsers(prev => prev.map(u =>
+        syncedIds.has(u.id)
+          ? { ...u, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
+          : u
+      ))
       setSelected({})
-      await loadUsers()
     } catch (e) {
       console.error('Error sincronizando:', e.message)
     }
@@ -265,8 +272,8 @@ export default function SyncUsuariosP() {
               </thead>
               <tbody>
                 {paginated.map(user => (
-                  <>
-                    <tr key={user.id} className={selected[user.id] ? 'row-selected' : ''}>
+                  <Fragment key={user.id}>
+                    <tr className={selected[user.id] ? 'row-selected' : ''}>
                       <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => <td key={col.key}>{user[col.key] || '-'}</td>)}
                       <td><StatusBadge row={user} /></td>
@@ -285,7 +292,7 @@ export default function SyncUsuariosP() {
                       </td>
                     </tr>
                     {expandedRows[user.id] && (
-                      <tr key={`expand-${user.id}`} className="expand-row">
+                      <tr className="expand-row">
                         <td colSpan={COLUMNS.length + 3}>
                           <div className="expand-content">
                             <div className="expand-grid">
@@ -322,7 +329,7 @@ export default function SyncUsuariosP() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -335,10 +342,10 @@ export default function SyncUsuariosP() {
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
                 .map((p, i, arr) => (
-                  <>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span key={`dot-${p}`} className="page-dots">...</span>}
-                    <button key={p} className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </>
+                  <Fragment key={p}>
+                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
+                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
+                  </Fragment>
                 ))}
               <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
               <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
