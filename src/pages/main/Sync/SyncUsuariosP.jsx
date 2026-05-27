@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
-import { fetchUsers } from '../../services/usuarios/fetchUsers'
-import { syncUsers } from '../../services/usuarios/syncUsers'
-import { deleteUser } from '../../services/usuarios/deleteUser'
-import { updateUser } from '../../services/usuarios/updateUser'
-import '../../styles/main/SyncUsuariosP.css'
+import { fetchUsers } from '../../../services/usuarios/fetchUsers'
+import { syncUsers } from '../../../services/usuarios/syncUsers'
+import { deleteUser } from '../../../services/usuarios/deleteUser'
+import { updateUser } from '../../../services/usuarios/updateUser'
+import "../../../styles/main/Sync/SyncUsuariosP.css";
 
 const COLUMNS = [
   { key: 'nombre', label: 'Nombre' },

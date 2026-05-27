@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
-import { fetchEnrollments } from '../../services/matriculas/fetchEnrollments'
-import { syncEnrollments } from '../../services/matriculas/syncEnrollments'
-import '../../styles/main/SyncMatriculas.css'
+import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
+import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
+import "../../../styles/main/Sync/SyncMatriculas.css";
 
 const COLUMNS = [
   { key: 'codigo_journey', label: 'Código Journey' },

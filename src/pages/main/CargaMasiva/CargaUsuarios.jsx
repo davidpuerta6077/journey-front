@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react'
 import { Upload, RefreshCw, CheckCircle, AlertCircle, Download, Info, FileSpreadsheet, Settings } from 'lucide-react'
 import * as XLSX from 'xlsx'
-import { uploadExcel } from '../../services/carga/uploadExcel'
-import { processExcel } from '../../services/carga/processExcel'
-import "../../styles/main/CargaUsuarios.css";
+import { uploadExcel } from '../../../services/carga/uploadExcel'
+import { processExcel } from '../../../services/carga/processExcel'
+import "../../../styles/main/CargaMasiva/CargaUsuarios.css";
 
-const API_BASE = import.meta.env.VITE_URL_BASE|| 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_URL_BASE
 
 const CAMPOS = [
   { col: 'name',      desc: 'Nombre del usuario' },

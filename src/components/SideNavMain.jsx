@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   Home, RefreshCw, BookOpen, Upload, Shield,
   Link, FileText, BarChart2, Search, Settings,
-  ChevronDown, Menu, User, Users, BookMarked,
-  GraduationCap, FileUp, Bell, UserMinus
+  ChevronDown, Menu, User, LogOut
 } from 'lucide-react'
 
 const menuItems = [
@@ -42,10 +41,10 @@ const menuItems = [
       { label: 'Estado de APIs', path: '/integracion/apis' },
     ]
   },
-  { label: 'Reportes', icon: FileText, path: '/reportes' },
-  { label: 'Estadísticas', icon: BarChart2, path: '/estadisticas' },
-  { label: 'Búsqueda', icon: Search, path: '/busqueda' },
-  { label: 'Configuración', icon: Settings, path: '/configuracion' },
+  { label: 'Reportes',     icon: FileText,   path: '/reportes' },
+  { label: 'Estadísticas', icon: BarChart2,  path: '/estadisticas' },
+  { label: 'Búsqueda',     icon: Search,     path: '/busqueda' },
+  { label: 'Configuración',icon: Settings,   path: '/configuracion' },
 ]
 
 function SidebarItem({ item }) {
@@ -90,8 +89,17 @@ function SidebarItem({ item }) {
 }
 
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen]   = useState(true)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const navigate = useNavigate()
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    navigate('/login')
+  }
 
   return (
     <div className="app">
@@ -105,14 +113,19 @@ export default function Layout() {
         <div className="user-menu">
           <button className="user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
             <User size={16} />
-            <span>Usuario</span>
+            <span>{user.name || user.email || 'Usuario'}</span>
             <ChevronDown size={14} />
           </button>
           {userMenuOpen && (
             <ul className="user-dropdown">
               <li><a href="#">Mi Perfil</a></li>
               <li><a href="#">Ver Logs</a></li>
-              <li><a href="#">Cerrar sesión</a></li>
+              <li>
+                <button className="logout-btn" onClick={handleLogout}>
+                  <LogOut size={14} />
+                  Cerrar sesión
+                </button>
+              </li>
             </ul>
           )}
         </div>

@@ -1,37 +1,45 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import SideNavMain from './components/SideNavMain'
+import PrivateRoute from './components/PrivateRoute'
 import './styles/global/Layout.css'
 
-import Home from './pages/Home'
+import Login from './pages/Login'
+import Home  from './pages/Home'
 
-import SyncUsuariosP  from './pages/main/SyncUsuariosP'
-import SyncCursos     from './pages/main/SyncCursos'
-import SyncMatriculas from './pages/main/SyncMatriculas'
+import SyncUsuariosP  from './pages/main/Sync/SyncUsuariosP'
+import SyncCursos     from './pages/main/Sync/SyncCursos'
+import SyncMatriculas from './pages/main/Sync/SyncMatriculas'
 
-import ModulosUsuarios   from './pages/main/ModulosUsuarios'
-import ModulosCursos     from './pages/main/ModulosCursos'
-import ModulosMatriculas from './pages/main/ModulosMatriculas'
+import ModulosUsuarios   from './pages/main/Modulo/ModulosUsuarios'
+import ModulosCursos     from './pages/main/Modulo/ModulosCursos'
+import ModulosMatriculas from './pages/main/Modulo/ModulosMatriculas'
 
-import CargaUsuarios      from './pages/main/CargaUsuarios'
-import CargaMatriculas    from './pages/main/CargaMatriculas'
-import CargaNovedades     from './pages/main/CargaNovedades'
-import CargaDesmatriculas from './pages/main/CargaDesmatriculas'
+import CargaUsuarios      from './pages/main/CargaMasiva/CargaUsuarios'
+import CargaMatriculas    from './pages/main/CargaMasiva/CargaMatriculas'
+import CargaNovedades     from './pages/main/CargaMasiva/CargaNovedades'
+import CargaDesmatriculas from './pages/main/CargaMasiva/CargaDesmatriculas'
 
-import ReglasActivas    from './pages/main/ReglasActivas'
-import ReglasPlantillas from './pages/main/ReglasPlantillas'
+import ReglasActivas    from './pages/main/Regla/ReglasActivas'
+import ReglasPlantillas from './pages/main/Regla/ReglasPlantillas'
 
-import IntegracionApis from './pages/main/IntegracionApis'
+import IntegracionApis from './pages/main/Integracion/IntegracionApis'
 
-import Reportes      from './pages/main/Reportes'
-import Estadisticas  from './pages/main/Estadisticas'
-import Busqueda      from './pages/main/Busqueda'
-import Configuracion from './pages/main/Configuracion'
+import Reportes      from './pages/main/Reportes/Reportes'
+import Estadisticas  from './pages/main/Estadisticas/Estadisticas'
+import Busqueda      from './pages/main/Busqueda/Busqueda'
+import Configuracion from './pages/main/Configuracion/Configuracion'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<SideNavMain />}>
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/" element={
+          <PrivateRoute>
+            <SideNavMain />
+          </PrivateRoute>
+        }>
           <Route index element={<Home />} />
 
           <Route path="sync/usuarios"   element={<SyncUsuariosP />} />

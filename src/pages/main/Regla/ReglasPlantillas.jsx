@@ -1,4 +1,4 @@
-import EnConstruccion from '../../components/EnConstruccion'
+import EnConstruccion from '../../../components/EnConstruccion'
 export default function ReglasPlantillas() {
   return <EnConstruccion titulo="Reglas — Plantillas" />
 }

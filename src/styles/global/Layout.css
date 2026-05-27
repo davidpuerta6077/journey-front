@@ -109,3 +109,13 @@
   overflow-y: auto;
   min-width: 0;
 }
+.logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: block;
+    padding: 10px 16px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+}
+.logout-btn:hover { background: rgba(91,132,255,0.14); }
