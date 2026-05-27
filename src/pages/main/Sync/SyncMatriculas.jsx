@@ -1,40 +1,40 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
 import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
-import "../../../styles/main/Sync/SyncMatriculas.css";
+import "../../../styles/main/Sync/SyncMatriculas.css"
 
 const COLUMNS = [
-  { key: 'codigo_journey', label: 'Código Journey' },
+  { key: 'codigo_journey',    label: 'Código Journey' },
   { key: 'nombre_asignatura', label: 'Asignatura' },
-  { key: 'nombre', label: 'Estudiante' },
-  { key: 'email', label: 'Email' },
-  { key: 'periodo', label: 'Período' },
-  { key: 'grupo', label: 'Grupo' },
-  { key: 'estado', label: 'Estado' },
+  { key: 'nombre',            label: 'Estudiante' },
+  { key: 'email',             label: 'Email' },
+  { key: 'periodo',           label: 'Período' },
+  { key: 'grupo',             label: 'Grupo' },
+  { key: 'estado',            label: 'Estado' },
 ]
 
 function StatusBadge({ row }) {
-  if (row._status === 'error') return <span className="badge badge-error">Error</span>
-  if (row._status === 'success') return <span className="badge badge-success">Sincronizado</span>
-  if (row.moodle_enrollment_id) return <span className="badge badge-synced">Sincronizado</span>
+  if (row._status === 'error')         return <span className="badge badge-error">Error</span>
+  if (row._syncStatus?.inMoodle)       return <span className="badge badge-synced">Sincronizado</span>
+  if (row.sincronizado)                return <span className="badge badge-db">Solo en BD</span>
   return <span className="badge badge-pending">Pendiente</span>
 }
 
 export default function SyncMatriculas() {
-  const [enrollments, setEnrollments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
-  const [search, setSearch] = useState('')
+  const [enrollments, setEnrollments]     = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [syncing, setSyncing]             = useState(false)
+  const [search, setSearch]               = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterPrograma, setFilterPrograma] = useState('')
-  const [filterEstado, setFilterEstado] = useState('')
-  const [filterSync, setFilterSync] = useState('')
-  const [sortKey, setSortKey] = useState('codigo_journey')
-  const [sortDir, setSortDir] = useState('asc')
-  const [expandedRows, setExpandedRows] = useState({})
-  const [selected, setSelected] = useState({})
-  const [page, setPage] = useState(1)
+  const [filterEstado, setFilterEstado]   = useState('')
+  const [filterSync, setFilterSync]       = useState('')
+  const [sortKey, setSortKey]             = useState('codigo_journey')
+  const [sortDir, setSortDir]             = useState('asc')
+  const [expandedRows, setExpandedRows]   = useState({})
+  const [selected, setSelected]           = useState({})
+  const [page, setPage]                   = useState(1)
   const PER_PAGE = 15
 
   const loadEnrollments = useCallback(async () => {
@@ -50,19 +50,22 @@ export default function SyncMatriculas() {
 
   useEffect(() => { loadEnrollments() }, [loadEnrollments])
 
+  const periodos  = [...new Set(enrollments.map(e => e.periodo).filter(Boolean))]
+  const programas = [...new Set(enrollments.map(e => e.programa).filter(Boolean))]
+  const estados   = [...new Set(enrollments.map(e => e.estado).filter(Boolean))]
+
   const filtered = useMemo(() => {
     let data = [...enrollments]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(e =>
-        Object.values(e).some(v => typeof v === 'string' && v.toLowerCase().includes(q))
-      )
+      data = data.filter(e => Object.values(e).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
     }
-    if (filterPeriodo) data = data.filter(e => e.periodo === filterPeriodo)
+    if (filterPeriodo)  data = data.filter(e => e.periodo === filterPeriodo)
     if (filterPrograma) data = data.filter(e => e.programa === filterPrograma)
-    if (filterEstado) data = data.filter(e => e.estado === filterEstado)
-    if (filterSync === 'sincronizado') data = data.filter(e => e.moodle_enrollment_id)
-    if (filterSync === 'pendiente') data = data.filter(e => !e.moodle_enrollment_id)
+    if (filterEstado)   data = data.filter(e => e.estado === filterEstado)
+    if (filterSync === 'sincronizado') data = data.filter(e => e._syncStatus?.inMoodle)
+    if (filterSync === 'solo_bd')      data = data.filter(e => e.sincronizado && !e._syncStatus?.inMoodle)
+    if (filterSync === 'pendiente')    data = data.filter(e => !e.sincronizado)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
@@ -72,11 +75,7 @@ export default function SyncMatriculas() {
   }, [enrollments, search, filterPeriodo, filterPrograma, filterEstado, filterSync, sortKey, sortDir])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
-
-  const periodos = [...new Set(enrollments.map(e => e.periodo).filter(Boolean))]
-  const programas = [...new Set(enrollments.map(e => e.programa).filter(Boolean))]
-  const estados = [...new Set(enrollments.map(e => e.estado).filter(Boolean))]
+  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -100,8 +99,11 @@ export default function SyncMatriculas() {
     setSyncing(true)
     try {
       await syncEnrollments(selectedItems)
+      const syncedIds = new Set(selectedItems.map(e => e.id))
+      setEnrollments(prev => prev.map(e =>
+        syncedIds.has(e.id) ? { ...e, sincronizado: true } : e
+      ))
       setSelected({})
-      await loadEnrollments()
     } catch (err) {
       console.error('Error sincronizando:', err.message)
     }
@@ -145,6 +147,7 @@ export default function SyncMatriculas() {
         <select className="filter-select" value={filterSync} onChange={e => { setFilterSync(e.target.value); setPage(1) }}>
           <option value="">Todos</option>
           <option value="sincronizado">Sincronizado</option>
+          <option value="solo_bd">Solo en BD</option>
           <option value="pendiente">Pendiente</option>
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
@@ -173,8 +176,8 @@ export default function SyncMatriculas() {
               </thead>
               <tbody>
                 {paginated.map(enr => (
-                  <>
-                    <tr key={enr.id} className={selected[enr.id] ? 'row-selected' : ''}>
+                  <Fragment key={enr.id}>
+                    <tr className={selected[enr.id] ? 'row-selected' : ''}>
                       <td><input type="checkbox" checked={!!selected[enr.id]} onChange={() => toggleSelect(enr.id)} /></td>
                       {COLUMNS.map(col => (
                         <td key={col.key}>
@@ -193,7 +196,7 @@ export default function SyncMatriculas() {
                       </td>
                     </tr>
                     {expandedRows[enr.id] && (
-                      <tr key={`expand-${enr.id}`} className="expand-row">
+                      <tr className="expand-row">
                         <td colSpan={COLUMNS.length + 3}>
                           <div className="expand-content">
                             <div className="expand-grid">
@@ -226,7 +229,7 @@ export default function SyncMatriculas() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -239,10 +242,10 @@ export default function SyncMatriculas() {
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
                 .map((p, i, arr) => (
-                  <>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span key={`dot-${p}`} className="page-dots">...</span>}
-                    <button key={p} className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </>
+                  <Fragment key={p}>
+                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
+                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
+                  </Fragment>
                 ))}
               <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
               <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>

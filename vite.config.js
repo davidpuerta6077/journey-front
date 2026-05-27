@@ -9,7 +9,6 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        '/sync': backendUrl,
         '/users': backendUrl,
         '/courses': backendUrl,
         '/enrollments': backendUrl,
