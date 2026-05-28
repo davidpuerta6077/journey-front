@@ -4,37 +4,46 @@ import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
 import { updateUser } from '../../../services/usuarios/updateUser'
-import "../../../styles/main/Sync/SyncUsuariosP.css";
+import { useNavigate, useLocation } from 'react-router-dom'
+import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 const COLUMNS = [
-  { key: 'nombre', label: 'Nombre' },
-  { key: 'email', label: 'Email' },
-  { key: 'documento', label: 'Documento' },
-  { key: 'jornada', label: 'Jornada' },
-  { key: 'departamento', label: 'Departamento' },
+  { key: 'nombre',     label: 'Nombre' },
+  { key: 'email',      label: 'Email' },
+  { key: 'documento',  label: 'Documento' },
+  { key: 'created_at', label: 'Fecha Creación' },
 ]
 
 function StatusBadge({ row }) {
-  if (row._status === 'error') return <span className="badge badge-error">Error</span>
+  if (row._status === 'error')   return <span className="badge badge-error">Error</span>
   if (row._status === 'success') return <span className="badge badge-success">Creado</span>
   if (row._synced || (row._syncStatus?.inDB && row._syncStatus?.inMoodle)) return <span className="badge badge-synced">Sincronizado</span>
-  if (row._syncStatus?.inDB) return <span className="badge badge-db">Solo en BD</span>
+  if (row._syncStatus?.inDB)     return <span className="badge badge-db">Solo en BD</span>
   if (row._syncStatus?.inMoodle) return <span className="badge badge-moodle">Solo en Moodle</span>
   return <span className="badge badge-pending">Pendiente</span>
 }
 
 function EditModal({ user, onClose, onSave }) {
   const [form, setForm] = useState({ ...user })
+  const [error, setError] = useState('')
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleSubmit = async () => {
+    if (!form.firstname || !form.lastname) {
+      setError('Nombre y apellido son obligatorios.')
+      return
+    }
     try {
-      await updateUser(user.id, form)
+      const cleaned = Object.fromEntries(
+        Object.entries(form).map(([k, v]) => [k, v === '' ? null : v])
+      )
+      await updateUser(user.id, cleaned)
       onSave()
       onClose()
     } catch (e) {
       console.error('Error actualizando:', e.message)
+      setError('Error al actualizar usuario.')
     }
   }
 
@@ -46,25 +55,26 @@ function EditModal({ user, onClose, onSave }) {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
         <div className="modal-form">
+          {error && <div className="modal-error">{error}</div>}
           <div className="modal-section-title">Datos Básicos</div>
           <div className="modal-row">
             <div className="modal-field">
-              <label>Nombre</label>
+              <label>Nombre *</label>
               <input name="firstname" value={form.firstname || ''} onChange={handleChange} />
             </div>
             <div className="modal-field">
-              <label>Apellido</label>
+              <label>Apellido *</label>
               <input name="lastname" value={form.lastname || ''} onChange={handleChange} />
             </div>
           </div>
           <div className="modal-row">
             <div className="modal-field">
               <label>Correo Institucional</label>
-              <input name="email" value={form.email || ''} onChange={handleChange} />
+              <input name="email" value={form.email || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
             </div>
             <div className="modal-field">
               <label>Documento</label>
-              <input name="documento" value={form.documento || ''} onChange={handleChange} />
+              <input name="documento" value={form.documento || ''} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
             </div>
           </div>
           <div className="modal-section-title">Contacto</div>
@@ -118,19 +128,28 @@ function EditModal({ user, onClose, onSave }) {
 }
 
 export default function SyncUsuariosP() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [syncing, setSyncing] = useState(false)
-  const [search, setSearch] = useState('')
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const [users, setUsers]               = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [syncing, setSyncing]           = useState(false)
+  const [search, setSearch]             = useState('')
   const [filterJornada, setFilterJornada] = useState('')
-  const [filterEstado, setFilterEstado] = useState('')
-  const [sortKey, setSortKey] = useState('nombre')
-  const [sortDir, setSortDir] = useState('asc')
+  const [filterEstado, setFilterEstado]   = useState('')
+  const [sortKey, setSortKey]           = useState('nombre')
+  const [sortDir, setSortDir]           = useState('asc')
   const [expandedRows, setExpandedRows] = useState({})
-  const [editUser, setEditUser] = useState(null)
-  const [selected, setSelected] = useState({})
-  const [page, setPage] = useState(1)
+  const [editUser, setEditUser]         = useState(null)
+  const [selected, setSelected]         = useState({})
+  const [page, setPage]                 = useState(1)
   const PER_PAGE = 15
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const documento = params.get('documento')
+    if (documento) setSearch(documento)
+  }, [location.search])
 
   const loadUsers = useCallback(async () => {
     setLoading(true)
@@ -152,8 +171,8 @@ export default function SyncUsuariosP() {
       data = data.filter(u => Object.values(u).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
     }
     if (filterJornada) data = data.filter(u => u.jornada === filterJornada)
-    if (filterEstado === 'sincronizado') data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
-    else if (filterEstado === 'solo_bd') data = data.filter(u => !u._synced && u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
+    if (filterEstado === 'sincronizado')   data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
+    else if (filterEstado === 'solo_bd')   data = data.filter(u => !u._synced && u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
     else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inDB)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
@@ -164,8 +183,8 @@ export default function SyncUsuariosP() {
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
-  const jornadas = [...new Set(users.map(u => u.jornada).filter(Boolean))]
+  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const jornadas   = [...new Set(users.map(u => u.jornada).filter(Boolean))]
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -189,8 +208,6 @@ export default function SyncUsuariosP() {
     setSyncing(true)
     try {
       await syncUsers(selectedUsers)
-
-      // Actualizar estado visual sin recargar — usuarios sincronizados permanecen en tabla
       const syncedIds = new Set(selectedUsers.map(u => u.id))
       setUsers(prev => prev.map(u =>
         syncedIds.has(u.id)
@@ -275,7 +292,13 @@ export default function SyncUsuariosP() {
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
                       <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
-                      {COLUMNS.map(col => <td key={col.key}>{user[col.key] || '-'}</td>)}
+                      {COLUMNS.map(col => (
+                        <td key={col.key}>
+                          {col.key === 'created_at'
+                            ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
+                            : user[col.key] || '-'}
+                        </td>
+                      ))}
                       <td><StatusBadge row={user} /></td>
                       <td>
                         <div className="action-btns">
@@ -296,6 +319,14 @@ export default function SyncUsuariosP() {
                         <td colSpan={COLUMNS.length + 3}>
                           <div className="expand-content">
                             <div className="expand-grid">
+                              <div className="expand-item">
+                                <span className="expand-label">Jornada</span>
+                                <span className="expand-value">{user.jornada || '-'}</span>
+                              </div>
+                              <div className="expand-item">
+                                <span className="expand-label">Departamento</span>
+                                <span className="expand-value">{user.departamento_academico || '-'}</span>
+                              </div>
                               <div className="expand-item">
                                 <span className="expand-label">Correo Personal</span>
                                 <span className="expand-value">{user.correo_personal || '-'}</span>

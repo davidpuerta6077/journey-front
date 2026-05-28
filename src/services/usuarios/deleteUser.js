@@ -4,5 +4,10 @@ import config from '../../config'
 const BASE = config.api_domain.url_base
 
 export const deleteUser = async (id) => {
-  await axios.delete(`${BASE}/journey/usuarios/${id}`)
+  try {
+    const res = await axios.delete(`${BASE}/users/${id}`)
+  } catch (error) {
+    console.error(error)
+    throw new Error(error.response?.data?.body || 'Error al eliminar usuario', { cause: error })
+  }
 }

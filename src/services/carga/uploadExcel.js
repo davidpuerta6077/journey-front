@@ -1,13 +1,16 @@
-const API_BASE = import.meta.env.VITE_URL_BASE || 'http://localhost:3001'
+import axios from 'axios'
+import config from '../../config'
+
+const BASE = config.api_domain.url_base
 
 export async function uploadExcel(file) {
-    const formData = new FormData()
-    formData.append('excel', file)
-    const res = await fetch(`${API_BASE}/users/upload-excel`, {
-        method: 'POST',
-        body: formData
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.body || 'Error al subir el archivo')
-    return data.body.filePath
+    try {
+        const formData = new FormData()
+        formData.append('excel', file)
+        const res = await axios.post(`${BASE}/users/upload-excel`, formData)
+        return res.data.body.filePath
+    } catch (error) {
+        console.error(error)
+        throw new Error(error.response?.data?.body || 'Error al subir el archivo', { cause: error })
+    }
 }

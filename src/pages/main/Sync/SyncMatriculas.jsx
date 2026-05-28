@@ -1,8 +1,15 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
-import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, RefreshCw, Search, UserX } from 'lucide-react'
 import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
 import "../../../styles/main/Sync/SyncMatriculas.css"
+import { useNavigate } from 'react-router-dom'
+
+const ROLE_LABEL = {
+  student:        'Estudiante',
+  editingteacher: 'Docente',
+  teacher:        'Tutor'
+}
 
 const COLUMNS = [
   { key: 'codigo_journey',    label: 'Código Journey' },
@@ -11,30 +18,35 @@ const COLUMNS = [
   { key: 'email',             label: 'Email' },
   { key: 'periodo',           label: 'Período' },
   { key: 'grupo',             label: 'Grupo' },
+  { key: 'role',              label: 'Rol' },
   { key: 'estado',            label: 'Estado' },
 ]
 
 function StatusBadge({ row }) {
-  if (row._status === 'error')         return <span className="badge badge-error">Error</span>
-  if (row._syncStatus?.inMoodle)       return <span className="badge badge-synced">Sincronizado</span>
-  if (row.sincronizado)                return <span className="badge badge-db">Solo en BD</span>
+  if (row._status === 'error')     return <span className="badge badge-error">Error</span>
+  if (!row.userExistsInMoodle)     return <span className="badge badge-no-user">Usuario no existe en Moodle</span>
+  if (row._syncStatus?.inMoodle)   return <span className="badge badge-synced">Sincronizado</span>
+  if (row.sincronizado)            return <span className="badge badge-db">Solo en BD</span>
   return <span className="badge badge-pending">Pendiente</span>
 }
 
 export default function SyncMatriculas() {
-  const [enrollments, setEnrollments]     = useState([])
-  const [loading, setLoading]             = useState(true)
-  const [syncing, setSyncing]             = useState(false)
-  const [search, setSearch]               = useState('')
-  const [filterPeriodo, setFilterPeriodo] = useState('')
+  const navigate = useNavigate()
+
+  const [enrollments, setEnrollments]       = useState([])
+  const [loading, setLoading]               = useState(true)
+  const [syncing, setSyncing]               = useState(false)
+  const [search, setSearch]                 = useState('')
+  const [filterPeriodo, setFilterPeriodo]   = useState('')
   const [filterPrograma, setFilterPrograma] = useState('')
-  const [filterEstado, setFilterEstado]   = useState('')
-  const [filterSync, setFilterSync]       = useState('')
-  const [sortKey, setSortKey]             = useState('codigo_journey')
-  const [sortDir, setSortDir]             = useState('asc')
-  const [expandedRows, setExpandedRows]   = useState({})
-  const [selected, setSelected]           = useState({})
-  const [page, setPage]                   = useState(1)
+  const [filterEstado, setFilterEstado]     = useState('')
+  const [filterSync, setFilterSync]         = useState('')
+  const [filterRol, setFilterRol]           = useState('')
+  const [sortKey, setSortKey]               = useState('codigo_journey')
+  const [sortDir, setSortDir]               = useState('asc')
+  const [expandedRows, setExpandedRows]     = useState({})
+  const [selected, setSelected]             = useState({})
+  const [page, setPage]                     = useState(1)
   const PER_PAGE = 15
 
   const loadEnrollments = useCallback(async () => {
@@ -63,16 +75,18 @@ export default function SyncMatriculas() {
     if (filterPeriodo)  data = data.filter(e => e.periodo === filterPeriodo)
     if (filterPrograma) data = data.filter(e => e.programa === filterPrograma)
     if (filterEstado)   data = data.filter(e => e.estado === filterEstado)
-    if (filterSync === 'sincronizado') data = data.filter(e => e._syncStatus?.inMoodle)
-    if (filterSync === 'solo_bd')      data = data.filter(e => e.sincronizado && !e._syncStatus?.inMoodle)
-    if (filterSync === 'pendiente')    data = data.filter(e => !e.sincronizado)
+    if (filterRol)      data = data.filter(e => e.role === filterRol)
+    if (filterSync === 'sincronizado')   data = data.filter(e => e._syncStatus?.inMoodle)
+    if (filterSync === 'solo_bd')        data = data.filter(e => e.sincronizado && !e._syncStatus?.inMoodle)
+    if (filterSync === 'pendiente')      data = data.filter(e => !e.sincronizado)
+    if (filterSync === 'sin_usuario')    data = data.filter(e => !e.userExistsInMoodle)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
       return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
     })
     return data
-  }, [enrollments, search, filterPeriodo, filterPrograma, filterEstado, filterSync, sortKey, sortDir])
+  }, [enrollments, search, filterPeriodo, filterPrograma, filterEstado, filterSync, filterRol, sortKey, sortDir])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
@@ -144,11 +158,18 @@ export default function SyncMatriculas() {
           <option value="">Todos los estados</option>
           {estados.map(e => <option key={e} value={e}>{e}</option>)}
         </select>
+        <select className="filter-select" value={filterRol} onChange={e => { setFilterRol(e.target.value); setPage(1) }}>
+          <option value="">Todos los roles</option>
+          <option value="student">Estudiante</option>
+          <option value="editingteacher">Docente</option>
+          <option value="teacher">Tutor</option>
+        </select>
         <select className="filter-select" value={filterSync} onChange={e => { setFilterSync(e.target.value); setPage(1) }}>
           <option value="">Todos</option>
           <option value="sincronizado">Sincronizado</option>
           <option value="solo_bd">Solo en BD</option>
           <option value="pendiente">Pendiente</option>
+          <option value="sin_usuario">Sin usuario en Moodle</option>
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
@@ -183,6 +204,8 @@ export default function SyncMatriculas() {
                         <td key={col.key}>
                           {col.key === 'codigo_journey'
                             ? <span className="codigo-journey">{enr[col.key] || '-'}</span>
+                            : col.key === 'role'
+                            ? ROLE_LABEL[enr.role] || enr.role || '-'
                             : enr[col.key] || '-'}
                         </td>
                       ))}
@@ -192,6 +215,15 @@ export default function SyncMatriculas() {
                           <button className="btn-icon" onClick={() => toggleExpand(enr.id)} title="Ver más">
                             {expandedRows[enr.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
+                          {!enr.userExistsInMoodle && (
+                            <button
+                              className="btn-icon btn-icon-warning"
+                              title="Ir a sincronizar usuario"
+                              onClick={() => navigate(`/sync/usuarios?documento=${enr.documento}`)}
+                            >
+                              <UserX size={14} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -210,7 +242,7 @@ export default function SyncMatriculas() {
                               </div>
                               <div className="expand-item">
                                 <span className="expand-label">Rol</span>
-                                <span className="expand-value">{enr.role || '-'}</span>
+                                <span className="expand-value">{ROLE_LABEL[enr.role] || enr.role || '-'}</span>
                               </div>
                               <div className="expand-item">
                                 <span className="expand-label">Course ID</span>
