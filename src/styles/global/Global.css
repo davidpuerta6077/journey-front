@@ -97,3 +97,257 @@
 .indicator-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
 .indicator-status { font-size: 1rem; }
 .indicator-label { font-size: 0.78rem; color: #64748b; text-align: center; }
+
+/* ─── BRAVO SUITE HOME ─── */
+.bravosuite-home {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.bravosuite-header {
+  margin-bottom: 36px;
+}
+
+.bravosuite-title h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+}
+
+.bravosuite-title h1 span {
+  color: #3b82f6;
+}
+
+.bravosuite-title p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.bravosuite-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.bravosuite-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bravosuite-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--card-color);
+  border-radius: 16px 16px 0 0;
+}
+
+.bravosuite-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+  border-color: var(--card-color);
+}
+
+.bravosuite-card-soon {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bravosuite-card-soon:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #e2e8f0;
+}
+
+.bravosuite-card-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.bravosuite-card-content h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.bravosuite-card-content p {
+  font-size: 0.83rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.bravosuite-soon-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  padding: 3px 8px;
+  border-radius: 20px;
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.bravosuite-ext-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 1rem;
+  color: var(--card-color);
+  opacity: 0.6;
+}
+
+
+/* ─── BRAVO SUITE HOME ─── */
+.bravosuite-home {
+  padding: 36px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.bravosuite-header {
+  margin-bottom: 40px;
+}
+
+.bravosuite-header h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.bravosuite-header h1 span {
+  color: #3b82f6;
+}
+
+.bravosuite-header p {
+  color: #64748b;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.bravosuite-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.bravosuite-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bravosuite-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--card-color);
+}
+
+.bravosuite-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+  border-color: var(--card-color);
+}
+
+.bravosuite-card-soon {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bravosuite-card-soon:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #e2e8f0;
+}
+
+.bravosuite-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bravosuite-card-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.bravosuite-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.bravosuite-card p {
+  font-size: 0.83rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.bravosuite-soon-badge {
+  font-size: 0.7rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.bravosuite-ext-badge {
+  font-size: 1.1rem;
+  color: var(--card-color);
+  opacity: 0.7;
+}
+
+/* ─── MINI SIDEBAR FIXES ─── */
+.sidebar-mini > ul > li > a,
+.sidebar-mini > ul > li > .sidebar-toggle,
+.sidebar-mini > ul > li > .sidebar-external,
+.sidebar-mini > ul > li > .sidebar-disabled {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+/* Ocultar todo excepto el icono principal en mini */
+.sidebar-mini > ul > li > a span,
+.sidebar-mini > ul > li > .sidebar-toggle span,
+.sidebar-mini > ul > li > .sidebar-external span,
+.sidebar-mini > ul > li > .sidebar-disabled span,
+.sidebar-mini > ul > li > .sidebar-toggle .chevron,
+.sidebar-mini > ul > li > .sidebar-external svg:last-child {
+  display: none;
+}
+
+/* Ocultar submenus y dividers en mini */
+.sidebar-mini .submenu { display: none; }
+.sidebar-mini .sidebar-section-divider { margin: 4px 6px; }

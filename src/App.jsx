@@ -6,6 +6,8 @@ import './styles/global/Layout.css'
 import Login from './pages/Login'
 import Home  from './pages/Home'
 
+// ─── JOURNEY SYNC ─────────────────────────────────────────────────────────────
+import HomeJourney    from './pages/main/HomeJourney'
 import SyncUsuariosP  from './pages/main/Sync/SyncUsuariosP'
 import SyncCursos     from './pages/main/Sync/SyncCursos'
 import SyncMatriculas from './pages/main/Sync/SyncMatriculas'
@@ -40,7 +42,11 @@ function App() {
             <SideNavMain />
           </PrivateRoute>
         }>
+          {/* ─── BRAVO SUITE HOME ─── */}
           <Route index element={<Home />} />
+
+          {/* ─── JOURNEY SYNC ─── */}
+          <Route path="HomeJourney" element={<HomeJourney />} />
 
           <Route path="sync/usuarios"   element={<SyncUsuariosP />} />
           <Route path="sync/cursos"     element={<SyncCursos />} />

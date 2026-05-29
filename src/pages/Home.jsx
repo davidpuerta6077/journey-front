@@ -1,111 +1,131 @@
 import { useNavigate } from 'react-router-dom'
-import { useEffect, useState, useCallback } from 'react'
-import { Users, BookOpen, Activity, RefreshCw, GraduationCap } from 'lucide-react'
-import { fetchIndicadorUsuarios } from '../services/home/fetchIndicadorUsuarios'
-import { fetchIndicadorCursos } from '../services/home/fetchIndicadorCursos'
-import { fetchIndicadorMatriculas } from '../services/home/fetchIndicadorMatriculas'
-import { fetchApiStatus } from '../services/home/fetchApiStatus'
 import '../styles/global/Global.css'
 
-import config from "../config"
-const BASE = config.api_domain.url_base
+const services = [
+  {
+    name: 'Journey Sync',
+    description: 'Sincronización de usuarios, cursos y matrículas con Moodle',
+    icon: '⚡',
+    color: '#3b82f6',
+    path: '/HomeJourney',
+    internal: true,
+  },
+  {
+    name: 'Centro de Soporte',
+    description: 'Gestión de tickets y soporte técnico institucional',
+    icon: '🎧',
+    color: '#8b5cf6',
+    href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php',
+  },
+  {
+    name: 'Hub',
+    description: 'Portal centralizado de recursos y herramientas',
+    icon: '🌐',
+    color: '#06b6d4',
+    href: 'https://hub.pascualbravovirtual.edu.co/login',
+  },
+  {
+    name: 'SIDEM',
+    description: 'Sistema de seguimiento y monitoreo académico',
+    icon: '📊',
+    color: '#10b981',
+    href: 'https://seguimiento.pascualbravovirtual.edu.co/',
+  },
+  {
+    name: 'Matomo',
+    description: 'Analítica web y seguimiento de usuarios',
+    icon: '📈',
+    color: '#f59e0b',
+    comingSoon: true,
+  },
+  {
+    name: 'Zabbix',
+    description: 'Monitoreo de infraestructura y servidores',
+    icon: '🖥️',
+    color: '#ef4444',
+    comingSoon: true,
+  },
+  {
+    name: 'Bebras',
+    description: 'Plataforma de pensamiento computacional',
+    icon: '🦫',
+    color: '#84cc16',
+    href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/',
+  },
+  {
+    name: 'Moodle Builder',
+    description: 'Constructor y configurador de cursos Moodle',
+    icon: '🏗️',
+    color: '#f97316',
+    href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html',
+  },
+  {
+    name: 'Encuestas',
+    description: 'Creación y gestión de encuestas institucionales',
+    icon: '📋',
+    color: '#ec4899',
+    href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login',
+  },
+  {
+    name: 'Informes (Onix-IA)',
+    description: 'Generación de informes con inteligencia artificial',
+    icon: '🤖',
+    color: '#6366f1',
+    comingSoon: true,
+  },
+  {
+    name: 'Rags',
+    description: 'Herramienta de recursos y gestión académica',
+    icon: '📚',
+    color: '#14b8a6',
+    comingSoon: true,
+  },
+  {
+    name: 'PMZ',
+    description: 'Panel de monitoreo de zonas y servicios',
+    icon: '🗺️',
+    color: '#a855f7',
+    comingSoon: true,
+  },
+]
 
 export default function Home() {
   const navigate = useNavigate()
-  const [indicadores, setIndicadores] = useState({
-    usuarios: 0,
-    cursos: 0,
-    matriculas: 0,
-    apiStatus: 'Verificando...'
-  })
 
-  const [test, setTests] = useState('Verificando API')
-
-  const cargarIndicadores = useCallback(async () => {
-    try {
-      const testRes = await fetchApiStatus()
-      console.log(testRes)
-      console.log(BASE)
-      setTests(testRes)
-
-      const [usuarios, cursos, matriculas] = await Promise.all([
-        fetchIndicadorUsuarios(),
-        fetchIndicadorCursos(),
-        fetchIndicadorMatriculas(),
-      ])
-
-      setIndicadores({ usuarios, cursos, matriculas })
-    } catch {
-      setIndicadores(prev => ({ ...prev, apiStatus: 'Error' }))
-    }
-  }, [])
-
-  useEffect(() => { cargarIndicadores() }, [cargarIndicadores])
-
-  const acciones = [
-    { label: 'Usuarios Plataforma', icon: Users,          path: '/sync/usuarios' },
-    { label: 'Matrículas',          icon: GraduationCap,  path: '/sync/matriculas' },
-    { label: 'Cursos',              icon: BookOpen,        path: '/sync/cursos' },
-  ]
+  const handleClick = (service) => {
+    if (service.comingSoon) return
+    if (service.internal) navigate(service.path)
+    else window.open(service.href, '_blank')
+  }
 
   return (
-    <div className="home">
-      <div className="home-header">
-        <div>
-          <h2>Hola, Usuario</h2>
-          <p className="home-subtitle">Recursos más usados</p>
-        </div>
-        <div className="home-sync-btns">
-          <button className="btn-sync" onClick={() => navigate('/sync/usuarios')}>
-            <RefreshCw size={14} /> Sync Usuarios
-          </button>
-          <button className="btn-sync btn-sync-secondary" onClick={() => navigate('/sync/matriculas')}>
-            <RefreshCw size={14} /> Sync Matrículas
-          </button>
-          <button className="btn-sync btn-sync-outline" onClick={() => navigate('/sync/cursos')}>
-            <RefreshCw size={14} /> Sync Cursos
-          </button>
-        </div>
+    <div className="bravosuite-home">
+      <div className="bravosuite-header">
+        <h1>Br<span>@</span>vo Suite</h1>
+        <p>Plataforma integrada de herramientas institucionales</p>
       </div>
 
-      <div className="home-cards">
-        {acciones.map(a => {
-          const Icon = a.icon
-          return (
-            <button key={a.path} className="home-card" onClick={() => navigate(a.path)}>
-              <Icon size={28} strokeWidth={1.5} className="home-card-icon" />
-              <span className="home-card-label">{a.label}</span>
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="home-panel">
-        <h5>Indicadores</h5>
-        <div className="home-indicators">
-          <div className="indicator-card">
-            <Users size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.usuarios}</span>
-            <span className="indicator-label">Usuarios en BD</span>
+      <div className="bravosuite-grid">
+        {services.map((service, i) => (
+          <div
+            key={i}
+            className={`bravosuite-card ${service.comingSoon ? 'bravosuite-card-soon' : ''}`}
+            onClick={() => handleClick(service)}
+            style={{'--card-color': service.color}}
+          >
+            <div className="bravosuite-card-top">
+              <span className="bravosuite-card-icon">{service.icon}</span>
+              {!service.comingSoon && !service.internal && (
+                <span className="bravosuite-ext-badge">↗</span>
+              )}
+              {service.comingSoon && (
+                <span className="bravosuite-soon-badge">Próximamente</span>
+              )}
+            </div>
+            <h3>{service.name}</h3>
+            <p>{service.description}</p>
           </div>
-          <div className="indicator-card">
-            <BookOpen size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.cursos}</span>
-            <span className="indicator-label">Cursos</span>
-          </div>
-          <div className="indicator-card">
-            <GraduationCap size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.matriculas}</span>
-            <span className="indicator-label">Matrículas</span>
-          </div>
-          <div className="indicator-card">
-            <Activity size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value indicator-status">
-              {test}
-            </span>
-            <span className="indicator-label">Estado API Test</span>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )

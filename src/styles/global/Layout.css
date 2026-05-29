@@ -12,12 +12,17 @@
   z-index: 100;
 }
 .navbar-left { display: flex; align-items: center; gap: 12px; }
-.navbar-brand { font-weight: 700; font-size: 1.1rem; letter-spacing: 0.08em; color: #fff; }
+.navbar-brand {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
+  color: #fff;
+  user-select: none;
+}
 .toggle-btn {
   background: transparent;
   border: none;
   color: #fff;
-  font-size: 1.3rem;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -34,6 +39,9 @@
   font-size: 0.95rem;
   padding: 6px 12px;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .user-btn:hover { background: rgba(255,255,255,0.08); }
 .user-dropdown {
@@ -67,55 +75,180 @@
 .sidebar {
   width: 260px;
   min-height: calc(100vh - 56px);
-  background: #101827;
-  border-right: 1px solid rgba(148,163,184,0.18);
-  padding-top: 16px;
+  background: #0f172a;
+  border-right: 1px solid rgba(148,163,184,0.1);
+  padding-top: 8px;
   flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.25s ease;
 }
+
+.sidebar-mini {
+  width: 52px;
+}
+
 .sidebar ul { list-style: none; margin: 0; padding: 0; }
 .sidebar li { margin: 0; }
 
-.sidebar a, .sidebar-toggle {
+/* ─── BASE ITEMS ─── */
+.sidebar a,
+.sidebar-toggle,
+.sidebar-external,
+.sidebar-disabled {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  color: #cbd5e1;
+  color: #94a3b8;
   text-decoration: none;
-  padding: 12px 18px;
+  padding: 9px 14px;
   border: none;
   background: transparent;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.15s, color 0.15s;
   text-align: left;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.sidebar a:hover, .sidebar-toggle:hover { background: rgba(91,132,255,0.12); color: #fff; }
-.sidebar a.active { background: rgba(91,132,255,0.2); color: #fff; font-weight: 600; }
+.sidebar a:hover,
+.sidebar-toggle:hover,
+.sidebar-external:hover {
+  background: rgba(255,255,255,0.05);
+  color: #e2e8f0;
+}
+.sidebar a.active {
+  background: rgba(91,132,255,0.18);
+  color: #fff;
+  font-weight: 600;
+}
 
-.sidebar-icon { font-size: 1rem; width: 20px; text-align: center; }
-.chevron { margin-left: auto; font-size: 0.8rem; transition: transform 0.2s; }
+/* ─── JOURNEY SYNC ─── */
+.journey-toggle {
+  color: #7dd3fc !important;
+  font-weight: 600 !important;
+  font-size: 0.92rem !important;
+}
+.journey-toggle:hover {
+  background: rgba(125,211,252,0.07) !important;
+  color: #bae6fd !important;
+}
+
+/* ─── NIVEL 1 top ─── */
+.sidebar > ul > li > a,
+.sidebar > ul > li > .sidebar-toggle,
+.sidebar > ul > li > .sidebar-external,
+.sidebar > ul > li > .sidebar-disabled {
+  color: #cbd5e1;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+/* ─── SUBMENU ─── */
+.submenu {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0;
+  background: rgba(0,0,0,0.2);
+}
+
+/* ─── NIVEL 2 ─── */
+.submenu > li > a,
+.submenu > li > .sidebar-toggle,
+.submenu > li > .sidebar-external,
+.submenu > li > .sidebar-disabled {
+  padding-left: 32px;
+  font-size: 0.88rem;
+  color: #94a3b8;
+}
+
+/* ─── NIVEL 3 ─── */
+.submenu .submenu > li > a,
+.submenu .submenu > li > .sidebar-toggle,
+.submenu .submenu > li > .sidebar-external,
+.submenu .submenu > li > .sidebar-disabled {
+  padding-left: 48px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.submenu .submenu > li > a:hover,
+.submenu .submenu > li > .sidebar-toggle:hover {
+  color: #cbd5e1;
+}
+.submenu .submenu > li > a.active { color: #fff; }
+
+/* ─── NIVEL 4 ─── */
+.submenu .submenu .submenu > li > a,
+.submenu .submenu .submenu > li > .sidebar-disabled {
+  padding-left: 62px;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+/* ─── SEPARADOR ─── */
+.sidebar-section-divider {
+  height: 1px;
+  background: rgba(148,163,184,0.1);
+  margin: 8px 10px;
+}
+
+/* ─── DISABLED ─── */
+.sidebar-disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* ─── EXTERNAL ─── */
+.sidebar-external { color: #94a3b8; }
+.sidebar-external:hover { color: #e2e8f0; }
+
+/* ─── ICONS ─── */
+.sidebar-icon { width: 18px; flex-shrink: 0; }
+.chevron { margin-left: auto; transition: transform 0.2s; flex-shrink: 0; }
 .chevron.open { transform: rotate(180deg); }
 
-.submenu { padding-left: 10px; }
-.submenu li a { padding: 9px 18px 9px 28px; font-size: 0.88rem; }
+/* ─── MINI SIDEBAR ─── */
+.sidebar-mini a span,
+.sidebar-mini .sidebar-toggle span,
+.sidebar-mini .sidebar-external span,
+.sidebar-mini .sidebar-disabled span,
+.sidebar-mini .chevron {
+  display: none;
+}
+.sidebar-mini a,
+.sidebar-mini .sidebar-toggle,
+.sidebar-mini .sidebar-external,
+.sidebar-mini .sidebar-disabled {
+  justify-content: center;
+  padding: 12px 0;
+}
+.sidebar-mini .submenu { display: none; }
+.sidebar-mini .sidebar-section-divider { margin: 6px 4px; }
 
 /* ─── MAIN CONTENT ─── */
 .main-content {
   flex: 1;
   padding: 28px;
-  background: #ffffff;
+  background: #f8fafc;
   color: #1e293b;
   overflow-y: auto;
   min-width: 0;
 }
+
+/* ─── LOGOUT ─── */
 .logout-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    display: block;
-    padding: 10px 16px;
-    color: #e2e8f0;
-    font-size: 0.9rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  width: 100%;
 }
 .logout-btn:hover { background: rgba(91,132,255,0.14); }
