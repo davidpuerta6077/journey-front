@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
-import { Users, BookOpen, Activity, RefreshCw } from 'lucide-react'
+import { Users, BookOpen, Activity, RefreshCw, GraduationCap } from 'lucide-react'
 import { fetchIndicadorUsuarios } from '../services/home/fetchIndicadorUsuarios'
 import { fetchIndicadorCursos } from '../services/home/fetchIndicadorCursos'
+import { fetchIndicadorMatriculas } from '../services/home/fetchIndicadorMatriculas'
 import { fetchApiStatus } from '../services/home/fetchApiStatus'
 import '../styles/global/Global.css'
 
@@ -14,6 +15,7 @@ export default function Home() {
   const [indicadores, setIndicadores] = useState({
     usuarios: 0,
     cursos: 0,
+    matriculas: 0,
     apiStatus: 'Verificando...'
   })
 
@@ -21,23 +23,18 @@ export default function Home() {
 
   const cargarIndicadores = useCallback(async () => {
     try {
+      const testRes = await fetchApiStatus()
+      console.log(testRes)
+      console.log(BASE)
+      setTests(testRes)
 
-    const testRes = await fetchApiStatus()
- 
-    console.log(testRes)
-    console.log(BASE)
-
-    setTests(testRes)
-
-
-      const [usuarios, cursos, apiStatus] = await Promise.all([
+      const [usuarios, cursos, matriculas] = await Promise.all([
         fetchIndicadorUsuarios(),
         fetchIndicadorCursos(),
+        fetchIndicadorMatriculas(),
       ])
 
-
-
-      setIndicadores({ usuarios, cursos, apiStatus })
+      setIndicadores({ usuarios, cursos, matriculas })
     } catch {
       setIndicadores(prev => ({ ...prev, apiStatus: 'Error' }))
     }
@@ -46,9 +43,9 @@ export default function Home() {
   useEffect(() => { cargarIndicadores() }, [cargarIndicadores])
 
   const acciones = [
-    { label: 'Usuarios Plataforma', icon: Users, path: '/sync/usuarios' },
-    { label: 'Matrículas', icon: BookOpen, path: '/sync/matriculas' },
-    { label: 'Cursos', icon: Activity, path: '/sync/cursos' },
+    { label: 'Usuarios Plataforma', icon: Users,          path: '/sync/usuarios' },
+    { label: 'Matrículas',          icon: GraduationCap,  path: '/sync/matriculas' },
+    { label: 'Cursos',              icon: BookOpen,        path: '/sync/cursos' },
   ]
 
   return (
@@ -95,6 +92,11 @@ export default function Home() {
             <BookOpen size={24} strokeWidth={1.5} className="indicator-icon" />
             <span className="indicator-value">{indicadores.cursos}</span>
             <span className="indicator-label">Cursos</span>
+          </div>
+          <div className="indicator-card">
+            <GraduationCap size={24} strokeWidth={1.5} className="indicator-icon" />
+            <span className="indicator-value">{indicadores.matriculas}</span>
+            <span className="indicator-label">Matrículas</span>
           </div>
           <div className="indicator-card">
             <Activity size={24} strokeWidth={1.5} className="indicator-icon" />
