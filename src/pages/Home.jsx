@@ -81,7 +81,7 @@ const services = [
     comingSoon: true,
   },
   {
-    name: 'PMZ',
+    name: 'PM2',
     description: 'Panel de monitoreo de zonas y servicios',
     icon: '🗺️',
     color: '#a855f7',
