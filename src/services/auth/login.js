@@ -1,26 +1,14 @@
-const MOCK_USER = {
-    email: 'admin@journey.com',
-    password: '1234',
-    user: {
-        id: 1,
-        username: 'admin',
-        email: 'admin@journey.com',
-        rol: 'admin'
-    }
-}
+import axios from 'axios'
+import config from '../../config'
+
+const BASE = config.api_domain.url_base
 
 export async function loginService(email, password) {
-    // Simula delay de red
-    await new Promise(r => setTimeout(r, 600))
-
-    if (email === MOCK_USER.email && password === MOCK_USER.password) {
-        const token = 'mock-token-journey-2024'
-        localStorage.setItem('token', token)
-        localStorage.setItem('user', JSON.stringify(MOCK_USER.user))
-        return { token, user: MOCK_USER.user }
-    }
-
-    throw new Error('Credenciales inválidas.')
+    const res = await axios.post(`${BASE}/auth/login`, { email, password })
+    const { token, user } = res.data.body
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(user))
+    return { token, user }
 }
 
 export function logoutService() {
