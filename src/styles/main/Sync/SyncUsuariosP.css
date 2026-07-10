@@ -118,6 +118,7 @@
 .badge-moodle { background: #fef9c3; color: #ca8a04; }
 .badge-pending { background: #f1f5f9; color: #64748b; }
 .badge-error { background: #fee2e2; color: #dc2626; }
+.badge-no-user { background: #ffedd5; color: #c2410c; }
 
 /* ACCIONES */
 .action-btns { display: flex; gap: 6px; align-items: center; }
@@ -221,6 +222,15 @@
   background: #f8fafc;
 }
 .modal-field input:focus { outline: none; border-color: #5b84ff; background: #fff; }
+.modal-field select {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  background: #f8fafc;
+}
+.modal-field select:focus { outline: none; border-color: #5b84ff; background: #fff; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
 .filter-input-wrapper {
