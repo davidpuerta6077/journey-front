@@ -26,6 +26,7 @@ const EMPTY_FORM = {
 }
 
 function StatusBadge({ row }) {
+  if (row.estado === 'Suspendido') return <span className="badge badge-suspended">Suspendido</span>
   return row.sincronizado
     ? <span className="badge badge-synced">Sincronizado</span>
     : <span className="badge badge-db">Solo en BD</span>
