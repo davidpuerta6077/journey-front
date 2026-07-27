@@ -4,88 +4,96 @@ import { LogIn, Eye, EyeOff } from 'lucide-react'
 import { loginService } from '../services/auth/login'
 import '../styles/global/Login.css'
 
+import { useAuth } from "react-oidc-context";
+
 export default function Login() {
-  const navigate = useNavigate()
-  const [form, setForm]         = useState({ email: '', password: '' })
-  const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const auth = useAuth();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-    setError('')
+  const signOutRedirect = () => {
+    const clientId = "5ij2u3s8ipssnrtmu6nlvjj3da";
+    const logoutUri = "<logout uri>";
+    const cognitoDomain = "https://us-east-1xcezs3mwh.auth.us-east-1.amazoncognito.com";
+    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
+  };
+
+  if (auth.isLoading) {
+    return <div>Loading...</div>;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    try {
-      const { token, user } = await loginService(form.email, form.password)
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
-      navigate('/')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  if (auth.error) {
+    return <div>Encountering error... {auth.error.message}</div>;
   }
 
-  return (
-    <div className="login-page">
-      <div className="login-box">
-        <div className="login-header">
-          <h1 className="login-brand">JOURNEY</h1>
-          <p className="login-subtitle">Inicia sesión para continuar</p>
-        </div>
+  if (auth.isAuthenticated) {
+      return <Navigate to="/HomeJourney" replace />;
+  }
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <div className="login-field">
-            <label>Correo electrónico</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="usuario@correo.com"
-              value={form.email}
-              onChange={handleChange}
-              autoComplete="email"
-              required
-            />
-          </div>
+  console.log(auth)
 
-          <div className="login-field">
-            <label>Contraseña</label>
-            <div className="password-wrapper">
-              <input
-                type={showPass ? 'text' : 'password'}
-                name="password"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPass(v => !v)}
-              >
-                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
+return (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "100vh",
+      background: "#f4f6f9",
+      fontFamily: "Arial, sans-serif",
+    }}
+  >
+    <div
+      style={{
+        background: "#fff",
+        padding: "40px",
+        borderRadius: "12px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+        textAlign: "center",
+        minWidth: "350px",
+      }}
+    >
+      <h1 style={{ marginBottom: "10px", color: "#333" }}>
+        Bienvenido
+      </h1>
 
-          {error && (
-            <div className="login-error">{error}</div>
-          )}
+      <p style={{ color: "#666", marginBottom: "30px" }}>
+        Inicia sesión con tu cuenta institucional.
+      </p>
 
-          <button className="btn-login" type="submit" disabled={loading}>
-            <LogIn size={15} />
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
-      </div>
+      <button
+        onClick={() => auth.signinRedirect()}
+        style={{
+          width: "100%",
+          padding: "12px",
+          background: "#4F46E5",
+          color: "#fff",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "16px",
+          cursor: "pointer",
+          marginBottom: "15px",
+          transition: "0.2s",
+        }}
+      >
+        🔐 Iniciar sesión
+      </button>
+
+      <button
+        onClick={() => signOutRedirect()}
+        style={{
+          width: "100%",
+          padding: "12px",
+          background: "#000000",
+          color: "#fff",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "16px",
+          cursor: "pointer",
+          transition: "0.2s",
+        }}
+      >
+        🚪 Cerrar sesión
+      </button>
     </div>
-  )
+  </div>
+);
 }
