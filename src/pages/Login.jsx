@@ -1,105 +1,49 @@
-import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff } from 'lucide-react'
-import { loginService } from '../services/auth/login'
-import '../styles/global/Login.css'
-
 import { useAuth } from "react-oidc-context";
 
-export default function Login() {
+function Login() {
   const auth = useAuth();
-  const navigate = useNavigate()
 
   const signOutRedirect = () => {
-    const clientId = "5ij2u3s8ipssnrtmu6nlvjj3da";
-    const logoutUri = "<logout uri>";
-    const cognitoDomain = "https://us-east-1xcezs3mwh.auth.us-east-1.amazoncognito.com";
+    const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
+    const logoutUri = "https://organic-engine-g6x4r97v7492w6rx-5173.app.github.dev/login";
+    const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
+
+    auth.removeUser();
     window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   };
 
-
-  // if (auth.isLoading) {
-  //   return <div>Loading...</div>;
-  // }
-
-  // if (auth.error) {
-  //   return <div>Encountering error... {auth.error.message}</div>;
-  // }
-
-  // if (auth.isAuthenticated) {
-  //     return <Navigate to="/HomeJourney" replace />;
-  // }
-
-  if (true) {
-    return <Navigate to="/" replace />;
+  if (auth.isLoading) {
+    return <div className="login-container"><p>Cargando...</p></div>;
   }
 
-  console.log(auth)
+  if (auth.error) {
+    return <div className="login-container"><p>Error: {auth.error.message}</p></div>;
+  }
 
-return (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      minHeight: "100vh",
-      background: "#f4f6f9",
-      fontFamily: "Arial, sans-serif",
-    }}
-  >
-    <div
-      style={{
-        background: "#fff",
-        padding: "40px",
-        borderRadius: "12px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-        textAlign: "center",
-        minWidth: "350px",
-      }}
-    >
-      <h1 style={{ marginBottom: "10px", color: "#333" }}>
-        Bienvenido
-      </h1>
+  if (auth.isAuthenticated) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <h2>Ya has iniciado sesión</h2>
+          <button className="btn btn-signout" onClick={signOutRedirect}>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-      <p style={{ color: "#666", marginBottom: "30px" }}>
-        Inicia sesión con tu cuenta institucional.
-      </p>
-
-      <button
-        onClick={() => auth.signinRedirect()}
-        style={{
-          width: "100%",
-          padding: "12px",
-          background: "#4F46E5",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          fontSize: "16px",
-          cursor: "pointer",
-          marginBottom: "15px",
-          transition: "0.2s",
-        }}
-      >
-        🔐 Iniciar sesión
-      </button>
-
-      <button
-        onClick={() => signOutRedirect()}
-        style={{
-          width: "100%",
-          padding: "12px",
-          background: "#000000",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          fontSize: "16px",
-          cursor: "pointer",
-          transition: "0.2s",
-        }}
-      >
-        🚪 Cerrar sesión
-      </button>
+  return (
+    <div className="login-container">
+      <div className="login-card">
+        <h1>Bravo Suite</h1>
+        <p>Inicia sesión para continuar</p>
+        <button className="btn btn-signin" onClick={() => auth.signinRedirect()}>
+          Iniciar sesión
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
 }
+
+export default Login;

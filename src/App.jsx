@@ -38,9 +38,9 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/" element={
-          <PrivateRoute>
-            <SideNavMain />
-          </PrivateRoute>
+                <PrivateRoute>
+                  <SideNavMain />
+                </PrivateRoute>
         }>
           {/* ─── BRAVO SUITE HOME ─── */}
           <Route index element={<Home />} />

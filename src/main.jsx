@@ -6,11 +6,11 @@ import App from './App.jsx'
 import { AuthProvider } from "react-oidc-context";
 
 const cognitoAuthConfig = {
-  authority: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_xceZs3mwh",
-  client_id: "5ij2u3s8ipssnrtmu6nlvjj3da",
-  redirect_uri: "https://sturdy-space-trout-j9rj76qp94q3jpq4-5173.app.github.dev",
+  authority: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ynphSRVAg",
+  client_id: "5hpvb84h2hm3rfsf6mbfs936hc",
+  redirect_uri: "https://organic-engine-g6x4r97v7492w6rx-5173.app.github.dev",
   response_type: "code",
-  scope: "email openid phone",
+  scope: "phone openid email",
 };
 
 createRoot(document.getElementById('root')).render(
