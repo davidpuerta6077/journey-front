@@ -6,9 +6,9 @@ import App from './App.jsx'
 import { AuthProvider } from "react-oidc-context";
 
 const cognitoAuthConfig = {
-  authority: "https://us-east-1xcezs3mwh.auth.us-east-1.amazoncognito.com",
+  authority: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_xceZs3mwh",
   client_id: "5ij2u3s8ipssnrtmu6nlvjj3da",
-  redirect_uri: "https://sturdy-space-trout-j9rj76qp94q3jpq4-5173.app.github.dev/HomeJourney",
+  redirect_uri: "https://sturdy-space-trout-j9rj76qp94q3jpq4-5173.app.github.dev",
   response_type: "code",
   scope: "email openid phone",
 };

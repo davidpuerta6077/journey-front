@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { LogIn, Eye, EyeOff } from 'lucide-react'
 import { loginService } from '../services/auth/login'
 import '../styles/global/Login.css'
@@ -8,6 +8,7 @@ import { useAuth } from "react-oidc-context";
 
 export default function Login() {
   const auth = useAuth();
+  const navigate = useNavigate()
 
   const signOutRedirect = () => {
     const clientId = "5ij2u3s8ipssnrtmu6nlvjj3da";
@@ -16,16 +17,21 @@ export default function Login() {
     window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   };
 
-  if (auth.isLoading) {
-    return <div>Loading...</div>;
-  }
 
-  if (auth.error) {
-    return <div>Encountering error... {auth.error.message}</div>;
-  }
+  // if (auth.isLoading) {
+  //   return <div>Loading...</div>;
+  // }
 
-  if (auth.isAuthenticated) {
-      return <Navigate to="/HomeJourney" replace />;
+  // if (auth.error) {
+  //   return <div>Encountering error... {auth.error.message}</div>;
+  // }
+
+  // if (auth.isAuthenticated) {
+  //     return <Navigate to="/HomeJourney" replace />;
+  // }
+
+  if (true) {
+    return <Navigate to="/" replace />;
   }
 
   console.log(auth)
