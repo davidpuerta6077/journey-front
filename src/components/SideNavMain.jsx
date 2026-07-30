@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useAuth } from "react-oidc-context";
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { 
   Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut, 
@@ -120,6 +121,18 @@ function SidebarItem({ item, depth }) {
 SidebarItem.defaultProps = { depth: 0 }
 
 export default function Layout() {
+
+  const auth = useAuth();
+
+  const signOutRedirect = () => {
+    const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
+    const logoutUri = "https://curly-chainsaw-jw5j69xw96cpp5g-5173.app.github.dev/login";
+    const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
+
+    auth.removeUser();
+    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
+  };
+
   const [sidebarMini, setSidebarMini] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
@@ -153,7 +166,7 @@ export default function Layout() {
               <li><a href="#">Mi Perfil</a></li>
               <li><a href="#">Ver Logs</a></li>
               <li>
-                <button className="logout-btn" onClick={handleLogout}>
+                <button className="logout-btn" onClick={signOutRedirect}>
                   <LogOut size={14} />
                   Cerrar sesión
                 </button>

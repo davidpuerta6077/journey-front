@@ -1,11 +1,12 @@
 import { useAuth } from "react-oidc-context";
+import '../styles/global/Login.css'
 
 function Login() {
   const auth = useAuth();
 
   const signOutRedirect = () => {
     const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
-    const logoutUri = "https://organic-engine-g6x4r97v7492w6rx-5173.app.github.dev/login";
+    const logoutUri = "https://curly-chainsaw-jw5j69xw96cpp5g-5173.app.github.dev/login";
     const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
 
     auth.removeUser();
