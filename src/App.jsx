@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import SideNavMain from './components/SideNavMain'
+import SideNavMain from './components/sidenav/SideNavMain'
 import PrivateRoute from './components/PrivateRoute'
 import './styles/global/Layout.css'
 
