@@ -6,7 +6,7 @@ function Login() {
 
   const signOutRedirect = () => {
     const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
-    const logoutUri = "https://curly-chainsaw-jw5j69xw96cpp5g-5173.app.github.dev/login";
+    const logoutUri = "https://obscure-potato-wxvr56gq9pg257wq-5173.app.github.dev/login";
     const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
 
     auth.removeUser();

@@ -1,10 +1,48 @@
 import { useState } from 'react'
-import { useAuth } from "react-oidc-context";
+import { useAuth} from "react-oidc-context";
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { 
   Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut, 
   ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings
 } from 'lucide-react'
+import { usePermissions } from '../services/PermissionsContext'
+
+function getSubmoduleCode(path) {
+  if (!path) return null
+  return path.split('/').filter(Boolean).pop()
+}
+
+//Función para filtrar los items en el menu según la consulta al endpoint /permissions
+function filterMenuByPermissions(items, allowedCodes) {
+  return items.reduce((acc, item) => {
+    // Sin path (divider, external link, comingSoon sin children) -> se mantiene tal cual
+    if (item.type === 'divider' || item.href || item.comingSoon) {
+      acc.push(item)
+      return acc
+    }
+
+    if (item.children) {
+      const filteredChildren = filterMenuByPermissions(item.children, allowedCodes)
+      if (filteredChildren.length > 0) {
+        acc.push({ ...item, children: filteredChildren })
+      }
+      return acc
+    }
+
+    if (item.path) {
+      const code = getSubmoduleCode(item.path)
+      // Home ("/") siempre visible
+      if (item.path === '/' || allowedCodes.includes(code)) {
+        acc.push(item)
+      }
+      return acc
+    }
+
+    acc.push(item)
+    return acc
+  }, [])
+}
+//Fin función de filtrado
 
 const menuItems = [
   { label: 'Home', icon: Home, path: '/' },
@@ -55,6 +93,7 @@ const menuItems = [
 ]
 
 function SidebarItem({ item, depth }) {
+
   const [open, setOpen] = useState(false)
   const Icon = item.icon || BookOpen
 
@@ -124,14 +163,25 @@ export default function Layout() {
 
   const auth = useAuth();
 
+  //Logout process
   const signOutRedirect = () => {
     const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
-    const logoutUri = "https://curly-chainsaw-jw5j69xw96cpp5g-5173.app.github.dev/login";
+    const logoutUri = "https://obscure-potato-wxvr56gq9pg257wq-5173.app.github.dev/login";
     const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
 
     auth.removeUser();
     window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   };
+  //End logout process
+
+  //Permission checking
+  const { permissions } = usePermissions()
+
+  const allowedCodes = permissions?.modules?.flatMap(m =>
+    m.submodules.map(s => s.submodule_code)
+  ) || []
+
+  const filteredMenu = filterMenuByPermissions(menuItems, allowedCodes)
 
   const [sidebarMini, setSidebarMini] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -178,7 +228,7 @@ export default function Layout() {
       <div className="app-body">
         <aside className={`sidebar ${sidebarMini ? 'sidebar-mini' : ''}`}>
           <ul>
-            {menuItems.map((item, i) => (
+            {filteredMenu.map((item, i) => (
               <SidebarItem key={i} item={item} />
             ))}
           </ul>
