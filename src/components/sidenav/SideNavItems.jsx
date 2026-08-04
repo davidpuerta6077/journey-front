@@ -1,6 +1,7 @@
 import { 
   Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut, 
-  ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings
+  ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings,
+  Search
 } from 'lucide-react'
 
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
@@ -36,8 +37,11 @@ export const menuItems = [
       { label: 'Reportes', icon: FileText, path: '/reportes', submoduleCode: 'reports' },
       { label: 'Estadísticas', icon: BarChart2, path: '/estadisticas', submoduleCode: 'statistics' },
       { label: 'Configuración', icon: Settings, path: '/configuracion', submoduleCode: 'settings' },
+      { label: 'busqueda', icon: Search, path: '/busqueda', submoduleCode: 'search' },
   ]},
+
   { type: 'divider' },
+
   { label: 'Centro de soporte', icon: ExternalLink, moduleCode: 'support_center', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
   { label: 'Hub', icon: ExternalLink, moduleCode: 'hub', href: 'https://hub.pascualbravovirtual.edu.co/login' },
   { label: 'SIDEM', icon: ExternalLink, moduleCode: 'sidem', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },

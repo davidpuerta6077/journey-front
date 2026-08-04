@@ -49,95 +49,95 @@ function App() {
           <Route index element={<Home />} />
 
           {/* ─── JOURNEY SYNC ─── */}
-          <Route path="HomeJourney" element={<HomeJourney />} />
+          <Route path="HomeJourney" submoduleCode='journey_home' element={<HomeJourney />} />
 
           <Route path="sync/usuarios" element={
-            <PrivateRoute submoduleCode="usuarios">
+            <PrivateRoute submoduleCode="sync_users">
               <SyncUsuariosP />
             </PrivateRoute>
           } />
           <Route path="sync/cursos" element={
-            <PrivateRoute submoduleCode="cursos">
+            <PrivateRoute submoduleCode="sync_courses">
               <SyncCursos />
             </PrivateRoute>
           } />
           <Route path="sync/matriculas" element={
-            <PrivateRoute submoduleCode="matriculas">
+            <PrivateRoute submoduleCode="sync_enrollments">
               <SyncMatriculas />
             </PrivateRoute>
           } />
 
           <Route path="modulos/usuarios" element={
-            <PrivateRoute submoduleCode="usuarios">
+            <PrivateRoute submoduleCode="module_users">
               <ModulosUsuarios />
             </PrivateRoute>
           } />
           <Route path="modulos/cursos" element={
-            <PrivateRoute submoduleCode="cursos">
+            <PrivateRoute submoduleCode="module_courses">
               <ModulosCursos />
             </PrivateRoute>
           } />
           <Route path="modulos/matriculas" element={
-            <PrivateRoute submoduleCode="matriculas">
+            <PrivateRoute submoduleCode="module_enrollments">
               <ModulosMatriculas />
             </PrivateRoute>
           } />
 
           <Route path="carga/usuarios" element={
-            <PrivateRoute submoduleCode="usuarios">
+            <PrivateRoute submoduleCode="bulk_upload_users">
               <CargaUsuarios />
             </PrivateRoute>
           } />
           <Route path="carga/matriculas" element={
-            <PrivateRoute submoduleCode="matriculas">
+            <PrivateRoute submoduleCode="bulk_upload_enrollments">
               <CargaMatriculas />
             </PrivateRoute>
           } />
           <Route path="carga/novedades" element={
-            <PrivateRoute submoduleCode="novedades">
+            <PrivateRoute submoduleCode="bulk_upload_updates">
               <CargaNovedades />
             </PrivateRoute>
           } />
           <Route path="carga/desmatriculas" element={
-            <PrivateRoute submoduleCode="desmatriculas">
+            <PrivateRoute submoduleCode="bulk_upload_unenrollments">
               <CargaDesmatriculas />
             </PrivateRoute>
           } />
 
           <Route path="reglas/activas" element={
-            <PrivateRoute submoduleCode="activas">
+            <PrivateRoute submoduleCode="rules_active">
               <ReglasActivas />
             </PrivateRoute>
           } />
           <Route path="reglas/plantillas" element={
-            <PrivateRoute submoduleCode="plantillas">
+            <PrivateRoute submoduleCode="rules_templates">
               <ReglasPlantillas />
             </PrivateRoute>
           } />
 
           <Route path="integracion/apis" element={
-            <PrivateRoute submoduleCode="apis">
+            <PrivateRoute submoduleCode="integration_apis">
               <IntegracionApis />
             </PrivateRoute>
           } />
 
           <Route path="reportes" element={
-            <PrivateRoute submoduleCode="reportes">
+            <PrivateRoute submoduleCode="reports">
               <Reportes />
             </PrivateRoute>
           } />
           <Route path="estadisticas" element={
-            <PrivateRoute submoduleCode="estadisticas">
+            <PrivateRoute submoduleCode="statistics">
               <Estadisticas />
             </PrivateRoute>
           } />
           <Route path="busqueda" element={
-            <PrivateRoute submoduleCode="busqueda">
+            <PrivateRoute submoduleCode="search">
               <Busqueda />
             </PrivateRoute>
           } />
           <Route path="configuracion" element={
-            <PrivateRoute submoduleCode="configuracion">
+            <PrivateRoute submoduleCode="settings">
               <Configuracion />
             </PrivateRoute>
           } />
