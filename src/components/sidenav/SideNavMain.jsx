@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
+import config from "../../config.js";
 
 
 const Layout = () => {
@@ -16,7 +17,7 @@ const Layout = () => {
   //Logout process
   const signOutRedirect = () => {
     const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
-    const logoutUri = "https://obscure-potato-wxvr56gq9pg257wq-5173.app.github.dev/login";
+    const logoutUri = `${config.aws.redirect_uri}/login`;
     const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
     auth.removeUser();
     window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;

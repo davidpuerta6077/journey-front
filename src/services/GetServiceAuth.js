@@ -2,7 +2,8 @@ import axios from 'axios';
 import config from '../config';
 import awsAuth from './AwsAuthService';
 
-const domain = `https://ominous-spork-wxvr56gqgqxh56xj-3001.app.github.dev`;
+
+const domain = config.aws.redirect_uri;
 
 export const GetServiceAuth = async (endpoint) => {
     try {

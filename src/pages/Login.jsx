@@ -1,12 +1,13 @@
 import { useAuth } from "react-oidc-context";
 import '../styles/global/Login.css'
+import config from "../config.js";
 
 function Login() {
   const auth = useAuth();
 
   const signOutRedirect = () => {
     const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
-    const logoutUri = "https://obscure-potato-wxvr56gq9pg257wq-5173.app.github.dev/login";
+    const logoutUri = `${config.aws.redirect_uri}/login`; 
     const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
 
     auth.removeUser();
