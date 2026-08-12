@@ -12,7 +12,10 @@ export function PermissionsProvider({ children }) {
   useEffect(() => {
     const fetchPermissions = async () => {
       if (auth.isAuthenticated) {
-    const result = await GetServiceAuth(`auth/permissions?user_email=${encodeURIComponent(auth.user?.profile?.email)}`);
+        console.log(`auth/permissions?user_email=${encodeURIComponent(auth.user?.profile?.email)}`);
+        const result = await GetServiceAuth(`auth/permissions?user_email=${encodeURIComponent(auth.user?.profile?.email)}`);
+
+        console.log("result:", result?.body?.user_permissions);
         setPermissions(result?.body?.user_permissions || null);
       }
       setLoadingPermissions(false);
