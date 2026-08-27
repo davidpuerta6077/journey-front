@@ -1,91 +1,51 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { LogIn, Eye, EyeOff } from 'lucide-react'
-import { loginService } from '../services/auth/login'
+import { useAuth } from "react-oidc-context";
 import '../styles/global/Login.css'
+import config from "../config.js";
 
-export default function Login() {
-  const navigate = useNavigate()
-  const [form, setForm]         = useState({ email: '', password: '' })
-  const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+function Login() {
+  const auth = useAuth();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-    setError('')
+  const signOutRedirect = () => {
+    const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
+    const logoutUri = `${config.aws.redirect_uri}/login`; 
+    const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
+
+    auth.removeUser();
+    window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
+  };
+
+  if (auth.isLoading) {
+    return <div className="login-container"><p>Cargando...</p></div>;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-    try {
-      const { token, user } = await loginService(form.email, form.password)
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
-      navigate('/')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+  if (auth.error) {
+    return <div className="login-container"><p>Error: {auth.error.message}</p></div>;
+  }
+
+  if (auth.isAuthenticated) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <h2>Ya has iniciado sesión</h2>
+          <button className="btn btn-signout" onClick={signOutRedirect}>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="login-page">
-      <div className="login-box">
-        <div className="login-header">
-          <h1 className="login-brand">JOURNEY</h1>
-          <p className="login-subtitle">Inicia sesión para continuar</p>
-        </div>
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <div className="login-field">
-            <label>Correo electrónico</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="usuario@correo.com"
-              value={form.email}
-              onChange={handleChange}
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div className="login-field">
-            <label>Contraseña</label>
-            <div className="password-wrapper">
-              <input
-                type={showPass ? 'text' : 'password'}
-                name="password"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={handleChange}
-                autoComplete="current-password"
-                required
-              />
-              <button
-                type="button"
-                className="password-toggle"
-                onClick={() => setShowPass(v => !v)}
-              >
-                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-          </div>
-
-          {error && (
-            <div className="login-error">{error}</div>
-          )}
-
-          <button className="btn-login" type="submit" disabled={loading}>
-            <LogIn size={15} />
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
+    <div className="login-container">
+      <div className="login-card">
+        <h1>Bravo Suite</h1>
+        <p>Inicia sesión para continuar</p>
+        <button className="btn btn-signin" onClick={() => auth.signinRedirect()}>
+          Iniciar sesión
+        </button>
       </div>
     </div>
-  )
+  );
 }
+
+export default Login;
