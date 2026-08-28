@@ -4,6 +4,11 @@ import config from '../../config'
 const BASE = config.api_domain.url_base
 
 export const updateUser = async (id, form) => {
-  const res = await axios.put(`${BASE}/journey/usuarios/${id}`, form)
-  return res.data
+  try {
+   const res = await axios.put(`${BASE}/users/${id}`, form)
+    return res.data
+  } catch (error) {
+    console.error(error)
+    throw new Error(error.response?.data?.body || 'Error al actualizar usuario', { cause: error })
+  }
 }
