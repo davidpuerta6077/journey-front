@@ -1,11 +1,15 @@
 import axios from 'axios'
 import config from '../../config'
+import awsAuth from '../AwsAuthService'
 
 const BASE = config.api_domain.url_base
 
 export const deleteEnrollment = async (id) => {
   try {
-    await axios.delete(`${BASE}/enrollments/${id}`)
+    const token = awsAuth.getToken()
+    await axios.delete(`${BASE}/enrollments/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
   } catch (error) {
     console.error(error)
     throw new Error(error.response?.data?.body || 'Error al eliminar matrícula', { cause: error })

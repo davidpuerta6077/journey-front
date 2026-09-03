@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
 import axios from 'axios'
 import config from '../../../config'
+import awsAuth from '../../../services/AwsAuthService'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 
 const BASE = config.api_domain.url_base
@@ -39,7 +40,10 @@ export default function SyncCursos() {
   const loadCourses = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await axios.post(`${BASE}/courses/sync/preview`)
+      const token = awsAuth.getToken()
+      const res = await axios.post(`${BASE}/courses/sync/preview`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       setCourses(res.data?.body || [])
     } catch (e) {
       console.error('Error cargando cursos:', e.message)
@@ -94,7 +98,10 @@ export default function SyncCursos() {
     if (selectedCourses.length === 0) return
     setSyncing(true)
     try {
-      await axios.post(`${BASE}/courses/sync`, { items: selectedCourses })
+      const token = awsAuth.getToken()
+      await axios.post(`${BASE}/courses/sync`, { items: selectedCourses }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const syncedIds = new Set(selectedCourses.map(c => c.id))
       setCourses(prev => prev.map(c =>
         syncedIds.has(c.id) ? { ...c, sincronizado: true } : c

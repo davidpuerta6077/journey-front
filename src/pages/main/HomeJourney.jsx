@@ -37,9 +37,9 @@ export default function HomeJourney() {
   useEffect(() => { cargarIndicadores() }, [cargarIndicadores])
 
   const acciones = [
-    { label: 'Usuarios Plataforma', icon: Users,         path: '/sync/usuarios' },
-    { label: 'Matrículas',          icon: GraduationCap, path: '/sync/matriculas' },
-    { label: 'Cursos',              icon: BookOpen,       path: '/sync/cursos' },
+    { label: 'Usuarios Plataforma', icon: Users,         path: '/modulos/usuarios' },
+    { label: 'Matrículas',          icon: GraduationCap, path: '/modulos/matriculas' },
+    { label: 'Cursos',              icon: BookOpen,       path: '/modulos/cursos' },
   ]
 
   return (

@@ -1,11 +1,15 @@
 import axios from 'axios'
 import config from '../../config'
+import awsAuth from '../AwsAuthService'
 
 const BASE = config.api_domain.url_base
 
 export const fetchEnrollmentsList = async () => {
   try {
-    const res = await axios.get(`${BASE}/enrollments/list`)
+    const token = awsAuth.getToken()
+    const res = await axios.get(`${BASE}/enrollments/list`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
     const items = res.data?.body || []
     return items.map(e => ({
       ...e,

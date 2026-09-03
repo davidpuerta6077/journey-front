@@ -6,7 +6,7 @@ const BASE = config.api_domain.url_base
 
 export const fetchApiStatus = async () => {
   try {
-    const res = await axios.get(`${BASE}/users/test`)
+    const res = await axios.get(`${BASE}/test/test_bd_conection`)
 
     return res.data.body.test_message
 

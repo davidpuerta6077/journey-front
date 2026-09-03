@@ -18,7 +18,7 @@ export const menuItems = [
       ]},
       { label: 'Módulos', icon: BookOpen, children: [
           { label: 'Usuarios', path: '/modulos/usuarios', submoduleCode: 'module_users' },
-          { label: 'Cursos y categorías', path: '/modulos/cursos', submoduleCode: 'module_courses' },
+          { label: 'Cursos', path: '/modulos/cursos', submoduleCode: 'module_courses' },
           { label: 'Matrículas', path: '/modulos/matriculas', submoduleCode: 'module_enrollments' },
       ]},
       { label: 'Carga Masiva', icon: Upload, children: [

@@ -1,11 +1,15 @@
 import axios from 'axios'
 import config from '../../config'
+import awsAuth from '../AwsAuthService'
 
 const BASE = config.api_domain.url_base
 
 export const updateEnrollment = async (id, form) => {
   try {
-    const res = await axios.put(`${BASE}/enrollments/${id}`, form)
+    const token = awsAuth.getToken()
+    const res = await axios.put(`${BASE}/enrollments/${id}`, form, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
     return res.data
   } catch (error) {
     console.error(error)
