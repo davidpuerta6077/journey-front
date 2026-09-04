@@ -37,13 +37,8 @@ const Layout = () => {
   const [sidebarMini, setSidebarMini] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-
-  const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    navigate('/login')
-  }
+  const userEmail = auth.user?.profile?.email || 'Usuario'
+  const userRole = permissions?.role
 
   return (
     <div className="app">
@@ -59,15 +54,21 @@ const Layout = () => {
         <div className="user-menu">
           <button className="user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
             <User size={16} />
-            <span>{user.name || user.email || 'Usuario'}</span>
+            <span className="user-btn-info">
+              <span className="user-btn-email">{userEmail}</span>
+              {userRole && <span className="user-btn-role">{userRole}</span>}
+            </span>
             <ChevronDown size={14} />
           </button>
           {userMenuOpen && (
             <ul className="user-dropdown">
-              <li><a href="#">Mi Perfil</a></li>
-              <li><a href="#">Ver Logs</a></li>
               <li>
-                <button className="logout-btn" onClick={signOutRedirect}>
+                <button className="user-dropdown-item" onClick={() => { setUserMenuOpen(false); navigate('/perfil') }}>
+                  Mi Perfil
+                </button>
+              </li>
+              <li>
+                <button className="logout-btn user-dropdown-item" onClick={signOutRedirect}>
                   <LogOut size={14} />
                   Cerrar sesión
                 </button>

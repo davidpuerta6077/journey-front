@@ -36,6 +36,10 @@ import AdminUsuarios from './pages/main/Admin/AdminUsuarios'
 import AdminRoles from './pages/main/Admin/AdminRoles'
 import AdminModulos from './pages/main/Admin/AdminModulos'
 import AdminPermisos from './pages/main/Admin/AdminPermisos'
+import AdminLogs from './pages/main/Admin/AdminLogs'
+
+// ─── MI PERFIL ──────────────────────────────────────────────────────────────
+import MiPerfil from './pages/main/Perfil/MiPerfil'
 
 import NoAutorizado from './pages/NoAutorizado'
 
@@ -169,6 +173,14 @@ function App() {
               <AdminPermisos />
             </PrivateRoute>
           } />
+          <Route path="admin/logs" element={
+            <PrivateRoute submoduleCode="admin_logs">
+              <AdminLogs />
+            </PrivateRoute>
+          } />
+
+          {/* ─── MI PERFIL ─── */}
+          <Route path="perfil" element={<MiPerfil />} />
         </Route>
       </Routes>
     </BrowserRouter>

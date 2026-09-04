@@ -1,10 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
-import { Users, BookOpen, Activity, RefreshCw, GraduationCap } from 'lucide-react'
+import { Users, BookOpen, RefreshCw, GraduationCap } from 'lucide-react'
 import { fetchIndicadorUsuarios } from '../../services/home/fetchIndicadorUsuarios'
 import { fetchIndicadorCursos } from '../../services/home/fetchIndicadorCursos'
 import { fetchIndicadorMatriculas } from '../../services/home/fetchIndicadorMatriculas'
-import { fetchApiStatus } from '../../services/home/fetchApiStatus'
 import '../../styles/global/Global.css'
 
 import config from "../../config"
@@ -18,13 +17,10 @@ export default function HomeJourney() {
     matriculas: 0,
   })
   const [loadingIndicadores, setLoadingIndicadores] = useState(true)
-  const [test, setTests] = useState('Verificando API')
 
   const cargarIndicadores = useCallback(async () => {
     setLoadingIndicadores(true)
     try {
-      const testRes = await fetchApiStatus()
-      setTests(testRes)
       const [usuarios, cursos, matriculas] = await Promise.all([
         fetchIndicadorUsuarios(),
         fetchIndicadorCursos(),
@@ -100,11 +96,6 @@ export default function HomeJourney() {
               {loadingIndicadores ? 'Cargando...' : indicadores.matriculas}
             </span>
             <span className="indicator-label">Matrículas</span>
-          </div>
-          <div className="indicator-card">
-            <Activity size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value indicator-status">{test}</span>
-            <span className="indicator-label">Estado API</span>
           </div>
         </div>
       </div>

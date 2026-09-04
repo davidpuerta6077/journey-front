@@ -64,5 +64,6 @@ export const menuItems = [
       { label: 'Roles',     path: '/admin/roles',     submoduleCode: 'admin_roles' },
       { label: 'Módulos',   path: '/admin/modulos',   submoduleCode: 'admin_modules' },
       { label: 'Permisos',  path: '/admin/permisos',  submoduleCode: 'admin_permissions' },
+      { label: 'Ver Logs',  path: '/admin/logs',      submoduleCode: 'admin_logs' },
   ]},
 ]
