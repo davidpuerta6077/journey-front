@@ -48,7 +48,34 @@
 .perfil-avatar-edit:hover { background: #4a70e0; }
 .perfil-avatar-edit input { display: none; }
 
-.perfil-name { font-size: 1.15rem; font-weight: 600; color: #1e293b; margin-top: 6px; }
+.perfil-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-top: 6px;
+}
+.perfil-name .btn-icon { opacity: 0.5; }
+.perfil-name:hover .btn-icon { opacity: 1; }
+
+.perfil-name-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.perfil-name-input {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 5px 8px;
+  outline: none;
+}
+.perfil-name-input:focus { border-color: #5b84ff; }
 
 .perfil-fields {
   width: 100%;

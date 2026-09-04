@@ -25,7 +25,7 @@ const Layout = () => {
   //End logout process
 
   //Permission checking
-  const { permissions } = usePermissions()
+  const { permissions, profile } = usePermissions()
 
   const allowedModuleCodes = permissions?.modules?.map(m => m.module_code) || []
   const allowedSubmoduleCodes = permissions?.modules?.flatMap(m =>
@@ -37,7 +37,8 @@ const Layout = () => {
   const [sidebarMini, setSidebarMini] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
-  const userEmail = auth.user?.profile?.email || 'Usuario'
+  const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
+  const userPhoto = profile?.photo_url
   const userRole = permissions?.role
 
   return (
@@ -53,9 +54,11 @@ const Layout = () => {
         </div>
         <div className="user-menu">
           <button className="user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-            <User size={16} />
+            {userPhoto
+              ? <img className="user-btn-avatar" src={`${config.api_domain.url_base}${userPhoto}`} alt={userName} />
+              : <User size={16} />}
             <span className="user-btn-info">
-              <span className="user-btn-email">{userEmail}</span>
+              <span className="user-btn-name">{userName}</span>
               {userRole && <span className="user-btn-role">{userRole}</span>}
             </span>
             <ChevronDown size={14} />

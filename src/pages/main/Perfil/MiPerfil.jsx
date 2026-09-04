@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { User, Camera } from 'lucide-react'
+import { User, Camera, Pencil, Check, X } from 'lucide-react'
 import { fetchMyProfile } from '../../../services/perfil/fetchMyProfile'
 import { uploadMyPhoto } from '../../../services/perfil/uploadMyPhoto'
+import { updateMyUsername } from '../../../services/perfil/updateMyUsername'
+import { usePermissions } from '../../../services/PermissionsContext'
 import config from '../../../config'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 import "../../../styles/main/Perfil/MiPerfil.css"
@@ -9,10 +11,15 @@ import "../../../styles/main/Perfil/MiPerfil.css"
 const BASE = config.api_domain.url_base
 
 export default function MiPerfil() {
+  const { refetchProfile } = usePermissions()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+
+  const [editingUsername, setEditingUsername] = useState(false)
+  const [usernameDraft, setUsernameDraft] = useState('')
+  const [savingUsername, setSavingUsername] = useState(false)
 
   const loadProfile = useCallback(async () => {
     setLoading(true)
@@ -34,11 +41,46 @@ export default function MiPerfil() {
     try {
       const updated = await uploadMyPhoto(file)
       setProfile(updated)
+      refetchProfile()
     } catch (err) {
       setError(err.message)
     }
     setUploading(false)
     e.target.value = ''
+  }
+
+  const startEditUsername = () => {
+    setUsernameDraft(profile.username)
+    setEditingUsername(true)
+    setError('')
+  }
+
+  const cancelEditUsername = () => {
+    setEditingUsername(false)
+    setError('')
+  }
+
+  const saveUsername = async () => {
+    const trimmed = usernameDraft.trim()
+    if (!trimmed) {
+      setError('El username no puede estar vacío.')
+      return
+    }
+    if (trimmed === profile.username) {
+      setEditingUsername(false)
+      return
+    }
+    setSavingUsername(true)
+    setError('')
+    try {
+      const updated = await updateMyUsername(trimmed)
+      setProfile(updated)
+      refetchProfile()
+      setEditingUsername(false)
+    } catch (err) {
+      setError(err.message)
+    }
+    setSavingUsername(false)
   }
 
   if (loading) {
@@ -74,7 +116,32 @@ export default function MiPerfil() {
             <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={uploading} />
           </label>
         </div>
-        <div className="perfil-name">{profile.username}</div>
+
+        {editingUsername ? (
+          <div className="perfil-name-edit">
+            <input
+              className="perfil-name-input"
+              value={usernameDraft}
+              onChange={e => setUsernameDraft(e.target.value)}
+              disabled={savingUsername}
+              autoFocus
+            />
+            <button className="btn-icon" onClick={saveUsername} disabled={savingUsername} title="Guardar">
+              <Check size={14} />
+            </button>
+            <button className="btn-icon" onClick={cancelEditUsername} disabled={savingUsername} title="Cancelar">
+              <X size={14} />
+            </button>
+          </div>
+        ) : (
+          <div className="perfil-name">
+            {profile.username}
+            <button className="btn-icon" onClick={startEditUsername} title="Editar username">
+              <Pencil size={13} />
+            </button>
+          </div>
+        )}
+
         {uploading && <span className="badge badge-pending">Subiendo foto...</span>}
         {error && <div className="modal-error">{error}</div>}
 
