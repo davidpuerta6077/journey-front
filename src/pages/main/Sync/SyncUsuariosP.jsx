@@ -173,7 +173,7 @@ export default function SyncUsuariosP() {
     if (filterJornada) data = data.filter(u => u.jornada === filterJornada)
     if (filterEstado === 'sincronizado')   data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
     else if (filterEstado === 'solo_bd')   data = data.filter(u => !u._synced && u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
-    else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inDB)
+    else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inMoodle && !u._synced)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
@@ -267,7 +267,7 @@ export default function SyncUsuariosP() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando usuarios...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando usuarios...</div>
       ) : (
         <>
           <div className="table-wrapper">

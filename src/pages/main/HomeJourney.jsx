@@ -1,10 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { useEffect, useState, useCallback } from 'react'
-import { Users, BookOpen, Activity, RefreshCw, GraduationCap } from 'lucide-react'
+import { Users, BookOpen, RefreshCw, GraduationCap } from 'lucide-react'
 import { fetchIndicadorUsuarios } from '../../services/home/fetchIndicadorUsuarios'
 import { fetchIndicadorCursos } from '../../services/home/fetchIndicadorCursos'
 import { fetchIndicadorMatriculas } from '../../services/home/fetchIndicadorMatriculas'
-import { fetchApiStatus } from '../../services/home/fetchApiStatus'
 import '../../styles/global/Global.css'
 
 import config from "../../config"
@@ -17,12 +16,11 @@ export default function HomeJourney() {
     cursos: 0,
     matriculas: 0,
   })
-  const [test, setTests] = useState('Verificando API')
+  const [loadingIndicadores, setLoadingIndicadores] = useState(true)
 
   const cargarIndicadores = useCallback(async () => {
+    setLoadingIndicadores(true)
     try {
-      const testRes = await fetchApiStatus()
-      setTests(testRes)
       const [usuarios, cursos, matriculas] = await Promise.all([
         fetchIndicadorUsuarios(),
         fetchIndicadorCursos(),
@@ -32,14 +30,15 @@ export default function HomeJourney() {
     } catch {
       setIndicadores(prev => ({ ...prev }))
     }
+    setLoadingIndicadores(false)
   }, [])
 
   useEffect(() => { cargarIndicadores() }, [cargarIndicadores])
 
   const acciones = [
-    { label: 'Usuarios Plataforma', icon: Users,         path: '/sync/usuarios' },
-    { label: 'Matrículas',          icon: GraduationCap, path: '/sync/matriculas' },
-    { label: 'Cursos',              icon: BookOpen,       path: '/sync/cursos' },
+    { label: 'Usuarios',            icon: Users,         path: '/modulos/usuarios' },
+    { label: 'Matrículas',          icon: GraduationCap, path: '/modulos/matriculas' },
+    { label: 'Cursos',              icon: BookOpen,       path: '/modulos/cursos' },
   ]
 
   return (
@@ -79,23 +78,24 @@ export default function HomeJourney() {
         <div className="home-indicators">
           <div className="indicator-card">
             <Users size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.usuarios}</span>
+            <span className="indicator-value indicator-status">
+              {loadingIndicadores ? 'Cargando...' : indicadores.usuarios}
+            </span>
             <span className="indicator-label">Usuarios en BD</span>
           </div>
           <div className="indicator-card">
             <BookOpen size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.cursos}</span>
+            <span className="indicator-value indicator-status">
+              {loadingIndicadores ? 'Cargando...' : indicadores.cursos}
+            </span>
             <span className="indicator-label">Cursos</span>
           </div>
           <div className="indicator-card">
             <GraduationCap size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.matriculas}</span>
+            <span className="indicator-value indicator-status">
+              {loadingIndicadores ? 'Cargando...' : indicadores.matriculas}
+            </span>
             <span className="indicator-label">Matrículas</span>
-          </div>
-          <div className="indicator-card">
-            <Activity size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value indicator-status">{test}</span>
-            <span className="indicator-label">Estado API</span>
           </div>
         </div>
       </div>

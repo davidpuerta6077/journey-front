@@ -263,7 +263,7 @@ function EnrollmentsModal({ user, onClose }) {
         </div>
         <div className="modal-form" style={{ padding: 0 }}>
           {loading ? (
-            <p style={{ padding: '1rem' }}>Cargando matrículas...</p>
+            <div className="loading-box" style={{ padding: '1rem' }}><span className="loader"></span>Cargando matrículas...</div>
           ) : enrollments.length === 0 ? (
             <p style={{ padding: '1rem' }}>Este usuario no tiene matrículas registradas.</p>
           ) : (
@@ -455,7 +455,7 @@ export default function ModulosUsuarios() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando usuarios...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando usuarios...</div>
       ) : (
         <>
           <div className="table-wrapper">

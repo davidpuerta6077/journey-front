@@ -6,7 +6,13 @@ export default function PrivateRoute({ children, submoduleCode }) {
   const auth = useAuth();
   const { permissions, loadingPermissions } = usePermissions();
 
-  if (auth.isLoading || loadingPermissions) return <p>Cargando...</p>;
+  if (auth.isLoading || loadingPermissions) {
+    return (
+      <div className="loading-box" style={{ minHeight: '100vh' }}>
+        <span className="loader"></span>
+      </div>
+    );
+  }
   if (!auth.isAuthenticated) return <Navigate to="/login" replace />;
 
   if (submoduleCode) {

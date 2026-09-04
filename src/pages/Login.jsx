@@ -15,7 +15,7 @@ function Login() {
   };
 
   if (auth.isLoading) {
-    return <div className="login-container"><p>Cargando...</p></div>;
+    return <div className="login-container"><span className="loader"></span></div>;
   }
 
   if (auth.error) {

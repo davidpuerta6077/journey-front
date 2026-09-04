@@ -11,6 +11,14 @@ const services = [
     internal: true,
   },
   {
+    name: 'Administrador',
+    description: 'Gestión de usuarios, roles, módulos y permisos de Bravo Suite',
+    icon: '🛡️',
+    color: '#0ea5e9',
+    path: '/admin/usuarios',
+    internal: true,
+  },
+  {
     name: 'Centro de Soporte',
     description: 'Gestión de tickets y soporte técnico institucional',
     icon: '🎧',

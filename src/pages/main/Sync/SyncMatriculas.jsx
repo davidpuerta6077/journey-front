@@ -175,7 +175,7 @@ export default function SyncMatriculas() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando matrículas...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando matrículas...</div>
       ) : (
         <>
           <div className="table-wrapper">
