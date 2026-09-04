@@ -1,7 +1,7 @@
-import { 
-  Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut, 
+import {
+  Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut,
   ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings,
-  Search
+  Search, UserCog
 } from 'lucide-react'
 
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
@@ -12,7 +12,7 @@ export const menuItems = [
   { label: 'Journey Sync', icon: RefreshCw, journeyApp: true, moduleCode: 'journey_sync', children: [
       { label: 'Home', icon: Home, path: '/HomeJourney', submoduleCode: 'journey_home' },
       { label: 'Sincronización', icon: RefreshCw, children: [
-          { label: 'Usuarios Plataforma', path: '/sync/usuarios', submoduleCode: 'sync_users' },
+          { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },
           { label: 'Matrículas', path: '/sync/matriculas', submoduleCode: 'sync_enrollments' },
           { label: 'Cursos', path: '/sync/cursos', submoduleCode: 'sync_courses' },
       ]},
@@ -56,4 +56,13 @@ export const menuItems = [
   { label: 'Informes (Onix-IA)', icon: FileText, moduleCode: 'onix_reports', comingSoon: true },
   { label: 'Moodle Builder', icon: ExternalLink, moduleCode: 'moodle_builder', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
   { label: 'Encuestas', icon: ExternalLink, moduleCode: 'surveys', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
+
+  { type: 'divider' },
+
+  { label: 'Administrador', icon: UserCog, moduleCode: 'admin', children: [
+      { label: 'Usuarios',  path: '/admin/usuarios',  submoduleCode: 'admin_users' },
+      { label: 'Roles',     path: '/admin/roles',     submoduleCode: 'admin_roles' },
+      { label: 'Módulos',   path: '/admin/modulos',   submoduleCode: 'admin_modules' },
+      { label: 'Permisos',  path: '/admin/permisos',  submoduleCode: 'admin_permissions' },
+  ]},
 ]

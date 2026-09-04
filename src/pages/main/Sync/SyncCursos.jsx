@@ -152,7 +152,7 @@ export default function SyncCursos() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando cursos...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando cursos...</div>
       ) : (
         <>
           <div className="table-wrapper">

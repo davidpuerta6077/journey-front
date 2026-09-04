@@ -267,7 +267,7 @@ export default function SyncUsuariosP() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando usuarios...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando usuarios...</div>
       ) : (
         <>
           <div className="table-wrapper">

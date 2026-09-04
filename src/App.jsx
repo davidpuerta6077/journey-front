@@ -31,6 +31,12 @@ import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Busqueda from './pages/main/Busqueda/Busqueda'
 import Configuracion from './pages/main/Configuracion/Configuracion'
 
+// ─── ADMINISTRADOR (BRAVO SUITE) ───────────────────────────────────────────────
+import AdminUsuarios from './pages/main/Admin/AdminUsuarios'
+import AdminRoles from './pages/main/Admin/AdminRoles'
+import AdminModulos from './pages/main/Admin/AdminModulos'
+import AdminPermisos from './pages/main/Admin/AdminPermisos'
+
 import NoAutorizado from './pages/NoAutorizado'
 
 function App() {
@@ -139,6 +145,28 @@ function App() {
           <Route path="configuracion" element={
             <PrivateRoute submoduleCode="settings">
               <Configuracion />
+            </PrivateRoute>
+          } />
+
+          {/* ─── ADMINISTRADOR (BRAVO SUITE) ─── */}
+          <Route path="admin/usuarios" element={
+            <PrivateRoute submoduleCode="admin_users">
+              <AdminUsuarios />
+            </PrivateRoute>
+          } />
+          <Route path="admin/roles" element={
+            <PrivateRoute submoduleCode="admin_roles">
+              <AdminRoles />
+            </PrivateRoute>
+          } />
+          <Route path="admin/modulos" element={
+            <PrivateRoute submoduleCode="admin_modules">
+              <AdminModulos />
+            </PrivateRoute>
+          } />
+          <Route path="admin/permisos" element={
+            <PrivateRoute submoduleCode="admin_permissions">
+              <AdminPermisos />
             </PrivateRoute>
           } />
         </Route>

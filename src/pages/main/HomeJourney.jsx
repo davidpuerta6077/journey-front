@@ -17,9 +17,11 @@ export default function HomeJourney() {
     cursos: 0,
     matriculas: 0,
   })
+  const [loadingIndicadores, setLoadingIndicadores] = useState(true)
   const [test, setTests] = useState('Verificando API')
 
   const cargarIndicadores = useCallback(async () => {
+    setLoadingIndicadores(true)
     try {
       const testRes = await fetchApiStatus()
       setTests(testRes)
@@ -32,12 +34,13 @@ export default function HomeJourney() {
     } catch {
       setIndicadores(prev => ({ ...prev }))
     }
+    setLoadingIndicadores(false)
   }, [])
 
   useEffect(() => { cargarIndicadores() }, [cargarIndicadores])
 
   const acciones = [
-    { label: 'Usuarios Plataforma', icon: Users,         path: '/modulos/usuarios' },
+    { label: 'Usuarios',            icon: Users,         path: '/modulos/usuarios' },
     { label: 'Matrículas',          icon: GraduationCap, path: '/modulos/matriculas' },
     { label: 'Cursos',              icon: BookOpen,       path: '/modulos/cursos' },
   ]
@@ -79,17 +82,23 @@ export default function HomeJourney() {
         <div className="home-indicators">
           <div className="indicator-card">
             <Users size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.usuarios}</span>
+            <span className="indicator-value indicator-status">
+              {loadingIndicadores ? 'Cargando...' : indicadores.usuarios}
+            </span>
             <span className="indicator-label">Usuarios en BD</span>
           </div>
           <div className="indicator-card">
             <BookOpen size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.cursos}</span>
+            <span className="indicator-value indicator-status">
+              {loadingIndicadores ? 'Cargando...' : indicadores.cursos}
+            </span>
             <span className="indicator-label">Cursos</span>
           </div>
           <div className="indicator-card">
             <GraduationCap size={24} strokeWidth={1.5} className="indicator-icon" />
-            <span className="indicator-value">{indicadores.matriculas}</span>
+            <span className="indicator-value indicator-status">
+              {loadingIndicadores ? 'Cargando...' : indicadores.matriculas}
+            </span>
             <span className="indicator-label">Matrículas</span>
           </div>
           <div className="indicator-card">
