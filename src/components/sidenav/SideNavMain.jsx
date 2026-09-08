@@ -28,11 +28,13 @@ const Layout = () => {
   const { permissions, profile } = usePermissions()
 
   const allowedModuleCodes = permissions?.modules?.map(m => m.module_code) || []
-  const allowedSubmoduleCodes = permissions?.modules?.flatMap(m =>
-    m.submodules.map(s => s.submodule_code)
-  ) || []
+  const allowedPairs = new Set(
+    (permissions?.modules || []).flatMap(m =>
+      m.submodules.map(s => `${m.module_code}::${s.submodule_code}`)
+    )
+  )
 
-  const filteredMenu = filterMenuByPermissions(menuItems, allowedModuleCodes, allowedSubmoduleCodes)
+  const filteredMenu = filterMenuByPermissions(menuItems, allowedModuleCodes, allowedPairs)
 
   const [sidebarMini, setSidebarMini] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
