@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { usePermissions } from '../services/PermissionsContext'
 import '../styles/global/Global.css'
 
 const services = [
@@ -9,6 +10,7 @@ const services = [
     color: '#3b82f6',
     path: '/HomeJourney',
     internal: true,
+    moduleCode: 'journey_sync',
   },
   {
     name: 'Administrador',
@@ -17,6 +19,7 @@ const services = [
     color: '#0ea5e9',
     path: '/admin/usuarios',
     internal: true,
+    moduleCode: 'admin',
   },
   {
     name: 'Centro de Soporte',
@@ -24,6 +27,8 @@ const services = [
     icon: '🎧',
     color: '#8b5cf6',
     href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php',
+    moduleCode: 'support_center',
+    submoduleCode: 'access',
   },
   {
     name: 'Hub',
@@ -31,6 +36,8 @@ const services = [
     icon: '🌐',
     color: '#06b6d4',
     href: 'https://hub.pascualbravovirtual.edu.co/login',
+    moduleCode: 'hub',
+    submoduleCode: 'access',
   },
   {
     name: 'SIDEM',
@@ -38,6 +45,8 @@ const services = [
     icon: '📊',
     color: '#10b981',
     href: 'https://seguimiento.pascualbravovirtual.edu.co/',
+    moduleCode: 'sidem',
+    submoduleCode: 'access',
   },
   {
     name: 'Matomo',
@@ -45,6 +54,8 @@ const services = [
     icon: '📈',
     color: '#f59e0b',
     comingSoon: true,
+    moduleCode: 'monitoring',
+    submoduleCode: 'access',
   },
   {
     name: 'Zabbix',
@@ -52,6 +63,8 @@ const services = [
     icon: '🖥️',
     color: '#ef4444',
     comingSoon: true,
+    moduleCode: 'monitoring',
+    submoduleCode: 'access',
   },
   {
     name: 'Bebras',
@@ -59,6 +72,8 @@ const services = [
     icon: '🦫',
     color: '#84cc16',
     href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/',
+    moduleCode: 'bebras',
+    submoduleCode: 'access',
   },
   {
     name: 'Moodle Builder',
@@ -66,6 +81,8 @@ const services = [
     icon: '🏗️',
     color: '#f97316',
     href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html',
+    moduleCode: 'moodle_builder',
+    submoduleCode: 'access',
   },
   {
     name: 'Encuestas',
@@ -73,6 +90,8 @@ const services = [
     icon: '📋',
     color: '#ec4899',
     href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login',
+    moduleCode: 'surveys',
+    submoduleCode: 'access',
   },
   {
     name: 'Informes (Onix-IA)',
@@ -80,6 +99,8 @@ const services = [
     icon: '🤖',
     color: '#6366f1',
     comingSoon: true,
+    moduleCode: 'onix_reports',
+    submoduleCode: 'access',
   },
   {
     name: 'Rags',
@@ -87,6 +108,17 @@ const services = [
     icon: '📚',
     color: '#14b8a6',
     comingSoon: true,
+    moduleCode: 'rags',
+    submoduleCode: 'access',
+  },
+  {
+    name: 'Laboratorios Virtuales',
+    description: 'Registro y consulta de calificaciones de laboratorios virtuales',
+    icon: '🧪',
+    color: '#22c55e',
+    comingSoon: true,
+    moduleCode: 'virtual_labs',
+    submoduleCode: 'virtual_labs_grades',
   },
   {
     name: 'PM2',
@@ -94,11 +126,24 @@ const services = [
     icon: '🗺️',
     color: '#a855f7',
     comingSoon: true,
+    moduleCode: 'monitoring',
+    submoduleCode: 'access',
   },
 ]
 
 export default function Home() {
   const navigate = useNavigate()
+  const { permissions } = usePermissions()
+
+  const hasAccess = (service) => {
+    if (!service.moduleCode) return true
+    const mod = permissions?.modules?.find(m => m.module_code === service.moduleCode)
+    if (!mod) return false
+    if (service.submoduleCode) return mod.submodules.some(s => s.submodule_code === service.submoduleCode)
+    return mod.submodules.length > 0
+  }
+
+  const visibleServices = services.filter(hasAccess)
 
   const handleClick = (service) => {
     if (service.comingSoon) return
@@ -114,7 +159,7 @@ export default function Home() {
       </div>
 
       <div className="bravosuite-grid">
-        {services.map((service, i) => (
+        {visibleServices.map((service, i) => (
           <div
             key={i}
             className={`bravosuite-card ${service.comingSoon ? 'bravosuite-card-soon' : ''}`}

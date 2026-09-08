@@ -42,20 +42,21 @@ export const menuItems = [
 
   { type: 'divider' },
 
-  { label: 'Centro de soporte', icon: ExternalLink, moduleCode: 'support_center', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
-  { label: 'Hub', icon: ExternalLink, moduleCode: 'hub', href: 'https://hub.pascualbravovirtual.edu.co/login' },
-  { label: 'SIDEM', icon: ExternalLink, moduleCode: 'sidem', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
-  { label: 'Monitoreo', icon: Activity, moduleCode: 'monitoring', children: [
+  { label: 'Centro de soporte', icon: ExternalLink, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
+  { label: 'Hub', icon: ExternalLink, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
+  { label: 'SIDEM', icon: ExternalLink, moduleCode: 'sidem', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
+  { label: 'Monitoreo', icon: Activity, moduleCode: 'monitoring', submoduleCode: 'access', children: [
       { label: 'Matomo', comingSoon: true },
       { label: 'Zabbix', comingSoon: true },
       { label: 'PMZ', comingSoon: true },
       { label: 'Bases de Datos', comingSoon: true },
   ]},
-  { label: 'Bebras', icon: ExternalLink, moduleCode: 'bebras', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
-  { label: 'Rags', icon: LayoutGrid, moduleCode: 'rags', comingSoon: true },
-  { label: 'Informes (Onix-IA)', icon: FileText, moduleCode: 'onix_reports', comingSoon: true },
-  { label: 'Moodle Builder', icon: ExternalLink, moduleCode: 'moodle_builder', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
-  { label: 'Encuestas', icon: ExternalLink, moduleCode: 'surveys', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
+  { label: 'Bebras', icon: ExternalLink, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
+  { label: 'Rags', icon: LayoutGrid, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
+  { label: 'Informes (Onix-IA)', icon: FileText, moduleCode: 'onix_reports', submoduleCode: 'access', comingSoon: true },
+  { label: 'Moodle Builder', icon: ExternalLink, moduleCode: 'moodle_builder', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
+  { label: 'Encuestas', icon: ExternalLink, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
+  { label: 'Laboratorios Virtuales', icon: LayoutGrid, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
 
   { type: 'divider' },
 
