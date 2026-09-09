@@ -26,6 +26,7 @@ export default function SyncCursos() {
   const [courses, setCourses]         = useState([])
   const [loading, setLoading]         = useState(true)
   const [syncing, setSyncing]         = useState(false)
+  const [applyingRule, setApplyingRule] = useState(false)
   const [search, setSearch]           = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterDepto, setFilterDepto] = useState('')
@@ -113,16 +114,48 @@ export default function SyncCursos() {
     setSyncing(false)
   }
 
+  const handleApplyRule = async () => {
+    if (selectedCourses.length === 0) return
+    setApplyingRule(true)
+    try {
+      const token = awsAuth.getToken()
+      const res = await axios.post(`${BASE}/courses/apply_rule`, { items: selectedCourses }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const results = res.data?.body?.results || []
+      const byId = new Map(results.map(r => [r.id, r]))
+      setCourses(prev => prev.map(c => {
+        const r = byId.get(c.id)
+        if (!r) return c
+        return r.status === 'success' ? { ...c, categoryid: r.categoryid, _ruleApplied: true } : c
+      }))
+      const failed = results.filter(r => r.status === 'error')
+      if (failed.length > 0) {
+        alert(`${failed.length} curso(s) no se les pudo aplicar la regla:\n` +
+          failed.map(f => `- ID ${f.id}: ${f.error}`).join('\n'))
+      }
+    } catch (e) {
+      console.error('Error aplicando regla:', e.message)
+      alert('Error al aplicar la regla: ' + e.message)
+    }
+    setApplyingRule(false)
+  }
+
   const allPageSelected = paginated.length > 0 && paginated.every(c => selected[c.id])
 
   return (
     <div className="sync-page">
       <div className="sync-page-header">
         <h2>Cursos Plataforma</h2>
-        <button className="btn-primary" onClick={handleSync} disabled={selectedCourses.length === 0 || syncing}>
-          <RefreshCw size={15} />
-          {syncing ? 'Sincronizando...' : `Sincronizar (${selectedCourses.length})`}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-secondary" onClick={handleApplyRule} disabled={selectedCourses.length === 0 || applyingRule}>
+            {applyingRule ? 'Aplicando regla...' : `Aplicar Regla (${selectedCourses.length})`}
+          </button>
+          <button className="btn-primary" onClick={handleSync} disabled={selectedCourses.length === 0 || syncing}>
+            <RefreshCw size={15} />
+            {syncing ? 'Sincronizando...' : `Sincronizar (${selectedCourses.length})`}
+          </button>
+        </div>
       </div>
 
       <div className="filters-bar">
@@ -215,6 +248,10 @@ export default function SyncCursos() {
                               <div className="expand-item">
                                 <span className="expand-label">Moodle ID</span>
                                 <span className="expand-value">{course.moodle_id || '-'}</span>
+                              </div>
+                              <div className="expand-item">
+                                <span className="expand-label">Categoría (regla aplicada)</span>
+                                <span className="expand-value">{course.categoryid || 'Sin aplicar todavía'}</span>
                               </div>
                             </div>
                           </div>
