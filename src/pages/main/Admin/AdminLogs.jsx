@@ -1,16 +1,274 @@
-import { ScrollText } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { Filter } from 'lucide-react'
+import { fetchLogs } from '../../../services/admin/fetchLogs'
+import { menuItems } from '../../../components/sidenav/SideNavItems'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
+// El menú lateral es la fuente de verdad de la jerarquía: cada submódulo
+// (submoduleCode, lo mismo que se guarda en logs.entity_type) cuelga de una
+// categoría principal (aplicación) y, opcionalmente, de un módulo intermedio.
+// Se recorre menuItems una sola vez para armar { submoduleCode -> {aplicacion, modulo} }.
+function buildSubmoduleIndex() {
+  const index = {}
+  for (const top of menuItems) {
+    if (top.type === 'divider' || !top.label) continue
+    if (top.submoduleCode) index[top.submoduleCode] = { aplicacion: top.label, modulo: top.label }
+    for (const mid of top.children || []) {
+      if (mid.submoduleCode) index[mid.submoduleCode] = { aplicacion: top.label, modulo: mid.label }
+      for (const leaf of mid.children || []) {
+        if (leaf.submoduleCode) index[leaf.submoduleCode] = { aplicacion: top.label, modulo: mid.label }
+      }
+    }
+  }
+  return index
+}
+
+// Categoría principal por defecto: todo lo que no se pueda clasificar pertenece
+// a la app base del sistema.
+const APP_POR_DEFECTO = 'Journey Sync'
+
+// Derivar del prefijo de ruta que queda en la descripción
+// (ej. "POST /courses/sync" -> Journey Sync / Cursos).
+const ROUTE_APP = {
+  users:        { aplicacion: 'Journey Sync', modulo: 'Usuarios' },
+  courses:      { aplicacion: 'Journey Sync', modulo: 'Cursos' },
+  enrollments:  { aplicacion: 'Journey Sync', modulo: 'Matrículas' },
+  grades:       { aplicacion: 'Journey Sync', modulo: 'Calificaciones' },
+  sicau:        { aplicacion: 'Journey Sync', modulo: 'SICAU' },
+  auth:         { aplicacion: 'Journey Sync', modulo: 'Sesión / Perfil' },
+  admin:        { aplicacion: 'Administrador', modulo: 'Administrador' },
+  virtual_labs: { aplicacion: 'Laboratorios Virtuales', modulo: 'Laboratorios Virtuales' },
+}
+
+// Nombres legacy de entity_type / type que ya existían en la tabla.
+const LEGACY = {
+  course: 'Cursos', user: 'Usuarios', enrollment: 'Matrículas',
+}
+
+function resolveByRoute(description) {
+  const seg = String(description || '').match(/\/([a-z_]+)/i)
+  return seg ? ROUTE_APP[seg[1].toLowerCase()] : null
+}
+
+function resolveByType(type) {
+  const t = String(type || '').toLowerCase()
+  if (t.startsWith('sync_error') || t.startsWith('sync')) return { aplicacion: 'Journey Sync', modulo: 'Sincronización' }
+  if (t.includes('matr')) return { aplicacion: 'Journey Sync', modulo: 'Matrículas' }
+  return null
+}
+
+function resolveLog(log, submoduleIndex) {
+  const byMenu = submoduleIndex[log.entity_type]
+  const byRoute = resolveByRoute(log.description)
+  const byType = resolveByType(log.type)
+  return {
+    aplicacion: byMenu?.aplicacion || log.aplicacion || byRoute?.aplicacion || byType?.aplicacion || APP_POR_DEFECTO,
+    modulo: byMenu?.modulo || log.modulo || byRoute?.modulo || byType?.modulo || LEGACY[log.entity_type] || log.entity_type || '—',
+  }
+}
+
+// Columnas de la vista. `key` es el campo del row ya formateado para mostrar,
+// y también la clave de su filtro por columna.
+const COLUMNS = [
+  { key: 'username',    label: 'Usuario' },
+  { key: 'aplicacion',  label: 'Aplicación' },
+  { key: 'modulo',      label: 'Módulo' },
+  { key: 'description', label: 'Descripción' },
+  { key: 'fecha',       label: 'Fecha-hora' },
+]
+
+// Filtro de columna estilo Excel: lista los valores presentes en esa columna
+// con checkboxes. `selected === null` = todos visibles; si no, solo los del Set.
+function ColumnFilter({ label, values, selected, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+  const [q, setQ] = useState('')
+  const ref = useRef(null)
+  const btnRef = useRef(null)
+
+  const openMenu = () => {
+    const rect = btnRef.current.getBoundingClientRect()
+    setPos({ top: rect.bottom + 4, left: Math.max(8, Math.min(rect.left, window.innerWidth - 262)) })
+    setOpen(true)
+  }
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const onScroll = (e) => { if (!ref.current || !ref.current.contains(e.target)) setOpen(false) }
+    const onResize = () => setOpen(false)
+    document.addEventListener('mousedown', onDoc)
+    window.addEventListener('scroll', onScroll, true)
+    window.addEventListener('resize', onResize)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      window.removeEventListener('scroll', onScroll, true)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [open])
+
+  const active = selected !== null && selected.size !== values.length
+  const shown = values.filter(v => v.toLowerCase().includes(q.toLowerCase()))
+  const isChecked = (v) => selected === null || selected.has(v)
+  const allShownChecked = shown.length > 0 && shown.every(isChecked)
+
+  const emit = (set) => onChange(set.size === values.length ? null : set)
+  const toggle = (v) => {
+    const base = selected === null ? new Set(values) : new Set(selected)
+    base.has(v) ? base.delete(v) : base.add(v)
+    emit(base)
+  }
+  const toggleAllShown = () => {
+    const base = selected === null ? new Set(values) : new Set(selected)
+    allShownChecked ? shown.forEach(v => base.delete(v)) : shown.forEach(v => base.add(v))
+    emit(base)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span>{label}</span>
+      <button
+        ref={btnRef}
+        type="button"
+        title="Filtrar columna"
+        onClick={() => (open ? setOpen(false) : openMenu())}
+        style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, lineHeight: 0, color: active ? '#5b84ff' : '#94a3b8' }}
+      >
+        <Filter size={13} fill={active ? '#5b84ff' : 'none'} />
+      </button>
+      {open && (
+        <div style={{
+          position: 'fixed', top: pos.top, left: pos.left, zIndex: 1000,
+          background: '#fff', border: '1px solid #d5dbe6', borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(0,0,0,.12)', width: 250, padding: 8,
+          fontWeight: 400, color: '#1e293b', textTransform: 'none',
+        }}>
+          <input
+            className="filter-input"
+            style={{ width: '100%', height: 30, fontSize: 12, marginBottom: 6 }}
+            placeholder="Buscar valor..."
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            autoFocus
+          />
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12, padding: '4px 2px', borderBottom: '1px solid #eef1f6', marginBottom: 4 }}>
+            <input type="checkbox" checked={allShownChecked} onChange={toggleAllShown} />
+            (Seleccionar todo)
+          </label>
+          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+            {shown.length === 0 && <div style={{ fontSize: 12, color: '#94a3b8', padding: 4 }}>Sin coincidencias</div>}
+            {shown.map(v => (
+              <label key={v} style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12, padding: '3px 2px' }}>
+                <input type="checkbox" checked={isChecked(v)} onChange={() => toggle(v)} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v || '—'}</span>
+              </label>
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+            <button type="button" className="btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => { onChange(null); setQ('') }}>Limpiar</button>
+            <button type="button" className="btn-primary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setOpen(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminLogs() {
+  const [logs, setLogs]       = useState([])
+  const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState({})   // { colKey: Set<string> }
+
+  const submoduleIndex = useMemo(() => buildSubmoduleIndex(), [])
+
+  // Cada row queda con los mismos campos que se pintan (y sobre los que se filtra):
+  // Prioridad de aplicación/módulo: menú lateral → JOIN de la API → ruta → tipo.
+  const rows = useMemo(() => logs.map(l => {
+    const r = resolveLog(l, submoduleIndex)
+    return {
+      id: l.id,
+      username: l.username || '-',
+      aplicacion: r.aplicacion,
+      modulo: r.modulo,
+      description: l.description || '-',
+      fecha: l.date ? new Date(l.date).toLocaleString() : '-',
+    }
+  }), [logs, submoduleIndex])
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      setLogs(await fetchLogs())
+    } catch (e) {
+      console.error('Error cargando logs:', e.message)
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { loadData() }, [loadData])
+
+  // Valores distintos por columna (para el menú de filtro tipo Excel).
+  const colValues = useMemo(() => {
+    const m = {}
+    for (const c of COLUMNS) {
+      m[c.key] = [...new Set(rows.map(row => String(row[c.key])))].sort((a, b) => a.localeCompare(b, 'es'))
+    }
+    return m
+  }, [rows])
+
+  // Una fila pasa si su valor está entre los seleccionados de cada columna filtrada.
+  const filtered = useMemo(() => rows.filter(row =>
+    COLUMNS.every(c => {
+      const sel = filters[c.key]
+      return !sel || sel.has(String(row[c.key]))
+    })
+  ), [rows, filters])
+
+  const setColFilter = (key, set) => setFilters(f => ({ ...f, [key]: set || undefined }))
+  const anyFilter = Object.values(filters).some(Boolean)
+
   return (
     <div className="sync-page">
       <div className="sync-page-header">
         <h2>Administrador — Logs</h2>
       </div>
-      <div className="loading-box" style={{ color: '#94a3b8' }}>
-        <ScrollText size={32} strokeWidth={1.5} />
-        <span>Próximamente — todavía no hay registros de auditoría configurados.</span>
+
+      <div className="filters-bar">
+        {anyFilter && (
+          <button className="btn-secondary" onClick={() => setFilters({})}>Limpiar filtros</button>
+        )}
+        <span className="results-count">{filtered.length} de {rows.length} registro{rows.length !== 1 ? 's' : ''}</span>
       </div>
+
+      {loading ? (
+        <div className="loading-box"><span className="loader"></span>Cargando logs...</div>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                {COLUMNS.map(c => (
+                  <th key={c.key}>
+                    <ColumnFilter
+                      label={c.label}
+                      values={colValues[c.key] || []}
+                      selected={filters[c.key] ?? null}
+                      onChange={(set) => setColFilter(c.key, set)}
+                    />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(row => (
+                <tr key={row.id}>
+                  {COLUMNS.map(c => <td key={c.key}>{row[c.key]}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
