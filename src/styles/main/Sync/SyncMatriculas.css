@@ -116,6 +116,8 @@
 .badge-synced { background: #dcfce7; color: #15803d; }
 .badge-success { background: #dcfce7; color: #15803d; }
 .badge-pending { background: #f1f5f9; color: #475569; }
+.badge-syncing { background: #dbeafe; color: #1d4ed8; }
+.badge-novedad { background: #fef9c3; color: #854d0e; }
 .badge-error { background: #fee2e2; color: #b91c1c; }
 .badge-no-user { background: #ffedd5; color: #c2410c; }
 
