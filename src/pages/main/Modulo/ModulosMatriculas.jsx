@@ -25,7 +25,10 @@ const EMPTY_FORM = {
   estado: 'Matriculado', courseid: '', codigo_journey: ''
 }
 
-function StatusBadge({ row }) {
+function StatusBadge({ row, syncResult }) {
+  if (syncResult?.status === 'error') return <span className="badge badge-error">Error</span>
+  if (syncResult?.status === 'usuario_no_existe') return <span className="badge badge-no-user">Usuario no existe en Moodle</span>
+  if (syncResult?.status === 'pendiente') return <span className="badge badge-pending">Pendiente</span>
   if (row.estado === 'Suspendido') return <span className="badge badge-suspended">Suspendido</span>
   return row.sincronizado
     ? <span className="badge badge-synced">Sincronizado</span>
@@ -283,6 +286,7 @@ export default function ModulosMatriculas() {
   const [search, setSearch]           = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterPrograma, setFilterPrograma] = useState('')
+  const [filterRol, setFilterRol]     = useState('')
   const [filterEstado, setFilterEstado]     = useState('')
   const [sortKey, setSortKey]         = useState('nombre_estudiante')
   const [sortDir, setSortDir]         = useState('asc')
@@ -291,6 +295,8 @@ export default function ModulosMatriculas() {
   const [page, setPage]               = useState(1)
   const [showCreate, setShowCreate]   = useState(false)
   const [editEnrollment, setEditEnrollment] = useState(null)
+  const [syncResults, setSyncResults] = useState({}) // { [enrollmentId]: { status, message } }
+  const [retryingId, setRetryingId]   = useState(null)
   const PER_PAGE = 15
 
   const loadEnrollments = useCallback(async () => {
@@ -315,20 +321,25 @@ export default function ModulosMatriculas() {
     }
     if (filterPeriodo)  data = data.filter(e => e.periodo === filterPeriodo)
     if (filterPrograma) data = data.filter(e => e.programa === filterPrograma)
-    if (filterEstado === 'sincronizado') data = data.filter(e => e.sincronizado)
-    else if (filterEstado === 'solo_bd') data = data.filter(e => !e.sincronizado)
+    if (filterRol)      data = data.filter(e => e.role === filterRol)
+    if (filterEstado === 'sincronizado')      data = data.filter(e => e.sincronizado && !syncResults[e.id])
+    else if (filterEstado === 'solo_bd')      data = data.filter(e => !e.sincronizado && !syncResults[e.id])
+    else if (filterEstado === 'pendiente')    data = data.filter(e => syncResults[e.id]?.status === 'pendiente')
+    else if (filterEstado === 'usuario_no_existe') data = data.filter(e => syncResults[e.id]?.status === 'usuario_no_existe')
+    else if (filterEstado === 'error')        data = data.filter(e => syncResults[e.id]?.status === 'error')
     data.sort((a, b) => {
       const av = String(a[sortKey] || '')
       const bv = String(b[sortKey] || '')
       return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
     })
     return data
-  }, [enrollments, search, filterPeriodo, filterPrograma, filterEstado, sortKey, sortDir])
+  }, [enrollments, search, filterPeriodo, filterPrograma, filterRol, filterEstado, syncResults, sortKey, sortDir])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
   const periodos   = [...new Set(enrollments.map(e => e.periodo).filter(Boolean))]
   const programas  = [...new Set(enrollments.map(e => e.programa).filter(Boolean))]
+  const roles      = [...new Set(enrollments.map(e => e.role).filter(Boolean))]
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -347,6 +358,17 @@ export default function ModulosMatriculas() {
 
   const selectedEnrollments = enrollments.filter(e => selected[e.id])
 
+  const applySyncResults = (results) => {
+    setSyncResults(prev => {
+      const next = { ...prev }
+      results.forEach(r => {
+        if (r.status === 'success') delete next[r.id]
+        else next[r.id] = { status: r.status, message: r.message || r.error }
+      })
+      return next
+    })
+  }
+
   const handleSync = async () => {
     if (selectedEnrollments.length === 0) return
     setSyncing(true)
@@ -354,6 +376,7 @@ export default function ModulosMatriculas() {
       const res = await syncEnrollments(selectedEnrollments)
       const results = res?.body?.results || []
       const failed = results.filter(r => r.status === 'error')
+      applySyncResults(results)
       await loadEnrollments()
       setSelected({})
       if (failed.length > 0) {
@@ -365,6 +388,22 @@ export default function ModulosMatriculas() {
       alert('Error al sincronizar matrículas: ' + e.message)
     }
     setSyncing(false)
+  }
+
+  const handleRetry = async (enrollment) => {
+    setRetryingId(enrollment.id)
+    try {
+      const res = await syncEnrollments([enrollment])
+      const results = res?.body?.results || []
+      applySyncResults(results)
+      await loadEnrollments()
+      const failed = results.find(r => r.status === 'error')
+      if (failed) alert(`No se pudo sincronizar: ${failed.error}`)
+    } catch (e) {
+      console.error('Error reintentando:', e.message)
+      alert('Error al reintentar: ' + e.message)
+    }
+    setRetryingId(null)
   }
 
   const handleDelete = async (enrollment) => {
@@ -412,10 +451,17 @@ export default function ModulosMatriculas() {
           <option value="">Todos los programas</option>
           {programas.map(p => <option key={p} value={p}>{p}</option>)}
         </select>
+        <select className="filter-select" value={filterRol} onChange={e => { setFilterRol(e.target.value); setPage(1) }}>
+          <option value="">Todos los roles</option>
+          {roles.map(r => <option key={r} value={r}>{ROLE_OPTIONS.find(o => o.value === r)?.label || r}</option>)}
+        </select>
         <select className="filter-select" value={filterEstado} onChange={e => { setFilterEstado(e.target.value); setPage(1) }}>
           <option value="">Todos los estados</option>
           <option value="sincronizado">Sincronizado</option>
           <option value="solo_bd">Solo en BD</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="usuario_no_existe">Usuario no existe en Moodle</option>
+          <option value="error">Error</option>
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
@@ -466,9 +512,19 @@ export default function ModulosMatriculas() {
                       <td>{enrollment.programa || '-'}</td>
                       <td>{enrollment.periodo || '-'} / Grupo {enrollment.grupo || '-'}</td>
                       <td>{enrollment.created_at ? String(enrollment.created_at).split('T')[0] : '-'}</td>
-                      <td><StatusBadge row={enrollment} /></td>
+                      <td><StatusBadge row={enrollment} syncResult={syncResults[enrollment.id]} /></td>
                       <td>
                         <div className="action-btns">
+                          {['pendiente', 'usuario_no_existe', 'error'].includes(syncResults[enrollment.id]?.status) && (
+                            <button
+                              className="btn-icon"
+                              onClick={() => handleRetry(enrollment)}
+                              disabled={retryingId === enrollment.id}
+                              title={syncResults[enrollment.id]?.message || 'Reintentar sincronización'}
+                            >
+                              <RefreshCw size={14} />
+                            </button>
+                          )}
                           <button className="btn-icon" onClick={() => toggleExpand(enrollment.id)} title="Desplegar opciones">
                             {expandedRows[enrollment.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
