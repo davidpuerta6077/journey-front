@@ -31,12 +31,6 @@ export const menuItems = [
           { label: 'Reglas activas', path: '/reglas/activas', submoduleCode: 'rules_active' },
           { label: 'Plantillas', path: '/reglas/plantillas', submoduleCode: 'rules_templates' },
       ]},
-      { label: 'Integración', icon: Globe, children: [
-          { label: 'Estado de APIs', path: '/integracion/apis', submoduleCode: 'integration_apis' },
-      ]},
-      { label: 'Reportes', icon: FileText, path: '/reportes', submoduleCode: 'reports' },
-      { label: 'Estadísticas', icon: BarChart2, path: '/estadisticas', submoduleCode: 'statistics' },
-      { label: 'Configuración', icon: Settings, path: '/configuracion', submoduleCode: 'settings' },
       { label: 'busqueda', icon: Search, path: '/busqueda', submoduleCode: 'search' },
   ]},
 
@@ -61,10 +55,16 @@ export const menuItems = [
   { type: 'divider' },
 
   { label: 'Administrador', icon: UserCog, moduleCode: 'admin', children: [
-      { label: 'Usuarios',  path: '/admin/usuarios',  submoduleCode: 'admin_users' },
-      { label: 'Roles',     path: '/admin/roles',     submoduleCode: 'admin_roles' },
-      { label: 'Módulos',   path: '/admin/modulos',   submoduleCode: 'admin_modules' },
-      { label: 'Permisos',  path: '/admin/permisos',  submoduleCode: 'admin_permissions' },
-      { label: 'Ver Logs',  path: '/admin/logs',      submoduleCode: 'admin_logs' },
+      { label: 'Usuarios',      path: '/admin/usuarios',      submoduleCode: 'admin_users' },
+      { label: 'Roles',         path: '/admin/roles',         submoduleCode: 'admin_roles' },
+      { label: 'Módulos',       path: '/admin/modulos',       submoduleCode: 'admin_modules' },
+      { label: 'Permisos',      path: '/admin/permisos',      submoduleCode: 'admin_permissions' },
+      { label: 'Ver Logs',      path: '/admin/logs',          submoduleCode: 'admin_logs' },
+      { label: 'Integración',   icon: Globe, children: [
+          { label: 'Estado de APIs', path: '/admin/integracion/apis', submoduleCode: 'integration_apis' },
+      ]},
+      { label: 'Reportes',      icon: FileText,    path: '/admin/reportes',      submoduleCode: 'reports' },
+      { label: 'Estadísticas',  icon: BarChart2,   path: '/admin/estadisticas',  submoduleCode: 'statistics' },
+      { label: 'Configuración', icon: Settings,    path: '/admin/configuracion', submoduleCode: 'settings' },
   ]},
 ]
