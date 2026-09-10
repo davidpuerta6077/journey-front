@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { fetchReportes } from '../../../services/reportes/fetchReportes'
 import { fetchTiposReporte } from '../../../services/reportes/fetchTiposReporte'
 import { createReporte } from '../../../services/reportes/createReporte'
 import { deleteReporte } from '../../../services/reportes/deleteReporte'
-import { runReporte } from '../../../services/reportes/runReporte'
 import { runReporteAdHoc } from '../../../services/reportes/runReporteAdHoc'
 import TablaResultado from './TablaResultado'
 import '../../../styles/main/Reportes/Reportes.css'
@@ -17,6 +17,7 @@ const paramsIniciales = (tipo) => {
 }
 
 export default function Reportes() {
+  const navigate = useNavigate()
   const [reportes, setReportes] = useState([])
   const [tipos, setTipos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -90,16 +91,7 @@ export default function Reportes() {
     }
   }
 
-  const ejecutar = async (id) => {
-    setEjecutando(true); setError('')
-    try {
-      setResultado(await runReporte(id))
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setEjecutando(false)
-    }
-  }
+  const ejecutar = (id) => navigate(`/admin/reportes/${id}`)
 
   const eliminar = async (id) => {
     if (!window.confirm('¿Eliminar este reporte?')) return
@@ -140,7 +132,7 @@ export default function Reportes() {
                 <td>{(tipos.find((t) => t.tipo === r.tipo) || {}).label || r.tipo}</td>
                 <td>{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</td>
                 <td className="reportes-acciones">
-                  <button className="btn-secondary" onClick={() => ejecutar(r.id)} disabled={ejecutando}>Ejecutar</button>
+                  <button className="btn-secondary" onClick={() => ejecutar(r.id)}>Ver</button>
                   <button className="btn-secondary" onClick={() => eliminar(r.id)} disabled={eliminandoId === r.id}>Eliminar</button>
                 </td>
               </tr>

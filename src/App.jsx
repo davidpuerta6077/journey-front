@@ -34,6 +34,7 @@ import AdminPermisos from './pages/main/Admin/AdminPermisos'
 import AdminLogs from './pages/main/Admin/AdminLogs'
 import IntegracionApis from './pages/main/Integracion/IntegracionApis'
 import Reportes from './pages/main/Reportes/Reportes'
+import ReporteDetalle from './pages/main/Reportes/ReporteDetalle'
 import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Configuracion from './pages/main/Configuracion/Configuracion'
 
@@ -164,6 +165,11 @@ function App() {
           <Route path="admin/reportes" element={
             <PrivateRoute submoduleCode="reports">
               <Reportes />
+            </PrivateRoute>
+          } />
+          <Route path="admin/reportes/:id" element={
+            <PrivateRoute submoduleCode="reports">
+              <ReporteDetalle />
             </PrivateRoute>
           } />
           <Route path="admin/estadisticas" element={
