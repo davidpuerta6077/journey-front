@@ -125,48 +125,42 @@ function ColumnFilter({ label, values, selected, onChange }) {
   }
 
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div ref={ref} className="col-filter">
       <span>{label}</span>
       <button
         ref={btnRef}
         type="button"
         title="Filtrar columna"
+        className={`col-filter-btn${active ? ' is-active' : ''}`}
         onClick={() => (open ? setOpen(false) : openMenu())}
-        style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 2, lineHeight: 0, color: active ? '#5b84ff' : '#94a3b8' }}
       >
         <Filter size={13} fill={active ? '#5b84ff' : 'none'} />
       </button>
       {open && (
-        <div style={{
-          position: 'fixed', top: pos.top, left: pos.left, zIndex: 1000,
-          background: '#fff', border: '1px solid #d5dbe6', borderRadius: 8,
-          boxShadow: '0 8px 24px rgba(0,0,0,.12)', width: 250, padding: 8,
-          fontWeight: 400, color: '#1e293b', textTransform: 'none',
-        }}>
+        <div className="col-filter-menu" style={{ top: pos.top, left: pos.left }}>
           <input
-            className="filter-input"
-            style={{ width: '100%', height: 30, fontSize: 12, marginBottom: 6 }}
+            className="filter-input col-filter-search"
             placeholder="Buscar valor..."
             value={q}
             onChange={e => setQ(e.target.value)}
             autoFocus
           />
-          <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12, padding: '4px 2px', borderBottom: '1px solid #eef1f6', marginBottom: 4 }}>
+          <label className="col-filter-all">
             <input type="checkbox" checked={allShownChecked} onChange={toggleAllShown} />
             (Seleccionar todo)
           </label>
-          <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-            {shown.length === 0 && <div style={{ fontSize: 12, color: '#94a3b8', padding: 4 }}>Sin coincidencias</div>}
+          <div className="col-filter-list">
+            {shown.length === 0 && <div className="col-filter-empty">Sin coincidencias</div>}
             {shown.map(v => (
-              <label key={v} style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12, padding: '3px 2px' }}>
+              <label key={v} className="col-filter-opt">
                 <input type="checkbox" checked={isChecked(v)} onChange={() => toggle(v)} />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v || '—'}</span>
+                <span>{v || '—'}</span>
               </label>
             ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-            <button type="button" className="btn-secondary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => { onChange(null); setQ('') }}>Limpiar</button>
-            <button type="button" className="btn-primary" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setOpen(false)}>Cerrar</button>
+          <div className="col-filter-actions">
+            <button type="button" className="btn-secondary" onClick={() => { onChange(null); setQ('') }}>Limpiar</button>
+            <button type="button" className="btn-primary" onClick={() => setOpen(false)}>Cerrar</button>
           </div>
         </div>
       )}
@@ -174,9 +168,15 @@ function ColumnFilter({ label, values, selected, onChange }) {
   )
 }
 
+// La API devuelve como máximo los últimos LIMITE_LOGS registros (LIMIT en
+// selectLogsData). Si llegan exactamente esos, hay historial más antiguo que
+// no se está mostrando y se avisa en la barra.
+const LIMITE_LOGS = 300
+
 export default function AdminLogs() {
   const [logs, setLogs]       = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState('')
   const [filters, setFilters] = useState({})   // { colKey: Set<string> }
 
   const submoduleIndex = useMemo(() => buildSubmoduleIndex(), [])
@@ -197,10 +197,13 @@ export default function AdminLogs() {
 
   const loadData = useCallback(async () => {
     setLoading(true)
+    setError('')
     try {
       setLogs(await fetchLogs())
     } catch (e) {
       console.error('Error cargando logs:', e.message)
+      setError(e.message)
+      setLogs([])
     }
     setLoading(false)
   }, [])
@@ -233,11 +236,16 @@ export default function AdminLogs() {
         <h2>Administrador — Logs</h2>
       </div>
 
+      {error && <div className="sync-error">{error}</div>}
+
       <div className="filters-bar">
         {anyFilter && (
           <button className="btn-secondary" onClick={() => setFilters({})}>Limpiar filtros</button>
         )}
         <span className="results-count">{filtered.length} de {rows.length} registro{rows.length !== 1 ? 's' : ''}</span>
+        {rows.length >= LIMITE_LOGS && (
+          <span className="results-note">Mostrando solo los {LIMITE_LOGS} más recientes</span>
+        )}
       </div>
 
       {loading ? (

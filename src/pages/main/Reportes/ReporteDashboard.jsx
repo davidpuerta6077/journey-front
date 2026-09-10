@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import TablaResultado from './TablaResultado'
 import KpiTile from '../../../components/charts/KpiTile'
 import BarChartCard from '../../../components/charts/BarChartCard'
@@ -50,12 +51,19 @@ function generico({ columns, rows }) {
 }
 
 export default function ReporteDashboard({ resultado, tipo }) {
+  // Inferir tipos de columna y agregados recorre todas las filas; se memoiza
+  // para no repetirlo en cada render (re-ejecuciones, toggles del <details>).
+  const { kpis, charts } = useMemo(() => {
+    const rows = resultado?.rows ?? []
+    if (!resultado) return { kpis: [], charts: [] }
+    const derivado =
+      (rows.length ? dashboardParaTipo(tipo, resultado) : null) ||
+      (rows.length ? generico(resultado) : { kpis: [{ label: 'Filas', value: 0 }], charts: [] })
+    return { kpis: derivado.kpis ?? [], charts: derivado.charts ?? [] }
+  }, [resultado, tipo])
+
   if (!resultado) return null
   const { rows = [] } = resultado
-
-  const { kpis = [], charts = [] } =
-    (rows.length ? dashboardParaTipo(tipo, resultado) : null) ||
-    (rows.length ? generico(resultado) : { kpis: [{ label: 'Filas', value: 0 }], charts: [] })
 
   return (
     <div className="reporte-dashboard">

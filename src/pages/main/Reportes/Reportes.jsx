@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchReportes } from '../../../services/reportes/fetchReportes'
 import { fetchTiposReporte } from '../../../services/reportes/fetchTiposReporte'
@@ -34,7 +34,10 @@ export default function Reportes() {
   const [ejecutando, setEjecutando] = useState(false)
   const [eliminandoId, setEliminandoId] = useState(null)
 
-  const tipoSel = tipos.find((t) => t.tipo === tipoCode) || null
+  const tipoSel = useMemo(
+    () => tipos.find((t) => t.tipo === tipoCode) || null,
+    [tipos, tipoCode],
+  )
 
   const cargar = async () => {
     setLoading(true)
@@ -169,7 +172,14 @@ export default function Reportes() {
                 <input
                   type={p.type === 'number' ? 'number' : 'text'}
                   value={params[p.key] ?? ''}
-                  onChange={(e) => setParam(p.key, e.target.value)}
+                  onChange={(e) =>
+                    setParam(
+                      p.key,
+                      p.type === 'number'
+                        ? (e.target.value === '' ? '' : Number(e.target.value))
+                        : e.target.value,
+                    )
+                  }
                 />
               )}
             </label>

@@ -13,6 +13,7 @@ export const fetchLogs = async () => {
     return res.data?.body || []
   } catch (error) {
     console.error(error)
-    throw new Error(error.response?.data?.body || 'Error al obtener los logs', { cause: error })
+    const body = error.response?.data?.body
+    throw new Error(typeof body === 'string' ? body : 'Error al obtener los logs', { cause: error })
   }
 }
