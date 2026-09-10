@@ -31,6 +31,7 @@ export default function Reportes() {
 
   const [resultado, setResultado] = useState(null)
   const [ejecutando, setEjecutando] = useState(false)
+  const [eliminandoId, setEliminandoId] = useState(null)
 
   const tipoSel = tipos.find((t) => t.tipo === tipoCode) || null
 
@@ -80,6 +81,7 @@ export default function Reportes() {
     try {
       await createReporte({ nombre, descripcion, tipo: tipoCode, params })
       setShowForm(false)
+      setResultado(null)
       await cargar()
     } catch (e) {
       setError(e.message)
@@ -102,11 +104,14 @@ export default function Reportes() {
   const eliminar = async (id) => {
     if (!window.confirm('¿Eliminar este reporte?')) return
     setError('')
+    setEliminandoId(id)
     try {
       await deleteReporte(id)
       await cargar()
     } catch (e) {
       setError(e.message)
+    } finally {
+      setEliminandoId(null)
     }
   }
 
@@ -121,10 +126,10 @@ export default function Reportes() {
 
       {loading ? (
         <div className="loading-box"><span className="loader"></span>Cargando reportes...</div>
-      ) : (
+      ) : !error && (
         <table className="reportes-tabla">
           <thead>
-            <tr><th>Nombre</th><th>Tipo</th><th>Creado</th><th></th></tr>
+            <tr><th>Nombre</th><th>Tipo</th><th>Creado</th><th><span className="sr-only">Acciones</span></th></tr>
           </thead>
           <tbody>
             {reportes.length === 0 ? (
@@ -136,7 +141,7 @@ export default function Reportes() {
                 <td>{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</td>
                 <td className="reportes-acciones">
                   <button className="btn-secondary" onClick={() => ejecutar(r.id)} disabled={ejecutando}>Ejecutar</button>
-                  <button className="btn-secondary" onClick={() => eliminar(r.id)}>Eliminar</button>
+                  <button className="btn-secondary" onClick={() => eliminar(r.id)} disabled={eliminandoId === r.id}>Eliminar</button>
                 </td>
               </tr>
             ))}
@@ -177,7 +182,7 @@ export default function Reportes() {
           <div className="reportes-form-acciones">
             <button className="btn-secondary" onClick={previsualizar} disabled={!tipoCode || ejecutando}>Previsualizar</button>
             <button className="btn-primary" onClick={guardar} disabled={saving}>Guardar</button>
-            <button className="btn-secondary" onClick={() => setShowForm(false)}>Cancelar</button>
+            <button className="btn-secondary" onClick={() => { setShowForm(false); setResultado(null) }}>Cancelar</button>
           </div>
         </div>
       )}
