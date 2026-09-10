@@ -11,15 +11,12 @@ export const STATUS = {
   neutral: '#6b7280',   // sin estado / desconocido
 }
 
-// Magnitud (una sola tinta, claro -> oscuro).
-export const SEQUENTIAL = ['#dce6fb', '#a9c1f4', '#4a70e0', '#2a4ba0']
-
 // Tinta de texto (los valores/etiquetas nunca llevan el color de la serie).
 export const INK = { primary: '#1f2937', secondary: '#4b5563', muted: '#9ca3af' }
 export const GRID = '#e5e7eb'
 
 // Color por índice de serie/categoría, con fallback a gris para la 6.ª+.
-export function colorFor(i) {
+function colorFor(i) {
   return CATEGORICAL[i] ?? STATUS.neutral
 }
 
