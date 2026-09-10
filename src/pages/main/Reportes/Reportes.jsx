@@ -169,6 +169,10 @@ export default function Reportes() {
             <label key={p.key}>{p.label}
               {p.type === 'boolean' ? (
                 <input type="checkbox" checked={!!params[p.key]} onChange={(e) => setParam(p.key, e.target.checked)} />
+              ) : p.type === 'select' ? (
+                <select value={params[p.key] ?? ''} onChange={(e) => setParam(p.key, e.target.value)}>
+                  {(p.options || []).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
               ) : (
                 <input
                   type={p.type === 'number' ? 'number' : 'text'}
