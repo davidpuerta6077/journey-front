@@ -1,26 +1,45 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Pencil, Trash2, Power } from 'lucide-react'
+import { Pencil, Trash2, Power, Plus } from 'lucide-react'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
 import { createRegla } from '../../../services/admin/createRegla'
 import { updateRegla } from '../../../services/admin/updateRegla'
 import { deleteRegla } from '../../../services/admin/deleteRegla'
+import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
+import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
+import { createMoodleCategoria } from '../../../services/admin/createMoodleCategoria'
+import { fetchAsignaturas } from '../../../services/admin/fetchAsignaturas'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 const EMPTY_FORM = { codigo_asignatura: '', programa: '', departamento: '', seed_shortname: '', categoryid: '', activo: true }
 
-function ReglaModal({ title, initial, onClose, onSave }) {
+function ReglaModal({ title, initial, categorias, semillas, asignaturas, onCategoriaCreada, onClose, onSave }) {
   const [form, setForm] = useState(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [creandoCategoria, setCreandoCategoria] = useState(false)
+  const [nuevaCategoriaNombre, setNuevaCategoriaNombre] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
   }
 
+  const handleCrearCategoria = async () => {
+    if (!nuevaCategoriaNombre.trim()) return
+    setError('')
+    try {
+      const nueva = await onCategoriaCreada(nuevaCategoriaNombre.trim())
+      setForm(f => ({ ...f, categoryid: String(nueva.id) }))
+      setNuevaCategoriaNombre('')
+      setCreandoCategoria(false)
+    } catch (e) {
+      setError(e.message)
+    }
+  }
+
   const handleSubmit = async () => {
     if (!form.seed_shortname || !form.categoryid) {
-      setError('Semilla (seed_shortname) y categoría (categoryid) son obligatorios.')
+      setError('Semilla y categoría destino son obligatorias.')
       return
     }
     setSaving(true)
@@ -51,33 +70,83 @@ function ReglaModal({ title, initial, onClose, onSave }) {
         <div className="modal-form">
           {error && <div className="modal-error">{error}</div>}
           <p className="modal-hint">
-            Deja código/programa/departamento vacíos para que la regla aplique de forma más general.
-            La más específica que coincida gana (código de asignatura &gt; programa+departamento &gt; departamento &gt; comodín).
+            Deja la asignatura vacía para que la regla aplique de forma más general
+            (opcionalmente puedes limitarla más por programa/departamento en "Opciones avanzadas").
+            La más específica que coincida gana.
           </p>
           <div className="modal-field">
-            <label>Código Asignatura</label>
-            <input name="codigo_asignatura" value={form.codigo_asignatura} onChange={handleChange} placeholder="ej. FB0010 (vacío = cualquiera)" />
+            <label>Asignatura</label>
+            <input
+              name="codigo_asignatura"
+              list="asignaturas-datalist"
+              value={form.codigo_asignatura}
+              onChange={handleChange}
+              placeholder="Busca por nombre o código (vacío = cualquiera)"
+              autoComplete="off"
+            />
+            <datalist id="asignaturas-datalist">
+              {asignaturas.map(a => (
+                <option key={a.codigo_asignatura} value={a.codigo_asignatura}>
+                  {a.nombre_asignatura ? `${a.nombre_asignatura} (${a.codigo_asignatura})` : a.codigo_asignatura}
+                </option>
+              ))}
+            </datalist>
           </div>
-          <div className="modal-row">
-            <div className="modal-field">
-              <label>Programa</label>
-              <input name="programa" value={form.programa} onChange={handleChange} placeholder="ej. Tecnología en desarrollo de software" />
-            </div>
-            <div className="modal-field">
-              <label>Departamento</label>
-              <input name="departamento" value={form.departamento} onChange={handleChange} placeholder="ej. Sistemas Digitales" />
-            </div>
+          <div className="modal-field">
+            <label>Semilla en Moodle *</label>
+            <select name="seed_shortname" value={form.seed_shortname} onChange={handleChange}>
+              <option value="">Selecciona un curso semilla...</option>
+              {semillas.map(s => (
+                <option key={s.id} value={s.shortname}>{s.fullname} ({s.shortname})</option>
+              ))}
+              {form.seed_shortname && !semillas.some(s => s.shortname === form.seed_shortname) && (
+                <option value={form.seed_shortname}>{form.seed_shortname} (actual, no está en la lista)</option>
+              )}
+            </select>
           </div>
-          <div className="modal-row">
-            <div className="modal-field">
-              <label>Semilla en Moodle (shortname) *</label>
-              <input name="seed_shortname" value={form.seed_shortname} onChange={handleChange} placeholder="ej. SEMILLA-FB0010" />
+          <div className="modal-field">
+            <label>Categoría Moodle destino *</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select name="categoryid" value={form.categoryid} onChange={handleChange} style={{ flex: 1 }}>
+                <option value="">Selecciona una categoría...</option>
+                {categorias.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} (id {c.id})</option>
+                ))}
+                {form.categoryid && !categorias.some(c => String(c.id) === String(form.categoryid)) && (
+                  <option value={form.categoryid}>categoryid {form.categoryid} (actual, no está en la lista)</option>
+                )}
+              </select>
+              <button type="button" className="btn-icon" title="Crear categoría nueva en Moodle" onClick={() => setCreandoCategoria(v => !v)}>
+                <Plus size={16} />
+              </button>
             </div>
-            <div className="modal-field">
-              <label>Categoría Moodle destino (categoryid) *</label>
-              <input name="categoryid" type="number" value={form.categoryid} onChange={handleChange} placeholder="ej. 12" />
-            </div>
+            {creandoCategoria && (
+              <div className="modal-row" style={{ marginTop: 8 }}>
+                <input
+                  placeholder="Nombre de la nueva categoría"
+                  value={nuevaCategoriaNombre}
+                  onChange={e => setNuevaCategoriaNombre(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button type="button" className="btn-secondary" onClick={handleCrearCategoria}>Crear</button>
+              </div>
+            )}
           </div>
+          <details className="modal-field">
+            <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: '#64748b' }}>
+              Opciones avanzadas (programa / departamento)
+            </summary>
+            <div className="modal-row" style={{ marginTop: 8 }}>
+              <div className="modal-field">
+                <label>Programa</label>
+                <input name="programa" value={form.programa} onChange={handleChange} placeholder="ej. Tecnología en desarrollo de software" />
+              </div>
+              <div className="modal-field">
+                <label>Departamento</label>
+                <input name="departamento" value={form.departamento} onChange={handleChange} placeholder="ej. Sistemas Digitales" />
+              </div>
+            </div>
+          </details>
           <div className="modal-field">
             <label>
               <input type="checkbox" checked={!!form.activo} onChange={e => setForm({ ...form, activo: e.target.checked })} style={{ marginRight: 6 }} />
@@ -102,6 +171,10 @@ export default function ReglasActivas() {
   const [showCreate, setShowCreate] = useState(false)
   const [editRegla, setEditRegla]   = useState(null)
 
+  const [categorias, setCategorias]   = useState([])
+  const [semillas, setSemillas]       = useState([])
+  const [asignaturas, setAsignaturas] = useState([])
+
   const loadReglas = useCallback(async () => {
     setLoading(true)
     try {
@@ -112,7 +185,26 @@ export default function ReglasActivas() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { loadReglas() }, [loadReglas])
+  const loadCatalogos = useCallback(async () => {
+    try {
+      const [cats, seeds, asigs] = await Promise.all([
+        fetchMoodleCategorias(), fetchMoodleSemillas(), fetchAsignaturas()
+      ])
+      setCategorias(cats)
+      setSemillas(seeds)
+      setAsignaturas(asigs)
+    } catch (e) {
+      console.error('Error cargando catálogos para el formulario de reglas:', e.message)
+    }
+  }, [])
+
+  useEffect(() => { loadReglas(); loadCatalogos() }, [loadReglas, loadCatalogos])
+
+  const handleCategoriaCreada = async (nombre) => {
+    const nueva = await createMoodleCategoria({ name: nombre })
+    setCategorias(prev => [...prev, nueva])
+    return nueva
+  }
 
   const handleToggleActivo = async (regla) => {
     try {
@@ -208,6 +300,10 @@ export default function ReglasActivas() {
         <ReglaModal
           title="Crear Regla"
           initial={EMPTY_FORM}
+          categorias={categorias}
+          semillas={semillas}
+          asignaturas={asignaturas}
+          onCategoriaCreada={handleCategoriaCreada}
           onClose={() => setShowCreate(false)}
           onSave={(form) => createRegla(form).then(loadReglas)}
         />
@@ -215,6 +311,10 @@ export default function ReglasActivas() {
       {editRegla && (
         <ReglaModal
           title="Editar Regla"
+          categorias={categorias}
+          semillas={semillas}
+          asignaturas={asignaturas}
+          onCategoriaCreada={handleCategoriaCreada}
           initial={{
             codigo_asignatura: editRegla.codigo_asignatura || '',
             programa: editRegla.programa || '',

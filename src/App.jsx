@@ -24,12 +24,7 @@ import CargaDesmatriculas from './pages/main/CargaMasiva/CargaDesmatriculas'
 import ReglasActivas from './pages/main/Regla/ReglasActivas'
 import ReglasPlantillas from './pages/main/Regla/ReglasPlantillas'
 
-import IntegracionApis from './pages/main/Integracion/IntegracionApis'
-
-import Reportes from './pages/main/Reportes/Reportes'
-import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Busqueda from './pages/main/Busqueda/Busqueda'
-import Configuracion from './pages/main/Configuracion/Configuracion'
 
 // ─── ADMINISTRADOR (BRAVO SUITE) ───────────────────────────────────────────────
 import AdminUsuarios from './pages/main/Admin/AdminUsuarios'
@@ -37,6 +32,10 @@ import AdminRoles from './pages/main/Admin/AdminRoles'
 import AdminModulos from './pages/main/Admin/AdminModulos'
 import AdminPermisos from './pages/main/Admin/AdminPermisos'
 import AdminLogs from './pages/main/Admin/AdminLogs'
+import IntegracionApis from './pages/main/Integracion/IntegracionApis'
+import Reportes from './pages/main/Reportes/Reportes'
+import Estadisticas from './pages/main/Estadisticas/Estadisticas'
+import Configuracion from './pages/main/Configuracion/Configuracion'
 
 // ─── MI PERFIL ──────────────────────────────────────────────────────────────
 import MiPerfil from './pages/main/Perfil/MiPerfil'
@@ -125,30 +124,9 @@ function App() {
             </PrivateRoute>
           } />
 
-          <Route path="integracion/apis" element={
-            <PrivateRoute submoduleCode="integration_apis">
-              <IntegracionApis />
-            </PrivateRoute>
-          } />
-
-          <Route path="reportes" element={
-            <PrivateRoute submoduleCode="reports">
-              <Reportes />
-            </PrivateRoute>
-          } />
-          <Route path="estadisticas" element={
-            <PrivateRoute submoduleCode="statistics">
-              <Estadisticas />
-            </PrivateRoute>
-          } />
           <Route path="busqueda" element={
             <PrivateRoute submoduleCode="search">
               <Busqueda />
-            </PrivateRoute>
-          } />
-          <Route path="configuracion" element={
-            <PrivateRoute submoduleCode="settings">
-              <Configuracion />
             </PrivateRoute>
           } />
 
@@ -176,6 +154,26 @@ function App() {
           <Route path="admin/logs" element={
             <PrivateRoute submoduleCode="admin_logs">
               <AdminLogs />
+            </PrivateRoute>
+          } />
+          <Route path="admin/integracion/apis" element={
+            <PrivateRoute submoduleCode="integration_apis">
+              <IntegracionApis />
+            </PrivateRoute>
+          } />
+          <Route path="admin/reportes" element={
+            <PrivateRoute submoduleCode="reports">
+              <Reportes />
+            </PrivateRoute>
+          } />
+          <Route path="admin/estadisticas" element={
+            <PrivateRoute submoduleCode="statistics">
+              <Estadisticas />
+            </PrivateRoute>
+          } />
+          <Route path="admin/configuracion" element={
+            <PrivateRoute submoduleCode="settings">
+              <Configuracion />
             </PrivateRoute>
           } />
 

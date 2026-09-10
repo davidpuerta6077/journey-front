@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
 import axios from 'axios'
 import config from '../../../config'
 import awsAuth from '../../../services/AwsAuthService'
+import { fetchReglas } from '../../../services/admin/fetchReglas'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 
 const BASE = config.api_domain.url_base
@@ -18,15 +19,20 @@ const COLUMNS = [
 ]
 
 function StatusBadge({ row }) {
-  if (row.sincronizado) return <span className="badge badge-synced">Sincronizado</span>
+  const estado = row.estado_sync || (row.sincronizado ? 'sincronizado' : 'pendiente')
+  if (estado === 'sincronizando') return <span className="badge badge-syncing">Sincronizando...</span>
+  if (estado === 'error')         return <span className="badge badge-error" title={row.ultimo_error_sync || ''}>Error</span>
+  if (estado === 'sincronizado')  return <span className="badge badge-synced">Sincronizado</span>
+  if (estado === 'novedad')       return <span className="badge badge-novedad" title="Ya existe en Moodle; actualízalo desde Módulo Cursos">Novedad</span>
   return <span className="badge badge-pending">Pendiente</span>
 }
 
 export default function SyncCursos() {
   const [courses, setCourses]         = useState([])
+  const [reglas, setReglas]           = useState([])
+  const [bulkRuleId, setBulkRuleId]   = useState('')
   const [loading, setLoading]         = useState(true)
   const [syncing, setSyncing]         = useState(false)
-  const [applyingRule, setApplyingRule] = useState(false)
   const [search, setSearch]           = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterDepto, setFilterDepto] = useState('')
@@ -38,8 +44,7 @@ export default function SyncCursos() {
   const [page, setPage]               = useState(1)
   const PER_PAGE = 15
 
-  const loadCourses = useCallback(async () => {
-    setLoading(true)
+  const refreshCourses = useCallback(async () => {
     try {
       const token = awsAuth.getToken()
       const res = await axios.post(`${BASE}/courses/sync/preview`, {}, {
@@ -49,10 +54,34 @@ export default function SyncCursos() {
     } catch (e) {
       console.error('Error cargando cursos:', e.message)
     }
-    setLoading(false)
   }, [])
 
-  useEffect(() => { loadCourses() }, [loadCourses])
+  const loadCourses = useCallback(async () => {
+    setLoading(true)
+    await refreshCourses()
+    setLoading(false)
+  }, [refreshCourses])
+
+  const loadReglas = useCallback(async () => {
+    try {
+      setReglas(await fetchReglas())
+    } catch (e) {
+      console.error('Error cargando reglas de sincronización:', e.message)
+    }
+  }, [])
+
+  useEffect(() => { loadCourses(); loadReglas() }, [loadCourses, loadReglas])
+
+  // Duplicar la semilla en Moodle es pesado (backup+restore); con 10-15 copias
+  // en una corrida el backend ya no espera a que termine todo para responder,
+  // así que mientras haya cursos en "sincronizando" se refresca la tabla cada
+  // pocos segundos para ver cuándo Moodle va terminando cada uno.
+  const hasSyncingRows = courses.some(c => c.estado_sync === 'sincronizando')
+  useEffect(() => {
+    if (!hasSyncingRows) return
+    const interval = setInterval(refreshCourses, 4000)
+    return () => clearInterval(interval)
+  }, [hasSyncingRows, refreshCourses])
 
   const periodos = [...new Set(courses.map(c => c.periodo).filter(Boolean))]
   const deptos   = [...new Set(courses.map(c => c.departamento).filter(Boolean))]
@@ -65,8 +94,7 @@ export default function SyncCursos() {
     }
     if (filterPeriodo) data = data.filter(c => c.periodo === filterPeriodo)
     if (filterDepto)   data = data.filter(c => c.departamento === filterDepto)
-    if (filterSync === 'sincronizado') data = data.filter(c => c.sincronizado)
-    if (filterSync === 'pendiente')    data = data.filter(c => !c.sincronizado)
+    if (filterSync) data = data.filter(c => (c.estado_sync || (c.sincronizado ? 'sincronizado' : 'pendiente')) === filterSync)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
@@ -100,45 +128,27 @@ export default function SyncCursos() {
     setSyncing(true)
     try {
       const token = awsAuth.getToken()
-      await axios.post(`${BASE}/courses/sync`, { items: selectedCourses }, {
+      const items = selectedCourses.map(c => ({
+        ...c,
+        rule_id: bulkRuleId ? Number(bulkRuleId) : null
+      }))
+      // El backend solo confirma que quedaron encoladas: duplicar la semilla en
+      // Moodle (backup+restore) puede tardar varios minutos con 10-15 copias en
+      // una corrida, así que no espera a que Moodle termine para responder. El
+      // resultado real de cada curso llega por el polling de refreshCourses
+      // mientras haya filas en "Sincronizando".
+      await axios.post(`${BASE}/courses/sync`, { items }, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      const syncedIds = new Set(selectedCourses.map(c => c.id))
-      setCourses(prev => prev.map(c =>
-        syncedIds.has(c.id) ? { ...c, sincronizado: true } : c
-      ))
+      const queuedIds = new Set(items.map(i => i.id))
+      setCourses(prev => prev.map(c => queuedIds.has(c.id) ? { ...c, estado_sync: 'sincronizando' } : c))
       setSelected({})
+      setBulkRuleId('')
     } catch (e) {
       console.error('Error sincronizando cursos:', e.message)
+      alert('Error al sincronizar: ' + e.message)
     }
     setSyncing(false)
-  }
-
-  const handleApplyRule = async () => {
-    if (selectedCourses.length === 0) return
-    setApplyingRule(true)
-    try {
-      const token = awsAuth.getToken()
-      const res = await axios.post(`${BASE}/courses/apply_rule`, { items: selectedCourses }, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const results = res.data?.body?.results || []
-      const byId = new Map(results.map(r => [r.id, r]))
-      setCourses(prev => prev.map(c => {
-        const r = byId.get(c.id)
-        if (!r) return c
-        return r.status === 'success' ? { ...c, categoryid: r.categoryid, _ruleApplied: true } : c
-      }))
-      const failed = results.filter(r => r.status === 'error')
-      if (failed.length > 0) {
-        alert(`${failed.length} curso(s) no se les pudo aplicar la regla:\n` +
-          failed.map(f => `- ID ${f.id}: ${f.error}`).join('\n'))
-      }
-    } catch (e) {
-      console.error('Error aplicando regla:', e.message)
-      alert('Error al aplicar la regla: ' + e.message)
-    }
-    setApplyingRule(false)
   }
 
   const allPageSelected = paginated.length > 0 && paginated.every(c => selected[c.id])
@@ -147,10 +157,23 @@ export default function SyncCursos() {
     <div className="sync-page">
       <div className="sync-page-header">
         <h2>Cursos Plataforma</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-secondary" onClick={handleApplyRule} disabled={selectedCourses.length === 0 || applyingRule}>
-            {applyingRule ? 'Aplicando regla...' : `Aplicar Regla (${selectedCourses.length})`}
-          </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {selectedCourses.length > 0 && (
+            <select
+              className="filter-select"
+              value={bulkRuleId}
+              onChange={e => setBulkRuleId(e.target.value)}
+              title="Regla a aplicar a los cursos seleccionados. Déjala en 'Automática' para que cada curso resuelva la suya por código/programa/departamento."
+            >
+              <option value="">Regla automática (por código/programa/departamento)</option>
+              {reglas.filter(r => r.activo).map(r => (
+                <option key={r.id} value={r.id}>
+                  {(r.codigo_asignatura || r.programa || r.departamento) ? `${r.codigo_asignatura || r.programa || r.departamento} → ` : ''}
+                  {r.seed_shortname} (cat. {r.categoryid})
+                </option>
+              ))}
+            </select>
+          )}
           <button className="btn-primary" onClick={handleSync} disabled={selectedCourses.length === 0 || syncing}>
             <RefreshCw size={15} />
             {syncing ? 'Sincronizando...' : `Sincronizar (${selectedCourses.length})`}
@@ -179,6 +202,9 @@ export default function SyncCursos() {
         <select className="filter-select" value={filterSync} onChange={e => { setFilterSync(e.target.value); setPage(1) }}>
           <option value="">Todos</option>
           <option value="sincronizado">Sincronizado</option>
+          <option value="sincronizando">Sincronizando</option>
+          <option value="error">Error</option>
+          <option value="novedad">Novedad</option>
           <option value="pendiente">Pendiente</option>
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
@@ -253,6 +279,12 @@ export default function SyncCursos() {
                                 <span className="expand-label">Categoría (regla aplicada)</span>
                                 <span className="expand-value">{course.categoryid || 'Sin aplicar todavía'}</span>
                               </div>
+                              {course.estado_sync === 'error' && course.ultimo_error_sync && (
+                                <div className="expand-item">
+                                  <span className="expand-label">Último error de sincronización</span>
+                                  <span className="expand-value">{course.ultimo_error_sync}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
