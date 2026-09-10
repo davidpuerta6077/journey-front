@@ -1,4 +1,5 @@
 import { INK } from './palette'
+import '../../styles/components/charts.css'
 
 // Tile de estadística. Número grande + etiqueta. Sin gráfico -> sin hover.
 export default function KpiTile({ label, value, hint, accent }) {

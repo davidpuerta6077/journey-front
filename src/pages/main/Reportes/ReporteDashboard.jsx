@@ -3,12 +3,12 @@ import KpiTile from '../../../components/charts/KpiTile'
 import BarChartCard from '../../../components/charts/BarChartCard'
 import LineChartCard from '../../../components/charts/LineChartCard'
 import { dashboardParaTipo } from './dashboards'
+import { numOr0, numOrNaN } from './dashboardHelpers'
 
-const num = (v) => (typeof v === 'number' ? v : Number(v))
 const esFecha = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
 const esNumerica = (rows, key) =>
   rows.some((r) => r[key] != null) &&
-  rows.every((r) => r[key] == null || (r[key] !== '' && Number.isFinite(num(r[key]))))
+  rows.every((r) => r[key] == null || (r[key] !== '' && Number.isFinite(numOrNaN(r[key]))))
 
 // Dashboard genérico: infiere KPIs y un gráfico del shape de los datos.
 function generico({ columns, rows }) {
@@ -20,7 +20,7 @@ function generico({ columns, rows }) {
   const kpis = [{ label: 'Filas', value: rows.length }]
   for (const k of numericas.slice(0, 3)) {
     const col = columns.find((c) => c.key === k)
-    const total = rows.reduce((a, r) => a + (num(r[k]) || 0), 0)
+    const total = rows.reduce((a, r) => a + numOr0(r[k]), 0)
     const esProm = /prom|media|promedio/i.test(k)
     kpis.push({
       label: col?.label || k,

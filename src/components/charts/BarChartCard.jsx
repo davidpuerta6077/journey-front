@@ -2,6 +2,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
 } from 'recharts'
 import { CATEGORICAL, INK, GRID, colorForEstado } from './palette'
+import '../../styles/components/charts.css'
 
 // Barras. `series`: [{ key, label }] (>=2 -> apiladas si stacked, con leyenda).
 // `orientation`: 'y' = barras horizontales (bueno para listas de categorías con

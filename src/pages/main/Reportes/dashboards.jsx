@@ -2,14 +2,14 @@ import BarChartCard from '../../../components/charts/BarChartCard'
 import LineChartCard from '../../../components/charts/LineChartCard'
 import DonutChartCard from '../../../components/charts/DonutChartCard'
 import { STATUS } from '../../../components/charts/palette'
+import { numOr0 } from './dashboardHelpers'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
-const num = (v) => (typeof v === 'number' ? v : Number(v)) || 0
-const sum = (rows, k) => rows.reduce((a, r) => a + num(r[k]), 0)
+const sum = (rows, k) => rows.reduce((a, r) => a + numOr0(r[k]), 0)
 const avg = (rows, k) => (rows.length ? sum(rows, k) / rows.length : 0)
 const round = (n, d = 1) => Number(Number(n).toFixed(d))
 const has = (cols, key) => cols.some((c) => c.key === key)
-const topN = (rows, k, n = 15) => [...rows].sort((a, b) => num(b[k]) - num(a[k])).slice(0, n)
+const topN = (rows, k, n = 15) => [...rows].sort((a, b) => numOr0(b[k]) - numOr0(a[k])).slice(0, n)
 const esVerdadero = (v) => v === true || v === 'true'
 
 // Agrupa filas por una clave sumando otra. Si valueKey es null, cuenta filas.
@@ -17,7 +17,7 @@ function agrupar(rows, nameKey, valueKey) {
   const m = new Map()
   for (const r of rows) {
     const k = r[nameKey] ?? '(sin valor)'
-    m.set(k, (m.get(k) || 0) + (valueKey ? num(r[valueKey]) : 1))
+    m.set(k, (m.get(k) || 0) + (valueKey ? numOr0(r[valueKey]) : 1))
   }
   return [...m.entries()].map(([k, v]) => ({ [nameKey]: k, valor: v }))
 }
@@ -32,7 +32,7 @@ function histograma(rows, key, buckets = [1, 7, 30, 90]) {
   for (const r of rows) {
     const v = r[key]
     if (v == null) { bins[bins.length - 1]++; continue }
-    const n = num(v)
+    const n = numOr0(v)
     let idx = buckets.findIndex((b) => n <= b)
     if (idx === -1) idx = buckets.length
     bins[idx]++
@@ -150,18 +150,19 @@ const D = {
     kpis: [
       { label: 'Categorías', value: rows.length },
       { label: 'Cursos', value: sum(rows, 'cursos') },
-      { label: 'Estudiantes', value: sum(rows, 'estudiantes') },
+      { label: 'Estudiantes', value: rows.some((r) => r.estudiantes == null) ? '—' : sum(rows, 'estudiantes') },
     ],
     charts: [<BarChartCard key="b" title="Cursos y estudiantes por categoría" data={rows} xKey="categoria" series={[{ key: 'cursos', label: 'Cursos' }, { key: 'estudiantes', label: 'Estudiantes' }]} />],
   }),
 
   moodle_enrollment_by_course: ({ rows }) => {
     const top = topN(rows, 'total', 20)
+    const sinConteo = rows.some((r) => r.total == null)
     return {
       kpis: [
         { label: 'Cursos', value: rows.length },
-        { label: 'Matriculados', value: sum(rows, 'total') },
-        { label: 'Promedio por curso', value: round(avg(rows, 'total'), 1) },
+        { label: 'Matriculados', value: sinConteo ? '—' : sum(rows, 'total') },
+        { label: 'Promedio por curso', value: sinConteo ? '—' : round(avg(rows, 'total'), 1) },
       ],
       charts: [<BarChartCard key="b" title="Matriculados por curso (top 20)" data={top} xKey="curso" series={[{ key: 'estudiantes', label: 'Estudiantes' }, { key: 'profesores', label: 'Profesores' }]} stacked orientation="y" height={Math.max(280, top.length * 26)} />],
     }
@@ -176,9 +177,9 @@ const D = {
     const r = rows[0] || {}
     return {
       kpis: [
-        { label: 'En Journey', value: num(r.en_journey) },
-        { label: 'En Moodle', value: r.en_moodle == null ? '—' : num(r.en_moodle) },
-        { label: 'Diferencia', value: r.diferencia == null ? '—' : num(r.diferencia), accent: num(r.diferencia) === 0 ? STATUS.ok : STATUS.warn },
+        { label: 'En Journey', value: numOr0(r.en_journey) },
+        { label: 'En Moodle', value: r.en_moodle == null ? '—' : numOr0(r.en_moodle) },
+        { label: 'Diferencia', value: r.diferencia == null ? '—' : numOr0(r.diferencia), accent: numOr0(r.diferencia) === 0 ? STATUS.ok : STATUS.warn },
       ],
       charts: [],
     }

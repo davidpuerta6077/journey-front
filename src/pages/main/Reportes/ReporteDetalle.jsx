@@ -6,6 +6,7 @@ import { fetchTiposReporte } from '../../../services/reportes/fetchTiposReporte'
 import { runReporte } from '../../../services/reportes/runReporte'
 import { exportarExcel } from './exportarExcel'
 import ReporteDashboard from './ReporteDashboard'
+import '../../../styles/main/Reportes/Reportes.css'
 import '../../../styles/main/Reportes/ReporteDetalle.css'
 
 export default function ReporteDetalle() {
