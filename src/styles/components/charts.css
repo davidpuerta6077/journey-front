@@ -1,0 +1,25 @@
+/* Estilos de las tarjetas de gráfico y los KPI tiles de src/components/charts/.
+   Se importa desde los propios componentes (KpiTile, *ChartCard); Vite deduplica
+   el import si aparece en varios. */
+
+.kpi-row {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.kpi-tile {
+  border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; background: #fff;
+}
+.kpi-tile-value { font-size: 26px; font-weight: 600; line-height: 1.1; }
+.kpi-tile-label { font-size: 13px; color: #4b5563; margin-top: 4px; }
+.kpi-tile-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+.chart-grid {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+.chart-card {
+  border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 12px 8px; background: #fff; margin: 0;
+}
+.chart-card-title { font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 8px; }
+.chart-card-body { width: 100%; }
+.chart-card-foot { font-size: 12px; text-align: right; margin-top: 4px; }
