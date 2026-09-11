@@ -13,6 +13,7 @@ const cognitoAuthConfig = {
   redirect_uri: config.aws.redirect_uri,
   response_type: "code",
   scope: "phone openid email",
+  automaticSilentRenew: true,
 };
 
 createRoot(document.getElementById("root")).render(
