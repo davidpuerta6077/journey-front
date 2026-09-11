@@ -9,16 +9,21 @@ function copyToClipboard(value) {
 }
 
 export default function ReglasPlantillas() {
-  const [categorias, setCategorias] = useState([])
-  const [semillas, setSemillas]     = useState([])
-  const [loading, setLoading]       = useState(true)
-  const [error, setError]           = useState('')
+  const [categorias, setCategorias]           = useState([])
+  const [semillas, setSemillas]               = useState([])
+  const [semillasCategoryId, setSemillasCategoryId] = useState('')
+  const [loading, setLoading]                 = useState(true)
+  const [loadingSemillas, setLoadingSemillas]  = useState(false)
+  const [error, setError]                     = useState('')
 
   const loadData = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const [cats, seeds] = await Promise.all([fetchMoodleCategorias(), fetchMoodleSemillas()])
+      const [cats, seeds] = await Promise.all([
+        fetchMoodleCategorias(),
+        fetchMoodleSemillas(semillasCategoryId || undefined)
+      ])
       setCategorias(cats)
       setSemillas(seeds)
     } catch (e) {
@@ -26,9 +31,23 @@ export default function ReglasPlantillas() {
       setError(e.message)
     }
     setLoading(false)
-  }, [])
+  }, [semillasCategoryId])
 
   useEffect(() => { loadData() }, [loadData])
+
+  const handleCategoriaSemillasChange = async (e) => {
+    const value = e.target.value
+    setSemillasCategoryId(value)
+    setLoadingSemillas(true)
+    setError('')
+    try {
+      setSemillas(await fetchMoodleSemillas(value || undefined))
+    } catch (e) {
+      console.error('Error cargando cursos semilla:', e.message)
+      setError(e.message)
+    }
+    setLoadingSemillas(false)
+  }
 
   return (
     <div className="sync-page">
@@ -81,7 +100,15 @@ export default function ReglasPlantillas() {
           </div>
 
           <div className="sync-page-header" style={{ marginTop: 24 }}>
-            <h3>Cursos semilla (categoría de Moodle destinada a semillas)</h3>
+            <h3>Cursos semilla</h3>
+            <div className="modal-field" style={{ margin: 0, minWidth: 280 }}>
+              <select value={semillasCategoryId} onChange={handleCategoriaSemillasChange} disabled={loadingSemillas}>
+                <option value="">Categoría por defecto (id 1)</option>
+                {categorias.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name} (id {cat.id})</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="table-wrapper">
             <table className="data-table">
@@ -89,10 +116,13 @@ export default function ReglasPlantillas() {
                 <tr><th>ID</th><th>Shortname</th><th>Nombre completo</th><th>Categoría</th><th></th></tr>
               </thead>
               <tbody>
-                {semillas.length === 0 && (
-                  <tr><td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>No se encontraron cursos semilla en Moodle.</td></tr>
+                {loadingSemillas && (
+                  <tr><td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>Consultando Moodle...</td></tr>
                 )}
-                {semillas.map(s => (
+                {!loadingSemillas && semillas.length === 0 && (
+                  <tr><td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>No se encontraron cursos semilla en esta categoría.</td></tr>
+                )}
+                {!loadingSemillas && semillas.map(s => (
                   <tr key={s.id}>
                     <td><code>{s.id}</code></td>
                     <td><code>{s.shortname}</code></td>
