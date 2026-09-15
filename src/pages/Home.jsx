@@ -4,7 +4,7 @@ import '../styles/global/Global.css'
 
 const services = [
   {
-    name: 'Nexo Sync',
+    name: 'Nexo',
     description: 'Sincronización de usuarios, cursos y matrículas con Moodle',
     icon: '⚡',
     color: '#3b82f6',
