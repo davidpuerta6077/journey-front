@@ -51,7 +51,7 @@ const Layout = () => {
             <Menu size={20} />
           </button>
           <span className="navbar-brand">
-            Br<span style={{ color: '#7dd3fc' }}>@</span>vo Suite
+            Bravo Hub
           </span>
         </div>
         <div className="user-menu">

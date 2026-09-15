@@ -6,8 +6,8 @@ import './styles/global/Layout.css'
 import Login from './pages/Login'
 import Home from './pages/Home'
 
-// ─── JOURNEY SYNC ─────────────────────────────────────────────────────────────
-import HomeJourney from './pages/main/HomeJourney'
+// ─── NEXO SYNC ─────────────────────────────────────────────────────────────
+import HomeNexo from './pages/main/HomeNexo'
 import SyncUsuariosP from './pages/main/Sync/SyncUsuariosP'
 import SyncCursos from './pages/main/Sync/SyncCursos'
 import SyncMatriculas from './pages/main/Sync/SyncMatriculas'
@@ -26,7 +26,7 @@ import ReglasPlantillas from './pages/main/Regla/ReglasPlantillas'
 
 import Busqueda from './pages/main/Busqueda/Busqueda'
 
-// ─── ADMINISTRADOR (BRAVO SUITE) ───────────────────────────────────────────────
+// ─── ADMINISTRADOR (BRAVO HUB) ───────────────────────────────────────────────
 import AdminUsuarios from './pages/main/Admin/AdminUsuarios'
 import AdminRoles from './pages/main/Admin/AdminRoles'
 import AdminModulos from './pages/main/Admin/AdminModulos'
@@ -55,11 +55,11 @@ function App() {
             <SideNavMain />
           </PrivateRoute>
         }>
-          {/* ─── BRAVO SUITE HOME ─── */}
+          {/* ─── BRAVO HUB HOME ─── */}
           <Route index element={<Home />} />
 
-          {/* ─── JOURNEY SYNC ─── */}
-          <Route path="HomeJourney" submoduleCode='journey_home' element={<HomeJourney />} />
+          {/* ─── NEXO SYNC ─── */}
+          <Route path="HomeNexo" submoduleCode='nexo_home' element={<HomeNexo />} />
 
           <Route path="sync/usuarios" element={
             <PrivateRoute submoduleCode="sync_users">
@@ -131,7 +131,7 @@ function App() {
             </PrivateRoute>
           } />
 
-          {/* ─── ADMINISTRADOR (BRAVO SUITE) ─── */}
+          {/* ─── ADMINISTRADOR (BRAVO HUB) ─── */}
           <Route path="admin/usuarios" element={
             <PrivateRoute submoduleCode="admin_users">
               <AdminUsuarios />

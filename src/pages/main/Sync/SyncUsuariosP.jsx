@@ -222,7 +222,7 @@ export default function SyncUsuariosP() {
   }
 
   const handleDelete = async (user) => {
-    if (!confirm(`¿Eliminar a ${user.nombre} de Journey?`)) return
+    if (!confirm(`¿Eliminar a ${user.nombre} de Nexo?`)) return
     try {
       await deleteUser(user.id)
       await loadUsers()

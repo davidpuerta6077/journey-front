@@ -97,7 +97,7 @@ export const SidebarItem = ({ item, depth }) => {
     return (
       <li>
         <button
-          className={`sidebar-toggle ${item.journeyApp ? 'journey-toggle' : ''}`}
+          className={`sidebar-toggle ${item.nexoApp ? 'nexo-toggle' : ''}`}
           onClick={() => setOpen(!open)}
         >
           <Icon size={16} className="sidebar-icon" />

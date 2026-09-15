@@ -38,7 +38,7 @@ function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Bravo Suite</h1>
+        <h1>Bravo Hub</h1>
         <p>Inicia sesión para continuar</p>
         <button className="btn btn-signin" onClick={() => auth.signinRedirect()}>
           Iniciar sesión

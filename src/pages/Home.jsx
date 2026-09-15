@@ -4,17 +4,17 @@ import '../styles/global/Global.css'
 
 const services = [
   {
-    name: 'Journey Sync',
+    name: 'Nexo Sync',
     description: 'Sincronización de usuarios, cursos y matrículas con Moodle',
     icon: '⚡',
     color: '#3b82f6',
-    path: '/HomeJourney',
+    path: '/HomeNexo',
     internal: true,
-    moduleCode: 'journey_sync',
+    moduleCode: 'nexo_sync',
   },
   {
     name: 'Administrador',
-    description: 'Gestión de usuarios, roles, módulos y permisos de Bravo Suite',
+    description: 'Gestión de usuarios, roles, módulos y permisos de Bravo Hub',
     icon: '🛡️',
     color: '#0ea5e9',
     path: '/admin/usuarios',
@@ -40,12 +40,12 @@ const services = [
     submoduleCode: 'access',
   },
   {
-    name: 'SIDEM',
+    name: 'Visor',
     description: 'Sistema de seguimiento y monitoreo académico',
-    icon: '📊',
+    icon: '👁️',
     color: '#10b981',
     href: 'https://seguimiento.pascualbravovirtual.edu.co/',
-    moduleCode: 'sidem',
+    moduleCode: 'visor',
     submoduleCode: 'access',
   },
   {
@@ -76,12 +76,12 @@ const services = [
     submoduleCode: 'access',
   },
   {
-    name: 'Moodle Builder',
+    name: 'CodeX',
     description: 'Constructor y configurador de cursos Moodle',
     icon: '🏗️',
     color: '#f97316',
     href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html',
-    moduleCode: 'moodle_builder',
+    moduleCode: 'codex',
     submoduleCode: 'access',
   },
   {
@@ -154,7 +154,7 @@ export default function Home() {
   return (
     <div className="bravosuite-home">
       <div className="bravosuite-header">
-        <h1>Br<span>@</span>vo Suite</h1>
+        <h1>Bravo Hub</h1>
         <p>Plataforma integrada de herramientas institucionales</p>
       </div>
 

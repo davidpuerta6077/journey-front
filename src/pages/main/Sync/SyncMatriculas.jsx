@@ -7,12 +7,12 @@ import { useNavigate } from 'react-router-dom'
 
 const ROLE_LABEL = {
   student:        'Estudiante',
-  editingteacher: 'Docente',
+  editingteacher: 'Profesor',
   teacher:        'Tutor'
 }
 
 const COLUMNS = [
-  { key: 'codigo_journey',    label: 'Código Journey' },
+  { key: 'codigo_journey',    label: 'Código Nexo' },
   { key: 'nombre_asignatura', label: 'Asignatura' },
   { key: 'nombre',            label: 'Estudiante' },
   { key: 'email',             label: 'Email' },
@@ -161,7 +161,7 @@ export default function SyncMatriculas() {
         <select className="filter-select" value={filterRol} onChange={e => { setFilterRol(e.target.value); setPage(1) }}>
           <option value="">Todos los roles</option>
           <option value="student">Estudiante</option>
-          <option value="editingteacher">Docente</option>
+          <option value="editingteacher">Profesor</option>
           <option value="teacher">Tutor</option>
         </select>
         <select className="filter-select" value={filterSync} onChange={e => { setFilterSync(e.target.value); setPage(1) }}>

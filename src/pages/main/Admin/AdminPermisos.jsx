@@ -9,22 +9,22 @@ import { revokePermiso } from '../../../services/admin/revokePermiso'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 import "../../../styles/main/Admin/AdminPermisos.css"
 
-// Descripciones cortas por módulo (mismo texto usado en el home de Bravo Suite).
+// Descripciones cortas por módulo (mismo texto usado en el home de Bravo Hub).
 const MODULE_DESCRIPTIONS = {
-  journey_sync:    'Sincronización de usuarios, cursos y matrículas con Moodle.',
-  admin:           'Administración de usuarios de plataforma, roles y permisos de Bravo Suite.',
+  nexo_sync:       'Sincronización de usuarios, cursos y matrículas con Moodle.',
+  admin:           'Administración de usuarios de plataforma, roles y permisos de Bravo Hub.',
   support_center:  'Gestión de tickets y soporte técnico institucional.',
   hub:             'Portal centralizado de recursos y herramientas.',
-  sidem:           'Sistema de seguimiento y monitoreo académico.',
+  visor:           'Sistema de seguimiento y monitoreo académico.',
   monitoring:      'Monitoreo de infraestructura y servidores.',
   bebras:          'Plataforma de pensamiento computacional.',
   rags:            'Herramienta de recursos y gestión académica.',
   onix_reports:    'Generación de informes con inteligencia artificial.',
-  moodle_builder:  'Constructor y configurador de cursos Moodle.',
+  codex:           'Constructor y configurador de cursos Moodle.',
   surveys:         'Creación y gestión de encuestas institucionales.',
 }
 
-// Journey Sync tiene muchos submódulos: se agrupan por categoría para no
+// Nexo Sync tiene muchos submódulos: se agrupan por categoría para no
 // mostrar una lista larga. El resto de módulos se muestra como lista simple.
 const CATEGORY_ORDER = ['Usuarios', 'Cursos', 'Matrículas', 'Reglas', 'Integración', 'Reportes', 'Configuración']
 
@@ -208,7 +208,7 @@ export default function AdminPermisos() {
         <h2>Permisos</h2>
       </div>
       <p className="permisos-intro">
-        Define a qué módulos y submódulos de Bravo Suite tiene acceso cada rol.
+        Define a qué módulos y submódulos de Bravo Hub tiene acceso cada rol.
         Los cambios se aplican al hacer clic en "Guardar cambios".
       </p>
 
@@ -263,9 +263,9 @@ export default function AdminPermisos() {
           const subIds = mod.submodules.map(s => s.submodule_id)
           const granted = subIds.filter(id => draft.has(id)).length
           const isOpen = q ? true : !!expandedModules[mod.module_id]
-          const isJourneySync = mod.module_code === 'journey_sync'
+          const isNexoSync = mod.module_code === 'nexo_sync'
 
-          const categorized = isJourneySync
+          const categorized = isNexoSync
             ? mod.submodules.reduce((acc, s) => {
                 const cat = categorize(s.submodule_code)
                 if (!acc[cat]) acc[cat] = []
@@ -299,7 +299,7 @@ export default function AdminPermisos() {
 
               {isOpen && (
                 <div className="permisos-module-body">
-                  {isJourneySync ? (
+                  {isNexoSync ? (
                     CATEGORY_ORDER.filter(cat => categorized[cat]?.length).map(cat => {
                       const items = categorized[cat]
                       const catIds = items.map(s => s.submodule_id)

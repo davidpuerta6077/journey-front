@@ -9,7 +9,7 @@ import '../../styles/global/Global.css'
 import config from "../../config"
 const BASE = config.api_domain.url_base
 
-export default function HomeJourney() {
+export default function HomeNexo() {
   const navigate = useNavigate()
   const [indicadores, setIndicadores] = useState({
     usuarios: 0,
@@ -45,7 +45,7 @@ export default function HomeJourney() {
     <div className="home">
       <div className="home-header">
         <div>
-          <h2>Journey Sync</h2>
+          <h2>Nexo Sync</h2>
           <p className="home-subtitle">Recursos más usados</p>
         </div>
         <div className="home-sync-btns">
@@ -74,7 +74,7 @@ export default function HomeJourney() {
       </div>
 
       <div className="home-panel">
-        <h5>Indicadores Journey</h5>
+        <h5>Indicadores Nexo</h5>
         <div className="home-indicators">
           <div className="indicator-card">
             <Users size={24} strokeWidth={1.5} className="indicator-icon" />

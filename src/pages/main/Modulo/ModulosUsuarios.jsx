@@ -270,7 +270,7 @@ function EnrollmentsModal({ user, onClose }) {
             <table className="data-table" style={{ margin: 0 }}>
               <thead>
                 <tr>
-                  <th>Código Journey</th>
+                  <th>Código Nexo</th>
                   <th>Asignatura</th>
                   <th>Período</th>
                   <th>Grupo</th>
@@ -395,7 +395,7 @@ export default function ModulosUsuarios() {
   }
 
   const handleDelete = async (user) => {
-    if (!confirm(`¿Eliminar a ${user.nombre} de Journey?`)) return
+    if (!confirm(`¿Eliminar a ${user.nombre} de Nexo?`)) return
     try {
       await deleteUser(user.id)
       await loadUsers()

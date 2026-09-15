@@ -1,7 +1,7 @@
 import {
   Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut,
   ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings,
-  Search, UserCog
+  Search, UserCog, Eye
 } from 'lucide-react'
 
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
@@ -9,8 +9,8 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 
 export const menuItems = [
   { label: 'Home', icon: Home, path: '/' },
-  { label: 'Journey Sync', icon: RefreshCw, journeyApp: true, moduleCode: 'journey_sync', children: [
-      { label: 'Home', icon: Home, path: '/HomeJourney', submoduleCode: 'journey_home' },
+  { label: 'Nexo Sync', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', children: [
+      { label: 'Home', icon: Home, path: '/HomeNexo', submoduleCode: 'nexo_home' },
       { label: 'Sincronización', icon: RefreshCw, children: [
           { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },
           { label: 'Matrículas', path: '/sync/matriculas', submoduleCode: 'sync_enrollments' },
@@ -38,17 +38,17 @@ export const menuItems = [
 
   { label: 'Centro de soporte', icon: ExternalLink, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
   { label: 'Hub', icon: ExternalLink, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
-  { label: 'SIDEM', icon: ExternalLink, moduleCode: 'sidem', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
+  { label: 'Visor', icon: Eye, moduleCode: 'visor', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
   { label: 'Monitoreo', icon: Activity, moduleCode: 'monitoring', submoduleCode: 'access', children: [
       { label: 'Matomo', comingSoon: true },
       { label: 'Zabbix', comingSoon: true },
-      { label: 'PMZ', comingSoon: true },
+      { label: 'PM2', comingSoon: true },
       { label: 'Bases de Datos', comingSoon: true },
   ]},
   { label: 'Bebras', icon: ExternalLink, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
   { label: 'Rags', icon: LayoutGrid, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
   { label: 'Informes (Onix-IA)', icon: FileText, moduleCode: 'onix_reports', submoduleCode: 'access', comingSoon: true },
-  { label: 'Moodle Builder', icon: ExternalLink, moduleCode: 'moodle_builder', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
+  { label: 'CodeX', icon: ExternalLink, moduleCode: 'codex', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
   { label: 'Encuestas', icon: ExternalLink, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
   { label: 'Laboratorios Virtuales', icon: LayoutGrid, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
 

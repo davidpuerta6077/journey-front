@@ -177,7 +177,7 @@ const D = {
     const r = rows[0] || {}
     return {
       kpis: [
-        { label: 'En Journey', value: numOr0(r.en_journey) },
+        { label: 'En Nexo', value: numOr0(r.en_journey) },
         { label: 'En Moodle', value: r.en_moodle == null ? '—' : numOr0(r.en_moodle) },
         { label: 'Diferencia', value: r.diferencia == null ? '—' : numOr0(r.diferencia), accent: numOr0(r.diferencia) === 0 ? STATUS.ok : STATUS.warn },
       ],
