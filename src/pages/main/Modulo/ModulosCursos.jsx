@@ -17,7 +17,7 @@ const COLUMNS = [
   { key: 'fullname',     label: 'Nombre Completo' },
   { key: 'shortname',    label: 'Nombre Corto' },
   { key: 'idnumber',     label: 'Código' },
-  { key: 'docente',      label: 'Docente' },
+  { key: 'docente',      label: 'Profesor' },
   { key: 'periodo',      label: 'Periodo' },
   { key: 'moodle_id',    label: 'Moodle ID' },
 ]
@@ -100,7 +100,7 @@ function CreateCourseModal({ onClose, onSave }) {
               <div className="modal-row">
                 <div className="modal-field">
                   <label>Nombre completo *</label>
-                  <input name="fullname" value={form.fullname} onChange={handleChange} placeholder="G105 Algebra Lineal (FB0010) - Docente: ... (2026-1)" />
+                  <input name="fullname" value={form.fullname} onChange={handleChange} placeholder="G105 Algebra Lineal (FB0010) - Profesor: ... (2026-1)" />
                 </div>
                 <div className="modal-field">
                   <label>Nombre corto *</label>
@@ -113,7 +113,7 @@ function CreateCourseModal({ onClose, onSave }) {
                   <input name="idnumber" value={form.idnumber} onChange={handleChange} placeholder="FB001020261G105" />
                 </div>
                 <div className="modal-field">
-                  <label>Docente</label>
+                  <label>Profesor</label>
                   <input name="docente" value={form.docente} onChange={handleChange} />
                 </div>
               </div>
@@ -261,7 +261,7 @@ export default function ModulosCursos() {
 
       <p className="permisos-intro">
         Cursos ya creados en Moodle. Los pendientes o con error se gestionan en Sync Cursos. Si SICAU
-        reporta un cambio (p.ej. de docente) en un curso que ya existe aquí, aparece en amarillo como
+        reporta un cambio (p.ej. de profesor) en un curso que ya existe aquí, aparece en amarillo como
         "Novedad" con un botón para empujar la actualización a Moodle.
       </p>
 
@@ -270,7 +270,7 @@ export default function ModulosCursos() {
           <Search size={15} className="filter-icon" />
           <input
             className="filter-input"
-            placeholder="Buscar por nombre, código, docente..."
+            placeholder="Buscar por nombre, código, profesor..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
           />

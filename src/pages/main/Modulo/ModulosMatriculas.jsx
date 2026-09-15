@@ -153,7 +153,7 @@ function EnrollmentFormFields({ form, setForm, studentDisabled }) {
           <input name="courseid" value={form.courseid} onChange={handleChange} placeholder="Se asigna al sincronizar" />
         </div>
         <div className="modal-field">
-          <label>Código Journey</label>
+          <label>Código Nexo</label>
           <input name="codigo_journey" value={form.codigo_journey} onChange={handleChange} placeholder="Se genera automáticamente si se deja vacío" />
         </div>
       </div>
@@ -554,7 +554,7 @@ export default function ModulosMatriculas() {
                                 <span className="expand-value">{enrollment.estado || '-'}</span>
                               </div>
                               <div className="expand-item">
-                                <span className="expand-label">Código Journey</span>
+                                <span className="expand-label">Código Nexo</span>
                                 <span className="expand-value">{enrollment.codigo_journey || '-'}</span>
                               </div>
                               <div className="expand-item">

@@ -12,7 +12,7 @@ const COLUMNS = [
   { key: 'fullname',     label: 'Nombre Completo' },
   { key: 'shortname',    label: 'Nombre Corto' },
   { key: 'idnumber',     label: 'Código' },
-  { key: 'docente',      label: 'Docente' },
+  { key: 'docente',      label: 'Profesor' },
   { key: 'periodo',      label: 'Periodo' },
   { key: 'departamento', label: 'Departamento' },
   { key: 'programa',     label: 'Programa' },
@@ -186,7 +186,7 @@ export default function SyncCursos() {
           <Search size={15} className="filter-icon" />
           <input
             className="filter-input"
-            placeholder="Buscar por nombre, código, docente..."
+            placeholder="Buscar por nombre, código, profesor..."
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
           />

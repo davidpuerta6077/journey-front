@@ -143,13 +143,13 @@
   font-weight: 600;
 }
 
-/* ─── JOURNEY SYNC ─── */
-.journey-toggle {
+/* ─── NEXO SYNC ─── */
+.nexo-toggle {
   color: #7dd3fc !important;
   font-weight: 600 !important;
   font-size: 0.92rem !important;
 }
-.journey-toggle:hover {
+.nexo-toggle:hover {
   background: rgba(125,211,252,0.07) !important;
   color: #bae6fd !important;
 }

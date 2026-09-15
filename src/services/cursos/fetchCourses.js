@@ -5,7 +5,7 @@ import awsAuth from '../AwsAuthService'
 const BASE = config.api_domain.url_base
 
 // Cursos que ya existen en Moodle: sincronizados, y los que tienen una
-// "novedad" pendiente (p.ej. cambió el docente en SICAU) -siguen existiendo
+// "novedad" pendiente (p.ej. cambió el profesor en SICAU) -siguen existiendo
 // en Moodle, solo falta empujarles la metadata nueva-. Los que nunca se han
 // creado (pendiente) o fallaron sin llegar a existir (error) viven en Sync
 // Cursos, no aquí.
