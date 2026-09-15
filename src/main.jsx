@@ -14,6 +14,9 @@ const cognitoAuthConfig = {
   response_type: "code",
   scope: "phone openid email",
   automaticSilentRenew: true,
+  onSigninCallback: () => {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  },
 };
 
 createRoot(document.getElementById("root")).render(

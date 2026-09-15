@@ -12,6 +12,7 @@ export function PermissionsProvider({ children }) {
   const [loadingPermissions, setLoadingPermissions] = useState(true);
 
   const loadPermissionsAndProfile = useCallback(async () => {
+    if (auth.isLoading) return;
     if (auth.isAuthenticated) {
       const result = await GetServiceAuth(`auth/permissions?user_email=${encodeURIComponent(auth.user?.profile?.email)}`);
       setPermissions(result?.body?.user_permissions || null);
@@ -20,9 +21,11 @@ export function PermissionsProvider({ children }) {
       } catch {
         setProfile(null);
       }
+    } else {
+      setPermissions(null);
     }
     setLoadingPermissions(false);
-  }, [auth.isAuthenticated, auth.user?.profile?.email]);
+  }, [auth.isLoading, auth.isAuthenticated, auth.user?.profile?.email]);
 
   useEffect(() => { loadPermissionsAndProfile() }, [loadPermissionsAndProfile]);
 
