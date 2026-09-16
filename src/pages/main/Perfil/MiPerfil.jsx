@@ -20,6 +20,7 @@ export default function MiPerfil() {
   const [editingUsername, setEditingUsername] = useState(false)
   const [usernameDraft, setUsernameDraft] = useState('')
   const [savingUsername, setSavingUsername] = useState(false)
+  const [photoFailed, setPhotoFailed] = useState(false)
 
   const loadProfile = useCallback(async () => {
     setLoading(true)
@@ -41,6 +42,7 @@ export default function MiPerfil() {
     try {
       const updated = await uploadMyPhoto(file)
       setProfile(updated)
+      setPhotoFailed(false)
       refetchProfile()
     } catch (err) {
       setError(err.message)
@@ -108,8 +110,15 @@ export default function MiPerfil() {
 
       <div className="perfil-card">
         <div className="perfil-avatar-wrapper">
-          {profile.photo_url
-            ? <img className="perfil-avatar" src={`${BASE}${profile.photo_url}`} alt={profile.username} />
+          {profile.photo_url && !photoFailed
+            ? (
+              <img
+                className="perfil-avatar"
+                src={`${BASE}${profile.photo_url}`}
+                alt={profile.username}
+                onError={() => setPhotoFailed(true)}
+              />
+            )
             : <div className="perfil-avatar-placeholder"><User size={40} /></div>}
           <label className="perfil-avatar-edit" title="Cambiar foto">
             <Camera size={14} />
@@ -153,6 +162,10 @@ export default function MiPerfil() {
           <div className="perfil-field">
             <label>Rol</label>
             <span>{profile.role_name || '-'}</span>
+          </div>
+          <div className="perfil-field">
+            <label>Departamento</label>
+            <span>{profile.departamento || '-'}</span>
           </div>
           <div className="perfil-field">
             <label>Estado</label>
