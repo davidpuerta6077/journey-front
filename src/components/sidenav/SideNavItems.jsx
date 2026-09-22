@@ -9,7 +9,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 
 export const menuItems = [
   { label: 'Home', icon: Home, path: '/' },
-  { label: 'Nexo Sync', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', children: [
+  { label: 'Nexo', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', children: [
       { label: 'Home', icon: Home, path: '/HomeNexo', submoduleCode: 'nexo_home' },
       { label: 'Sincronización', icon: RefreshCw, children: [
           { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },

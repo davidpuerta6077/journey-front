@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
-import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, RefreshCw, Search } from 'lucide-react'
 import axios from 'axios'
 import config from '../../../config'
 import awsAuth from '../../../services/AwsAuthService'
@@ -240,8 +240,8 @@ export default function SyncCursos() {
                       <td><StatusBadge row={course} /></td>
                       <td>
                         <div className="action-btns">
-                          <button className="btn-icon" onClick={() => toggleExpand(course.id)} title="Ver más">
-                            {expandedRows[course.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          <button className="btn-icon" onClick={() => toggleExpand(course.id)} title="Ver detalles">
+                            {expandedRows[course.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                           </button>
                         </div>
                       </td>
@@ -276,8 +276,26 @@ export default function SyncCursos() {
                                 <span className="expand-value">{course.moodle_id || '-'}</span>
                               </div>
                               <div className="expand-item">
+                                <span className="expand-label">Link del curso en Moodle</span>
+                                <span className="expand-value">
+                                  {course.moodle_course_url
+                                    ? <a href={course.moodle_course_url} target="_blank" rel="noopener noreferrer" className="expand-link">
+                                        Abrir en Moodle <ExternalLink size={12} />
+                                      </a>
+                                    : '-'}
+                                </span>
+                              </div>
+                              <div className="expand-item">
                                 <span className="expand-label">Categoría (regla aplicada)</span>
                                 <span className="expand-value">{course.categoryid || 'Sin aplicar todavía'}</span>
+                              </div>
+                              <div className="expand-item">
+                                <span className="expand-label">Fecha recibido (SICAU)</span>
+                                <span className="expand-value">{course.created_at ? String(course.created_at).split('T')[0] : '-'}</span>
+                              </div>
+                              <div className="expand-item">
+                                <span className="expand-label">Fecha sincronizado</span>
+                                <span className="expand-value">{course.synced_at ? String(course.synced_at).split('T')[0] : '-'}</span>
                               </div>
                               {course.estado_sync === 'error' && course.ultimo_error_sync && (
                                 <div className="expand-item">

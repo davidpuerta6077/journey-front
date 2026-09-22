@@ -313,7 +313,7 @@ export default function ModulosCursos() {
                             <button
                               className="btn-icon"
                               onClick={() => handlePushUpdate(course)}
-                              title="Actualizar metadata en Moodle (fullname/docente)"
+                              title="Actualizar metadata en Moodle (fullname/profesor)"
                             >
                               <UploadCloud size={14} />
                             </button>

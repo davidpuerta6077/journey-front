@@ -25,17 +25,17 @@ function buildSubmoduleIndex() {
 
 // Categoría principal por defecto: todo lo que no se pueda clasificar pertenece
 // a la app base del sistema.
-const APP_POR_DEFECTO = 'Nexo Sync'
+const APP_POR_DEFECTO = 'Nexo'
 
 // Derivar del prefijo de ruta que queda en la descripción
-// (ej. "POST /courses/sync" -> Nexo Sync / Cursos).
+// (ej. "POST /courses/sync" -> Nexo / Cursos).
 const ROUTE_APP = {
-  users:        { aplicacion: 'Nexo Sync', modulo: 'Usuarios' },
-  courses:      { aplicacion: 'Nexo Sync', modulo: 'Cursos' },
-  enrollments:  { aplicacion: 'Nexo Sync', modulo: 'Matrículas' },
-  grades:       { aplicacion: 'Nexo Sync', modulo: 'Calificaciones' },
-  sicau:        { aplicacion: 'Nexo Sync', modulo: 'SICAU' },
-  auth:         { aplicacion: 'Nexo Sync', modulo: 'Sesión / Perfil' },
+  users:        { aplicacion: 'Nexo', modulo: 'Usuarios' },
+  courses:      { aplicacion: 'Nexo', modulo: 'Cursos' },
+  enrollments:  { aplicacion: 'Nexo', modulo: 'Matrículas' },
+  grades:       { aplicacion: 'Nexo', modulo: 'Calificaciones' },
+  sicau:        { aplicacion: 'Nexo', modulo: 'SICAU' },
+  auth:         { aplicacion: 'Nexo', modulo: 'Sesión / Perfil' },
   admin:        { aplicacion: 'Administrador', modulo: 'Administrador' },
   virtual_labs: { aplicacion: 'Laboratorios Virtuales', modulo: 'Laboratorios Virtuales' },
 }
@@ -52,8 +52,8 @@ function resolveByRoute(description) {
 
 function resolveByType(type) {
   const t = String(type || '').toLowerCase()
-  if (t.startsWith('sync_error') || t.startsWith('sync')) return { aplicacion: 'Nexo Sync', modulo: 'Sincronización' }
-  if (t.includes('matr')) return { aplicacion: 'Nexo Sync', modulo: 'Matrículas' }
+  if (t.startsWith('sync_error') || t.startsWith('sync')) return { aplicacion: 'Nexo', modulo: 'Sincronización' }
+  if (t.includes('matr')) return { aplicacion: 'Nexo', modulo: 'Matrículas' }
   return null
 }
 

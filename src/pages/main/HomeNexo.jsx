@@ -45,7 +45,7 @@ export default function HomeNexo() {
     <div className="home">
       <div className="home-header">
         <div>
-          <h2>Nexo Sync</h2>
+          <h2>Nexo</h2>
           <p className="home-subtitle">Recursos más usados</p>
         </div>
         <div className="home-sync-btns">
