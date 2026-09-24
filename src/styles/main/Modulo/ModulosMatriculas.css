@@ -1,4 +1,15 @@
-.searchable-select { position: relative; }
+.searchable-select { position: relative; display: block; }
+.searchable-select input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  background: #f8fafc;
+}
+.searchable-select input:focus { outline: none; border-color: #5b84ff; background: #fff; }
 .searchable-select-dropdown {
   position: absolute;
   top: calc(100% + 4px);
@@ -24,3 +35,7 @@
   color: #94a3b8;
 }
 .asignatura-code { display: block; font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+
+.moodle-hint { display: inline-block; margin-top: 6px; }
+
+.badge-syncing { background: #dbeafe; color: #1d4ed8; }

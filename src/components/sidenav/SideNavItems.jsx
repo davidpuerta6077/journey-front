@@ -12,9 +12,10 @@ export const menuItems = [
   { label: 'Nexo', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', children: [
       { label: 'Home', icon: Home, path: '/HomeNexo', submoduleCode: 'nexo_home' },
       { label: 'Sincronización', icon: RefreshCw, children: [
+          { label: 'Cursos', path: '/sync/cursos', submoduleCode: 'sync_courses' },
           { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },
           { label: 'Matrículas', path: '/sync/matriculas', submoduleCode: 'sync_enrollments' },
-          { label: 'Cursos', path: '/sync/cursos', submoduleCode: 'sync_courses' },
+          { label: 'Novedades', path: '/sync/novedades', submoduleCode: 'sync_enrollments_novedades' },
       ]},
       { label: 'Módulos', icon: BookOpen, children: [
           { label: 'Usuarios', path: '/modulos/usuarios', submoduleCode: 'module_users' },
@@ -24,7 +25,7 @@ export const menuItems = [
       { label: 'Carga Masiva', icon: Upload, children: [
           { label: 'Usuarios', path: '/carga/usuarios', submoduleCode: 'bulk_upload_users' },
           { label: 'Matrículas', path: '/carga/matriculas', submoduleCode: 'bulk_upload_enrollments' },
-          { label: 'Novedades', path: '/carga/novedades', submoduleCode: 'bulk_upload_updates' },
+          { label: 'Novedades (carga manual)', path: '/carga/novedades', submoduleCode: 'bulk_upload_updates' },
           { label: 'Desmatrículas', path: '/carga/desmatriculas', submoduleCode: 'bulk_upload_unenrollments' },
       ]},
       { label: 'Reglas', icon: Shield, children: [

@@ -5,7 +5,10 @@ import { createCourseManual } from '../../../services/cursos/createCourseManual'
 import { pushCourseUpdate } from '../../../services/cursos/pushCourseUpdate'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
+import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
+
+const CACHE_KEY = 'courses-list'
 
 function StatusBadge({ row }) {
   if (row.estado_sync === 'novedad')     return <span className="badge badge-novedad" title={row.ultimo_error_sync || ''}>Novedad</span>
@@ -175,9 +178,11 @@ function CreateCourseModal({ onClose, onSave }) {
 }
 
 export default function ModulosCursos() {
-  const [courses, setCourses]     = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [courses, setCourses]     = useState(() => getCached(CACHE_KEY) || [])
+  const [loading, setLoading]     = useState(() => !getCached(CACHE_KEY))
   const [search, setSearch]       = useState('')
+  const [filterPeriodo, setFilterPeriodo] = useState('')
+  const [filterDepto, setFilterDepto]     = useState('')
   const [sortKey, setSortKey]     = useState('fullname')
   const [sortDir, setSortDir]     = useState('asc')
   const [expandedRows, setExpandedRows] = useState({})
@@ -187,19 +192,25 @@ export default function ModulosCursos() {
 
   const refreshCourses = useCallback(async () => {
     try {
-      setCourses(await fetchCourses())
+      const data = await fetchCourses()
+      setCached(CACHE_KEY, data)
+      setCourses(data)
     } catch (e) {
       console.error('Error cargando cursos:', e.message)
     }
   }, [])
 
+  // Usada por el botón "Recargar": ahí sí se espera ver el spinner, es una
+  // acción explícita del usuario.
   const loadCourses = useCallback(async () => {
     setLoading(true)
     await refreshCourses()
     setLoading(false)
   }, [refreshCourses])
 
-  useEffect(() => { loadCourses() }, [loadCourses])
+  // Carga inicial: si ya hay caché no se muestra spinner, solo se refresca
+  // por debajo.
+  useEffect(() => { refreshCourses().then(() => setLoading(false)) }, [refreshCourses])
 
   // Mientras se empuja la actualización de un curso con "novedad" a Moodle,
   // se refresca solo para ver cuándo pasa a sincronizado, sin recargar todo.
@@ -225,18 +236,24 @@ export default function ModulosCursos() {
     let data = [...courses]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(c => Object.values(c).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+      data = data.filter(c => Object.values(c).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
+    if (filterPeriodo) data = data.filter(c => c.periodo === filterPeriodo)
+    if (filterDepto)   data = data.filter(c => c.departamento === filterDepto)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
       return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av))
     })
     return data
-  }, [courses, search, sortKey, sortDir])
+  }, [courses, search, filterPeriodo, filterDepto, sortKey, sortDir])
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
   const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const periodos   = [...new Set(courses.map(c => c.periodo).filter(Boolean))]
+  const deptos     = [...new Set(courses.map(c => c.departamento).filter(Boolean))]
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -275,6 +292,14 @@ export default function ModulosCursos() {
             onChange={e => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
+        <select className="filter-select" value={filterPeriodo} onChange={e => { setFilterPeriodo(e.target.value); setPage(1) }}>
+          <option value="">Todos los periodos</option>
+          {periodos.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <select className="filter-select" value={filterDepto} onChange={e => { setFilterDepto(e.target.value); setPage(1) }}>
+          <option value="">Todos los departamentos</option>
+          {deptos.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
