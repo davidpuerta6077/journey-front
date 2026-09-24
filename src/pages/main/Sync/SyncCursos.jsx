@@ -4,9 +4,11 @@ import axios from 'axios'
 import config from '../../../config'
 import awsAuth from '../../../services/AwsAuthService'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
+import { getCached, setCached } from '../../../services/swrCache'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 
 const BASE = config.api_domain.url_base
+const CACHE_KEY = 'courses-sync-preview'
 
 const COLUMNS = [
   { key: 'fullname',     label: 'Nombre Completo' },
@@ -28,10 +30,10 @@ function StatusBadge({ row }) {
 }
 
 export default function SyncCursos() {
-  const [courses, setCourses]         = useState([])
+  const [courses, setCourses]         = useState(() => getCached(CACHE_KEY) || [])
   const [reglas, setReglas]           = useState([])
   const [bulkRuleId, setBulkRuleId]   = useState('')
-  const [loading, setLoading]         = useState(true)
+  const [loading, setLoading]         = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]         = useState(false)
   const [search, setSearch]           = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
@@ -50,14 +52,15 @@ export default function SyncCursos() {
       const res = await axios.post(`${BASE}/courses/sync/preview`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setCourses(res.data?.body || [])
+      const data = res.data?.body || []
+      setCached(CACHE_KEY, data)
+      setCourses(data)
     } catch (e) {
       console.error('Error cargando cursos:', e.message)
     }
   }, [])
 
   const loadCourses = useCallback(async () => {
-    setLoading(true)
     await refreshCourses()
     setLoading(false)
   }, [refreshCourses])
@@ -90,7 +93,9 @@ export default function SyncCursos() {
     let data = [...courses]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(c => Object.values(c).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+      data = data.filter(c => Object.values(c).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
     if (filterPeriodo) data = data.filter(c => c.periodo === filterPeriodo)
     if (filterDepto)   data = data.filter(c => c.departamento === filterDepto)

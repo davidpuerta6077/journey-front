@@ -7,7 +7,11 @@ import { updateUser } from '../../../services/usuarios/updateUser'
 import { createUser } from '../../../services/usuarios/createUser'
 import { resetPassword } from '../../../services/usuarios/resetPassword'
 import { getUserEnrollments } from '../../../services/usuarios/getUserEnrollments'
+import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
+
+// Misma key que Sync Usuarios: consultan exactamente el mismo preview.
+const CACHE_KEY = 'users-preview'
 
 const COLUMNS = [
   { key: 'nombre',     label: 'Nombre' },
@@ -24,6 +28,7 @@ const EMPTY_FORM = {
 }
 
 function StatusBadge({ row }) {
+  if (row._syncing)               return <span className="badge badge-syncing">Sincronizando...</span>
   if (row._status === 'error')   return <span className="badge badge-error">Error</span>
   if (row._status === 'success') return <span className="badge badge-success">Creado</span>
   if (row._synced || (row._syncStatus?.inDB && row._syncStatus?.inMoodle)) return <span className="badge badge-synced">Sincronizado</span>
@@ -308,9 +313,10 @@ function EnrollmentsModal({ user, onClose }) {
 }
 
 export default function ModulosUsuarios() {
-  const [users, setUsers]               = useState([])
-  const [loading, setLoading]           = useState(true)
+  const [users, setUsers]               = useState(() => getCached(CACHE_KEY) || [])
+  const [loading, setLoading]           = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]           = useState(false)
+  const [deleting, setDeleting]         = useState(false)
   const [search, setSearch]             = useState('')
   const [filterJornada, setFilterJornada]   = useState('')
   const [filterEstado, setFilterEstado]     = useState('')
@@ -325,9 +331,9 @@ export default function ModulosUsuarios() {
   const PER_PAGE = 15
 
   const loadUsers = useCallback(async () => {
-    setLoading(true)
     try {
       const data = await fetchUsers()
+      setCached(CACHE_KEY, data)
       setUsers(data)
     } catch (e) {
       console.error('Error cargando usuarios:', e.message)
@@ -341,7 +347,9 @@ export default function ModulosUsuarios() {
     let data = [...users]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(u => Object.values(u).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+      data = data.filter(u => Object.values(u).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
     if (filterJornada) data = data.filter(u => u.jornada === filterJornada)
     if (filterEstado === 'sincronizado')   data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
@@ -379,17 +387,21 @@ export default function ModulosUsuarios() {
   const handleSync = async () => {
     if (selectedUsers.length === 0) return
     setSyncing(true)
+    const syncingIds = new Set(selectedUsers.map(u => u.id))
+    setUsers(prev => prev.map(u => syncingIds.has(u.id) ? { ...u, _syncing: true } : u))
     try {
       await syncUsers(selectedUsers)
-      const syncedIds = new Set(selectedUsers.map(u => u.id))
       setUsers(prev => prev.map(u =>
-        syncedIds.has(u.id)
-          ? { ...u, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
+        syncingIds.has(u.id)
+          ? { ...u, _syncing: false, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
           : u
       ))
       setSelected({})
     } catch (e) {
       console.error('Error sincronizando:', e.message)
+      setUsers(prev => prev.map(u =>
+        syncingIds.has(u.id) ? { ...u, _syncing: false, _status: 'error' } : u
+      ))
     }
     setSyncing(false)
   }
@@ -401,6 +413,23 @@ export default function ModulosUsuarios() {
       await loadUsers()
     } catch (e) {
       console.error('Error eliminando:', e.message)
+    }
+  }
+
+  // Solo tiene sentido con más de un seleccionado: para uno solo ya está el
+  // ícono de eliminar individual en la fila.
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length <= 1) return
+    if (!confirm(`¿Eliminar ${selectedUsers.length} usuarios de Nexo? Esta acción no se puede deshacer.`)) return
+    setDeleting(true)
+    const results = await Promise.allSettled(selectedUsers.map(u => deleteUser(u.id)))
+    const failed = results.filter(r => r.status === 'rejected')
+    await loadUsers()
+    setSelected({})
+    setDeleting(false)
+    if (failed.length > 0) {
+      alert(`${failed.length} de ${selectedUsers.length} usuarios no se pudieron eliminar:\n` +
+        failed.map(f => `- ${f.reason?.message || 'Error desconocido'}`).join('\n'))
     }
   }
 
@@ -427,6 +456,16 @@ export default function ModulosUsuarios() {
           <button className="btn-primary" onClick={handleSync} disabled={selectedUsers.length === 0 || syncing}>
             <RefreshCw size={15} />
             {syncing ? 'Sincronizando...' : `Sincronizar (${selectedUsers.length})`}
+          </button>
+          <button
+            className="btn-icon btn-icon-delete"
+            onClick={handleBulkDelete}
+            disabled={selectedUsers.length <= 1 || deleting}
+            title={selectedUsers.length <= 1 ? 'Selecciona más de un usuario para eliminar en masa (para uno solo usa el ícono de la fila)' : `Eliminar ${selectedUsers.length} usuarios`}
+            style={{ padding: '9px 14px', border: '1px solid #e2e8f0', borderRadius: 8 }}
+          >
+            <Trash2 size={15} />
+            {deleting ? 'Eliminando...' : `Eliminar (${selectedUsers.length})`}
           </button>
         </div>
       </div>

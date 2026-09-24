@@ -6,8 +6,11 @@ import { createEnrollment } from '../../../services/matriculas/createEnrollment'
 import { updateEnrollment } from '../../../services/matriculas/updateEnrollment'
 import { deleteEnrollment } from '../../../services/matriculas/deleteEnrollment'
 import { searchUsers } from '../../../services/usuarios/searchUsers'
+import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 import "../../../styles/main/Modulo/ModulosMatriculas.css"
+
+const CACHE_KEY = 'enrollments-list'
 
 const ROLE_OPTIONS = [
   { value: 'gestor',         label: 'Gestor' },
@@ -17,18 +20,54 @@ const ROLE_OPTIONS = [
   { value: 'revisor',        label: 'Revisor' },
 ]
 
-const ESTADO_ACADEMICO_OPTIONS = ['Matriculado', 'Suspendido', 'Finalizada', 'Cancelada', 'Pendiente']
+// Equivalencia con los roles reales de Moodle (roleid que espera el sync:
+// student=5, editingteacher=3, teacher=4 = "Non-editing Teacher"). "Gestor"
+// y "Revisor" son roles internos de Journey sin equivalente en Moodle.
+const ROLE_MOODLE_HINT = {
+  gestor:         'Sin rol en Moodle (uso interno)',
+  editingteacher: 'Moodle: Editing Teacher',
+  teacher:        'Moodle: Teacher / Non-editing Teacher',
+  student:        'Moodle: Student',
+  revisor:        'Sin rol en Moodle (uso interno)',
+}
+
+// "Trasladado" queda fuera a propósito: no es un valor que SICAU mande, lo
+// calcula Nexo solo al detectar el traslado (ver saveEnrollmentConNovedades
+// en api/enrollments/controller.js) — no tiene sentido elegirlo a mano. Los
+// demás sí son valores reales que SICAU puede mandar en su campo `estado`, así
+// que se dejan disponibles aquí por si hay que crear o corregir una matrícula
+// a mano con ese mismo estado.
+const ESTADO_ACADEMICO_OPTIONS = ['Activa', 'Suspendido', 'Cancelada', 'Finalizada', 'Pendiente']
+
+// Con el sync por BD externa (ver database/seeds/fixMoodleExternalDbViews.js)
+// cualquier estado que no sea "Activa" simplemente desaparece de la vista
+// moodle_enrol, y Moodle aplica su unenrolaction configurada ("Desmatricular
+// al usuario del curso") por igual para los cuatro — ya no hay distinción
+// entre suspender y desmatricular como en el webservice viejo.
+const ESTADO_MOODLE_HINT = {
+  Activa:      'Moodle: Active — se matricula por BD externa en el próximo cron.',
+  Suspendido:  'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Cancelada:   'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Finalizada:  'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Pendiente:   'Aún no se sincroniza con Moodle.',
+}
 
 const EMPTY_FORM = {
   userid: '', studentLabel: '', role: 'student',
   codigo_asignatura: '', nombre_asignatura: '', grupo: '', periodo: '', programa: '',
-  estado: 'Matriculado', courseid: '', codigo_journey: ''
+  estado: 'Activa', codigo_journey: ''
 }
 
 function StatusBadge({ row, syncResult }) {
-  if (syncResult?.status === 'error') return <span className="badge badge-error">Error</span>
+  if (row._syncing) return <span className="badge badge-syncing">Sincronizando...</span>
+  if (syncResult?.status === 'error' || row.estado_sync === 'error')
+    return <span className="badge badge-error" title={row.ultimo_error_sync || ''}>Error</span>
   if (syncResult?.status === 'usuario_no_existe') return <span className="badge badge-no-user">Usuario no existe en Moodle</span>
   if (syncResult?.status === 'pendiente') return <span className="badge badge-pending">Pendiente</span>
+  if (syncResult?.status === 'desmatriculando' || row.estado_sync === 'desmatriculando')
+    return <span className="badge badge-syncing" title={syncResult?.message || 'Moodle puede tardar 1-2 min en aplicar la baja'}>Desmatriculando...</span>
+  if (row.estado_sync === 'traslado')
+    return <span className="badge badge-novedad" title="El estudiante cambió de grupo/curso en SICAU; revisa esta matrícula">Duplicado</span>
   if (row.estado === 'Suspendido') return <span className="badge badge-suspended">Suspendido</span>
   return row.sincronizado
     ? <span className="badge badge-synced">Sincronizado</span>
@@ -110,6 +149,7 @@ function EnrollmentFormFields({ form, setForm, studentDisabled }) {
         <select name="role" value={form.role} onChange={handleChange}>
           {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
+        <span className="badge badge-moodle moodle-hint">{ROLE_MOODLE_HINT[form.role] || ''}</span>
       </div>
 
       <div className="modal-section-title">Información Académica *</div>
@@ -139,23 +179,22 @@ function EnrollmentFormFields({ form, setForm, studentDisabled }) {
           <input name="programa" value={form.programa} onChange={handleChange} placeholder="Ingeniería de Sistemas" />
         </div>
         <div className="modal-field">
-          <label>Estado Académico</label>
+          <label>Estado Académico *</label>
           <select name="estado" value={form.estado} onChange={handleChange}>
             {ESTADO_ACADEMICO_OPTIONS.map(e => <option key={e} value={e}>{e}</option>)}
+            {form.estado && !ESTADO_ACADEMICO_OPTIONS.includes(form.estado) && (
+              <option value={form.estado}>{form.estado} (actual — gestionado desde Sync)</option>
+            )}
           </select>
+          <span className="badge badge-moodle moodle-hint">{ESTADO_MOODLE_HINT[form.estado] || 'Cambios de estado distintos de "Activa" se gestionan desde Sync > Novedades.'}</span>
         </div>
       </div>
 
-      <div className="modal-section-title">Detalles de Integración (opcional)</div>
-      <div className="modal-row">
-        <div className="modal-field">
-          <label>ID Curso Moodle</label>
-          <input name="courseid" value={form.courseid} onChange={handleChange} placeholder="Se asigna al sincronizar" />
-        </div>
-        <div className="modal-field">
-          <label>Código Nexo</label>
-          <input name="codigo_journey" value={form.codigo_journey} onChange={handleChange} placeholder="Se genera automáticamente si se deja vacío" />
-        </div>
+      <div className="modal-section-title">Integración con Moodle</div>
+      <div className="modal-field">
+        <label>Código Nexo</label>
+        <input name="codigo_journey" value={form.codigo_journey} onChange={handleChange} placeholder="Se genera automáticamente si se deja vacío" />
+        <p className="modal-hint">Es el identificador (idnumber) del curso en Moodle: con él se realiza la matrícula. Se calcula como Código Asignatura + Periodo + Grupo si no lo escribes.</p>
       </div>
       <p className="modal-hint">El estado inicial de la matrícula será "Solo en BD" hasta que se ejecute la sincronización.</p>
     </>
@@ -184,7 +223,6 @@ function CreateEnrollmentModal({ onClose, onSave }) {
         periodo: form.periodo,
         programa: form.programa,
         estado: form.estado,
-        courseid: form.courseid ? Number(form.courseid) : null,
         codigo_journey: form.codigo_journey || undefined
       })
       onSave()
@@ -228,8 +266,7 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
     grupo: enrollment.grupo || '',
     periodo: enrollment.periodo || '',
     programa: enrollment.programa || '',
-    estado: enrollment.estado || 'Matriculado',
-    courseid: enrollment.courseid || '',
+    estado: enrollment.estado || 'Activa',
     codigo_journey: enrollment.codigo_journey || ''
   })
   const [error, setError] = useState('')
@@ -249,7 +286,7 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
         periodo: form.periodo,
         programa: form.programa,
         estado: form.estado,
-        courseid: form.courseid ? Number(form.courseid) : null
+        courseid: enrollment.courseid || null
       })
       onSave()
       onClose()
@@ -280,9 +317,10 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
 }
 
 export default function ModulosMatriculas() {
-  const [enrollments, setEnrollments] = useState([])
-  const [loading, setLoading]         = useState(true)
+  const [enrollments, setEnrollments] = useState(() => getCached(CACHE_KEY) || [])
+  const [loading, setLoading]         = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]         = useState(false)
+  const [deleting, setDeleting]       = useState(false)
   const [search, setSearch]           = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterPrograma, setFilterPrograma] = useState('')
@@ -299,10 +337,15 @@ export default function ModulosMatriculas() {
   const [retryingId, setRetryingId]   = useState(null)
   const PER_PAGE = 15
 
+  // Sin setLoading(true) al principio a propósito: esto se llama también
+  // después de crear/editar/eliminar/sincronizar una fila, y forzar el
+  // spinner de página completa cada vez volaba la tabla a blanco por una
+  // sola fila cambiada. La tabla se queda visible (con el dato de antes)
+  // hasta que llega el dato fresco.
   const loadEnrollments = useCallback(async () => {
-    setLoading(true)
     try {
       const data = await fetchEnrollmentsList()
+      setCached(CACHE_KEY, data)
       setEnrollments(data)
     } catch (e) {
       console.error('Error cargando matrículas:', e.message)
@@ -313,11 +356,14 @@ export default function ModulosMatriculas() {
   useEffect(() => { loadEnrollments() }, [loadEnrollments])
 
   const filtered = useMemo(() => {
-    let data = [...enrollments]
+    // Las eliminadas (borrado lógico: estado='Eliminado') no se muestran aquí
+    // — siguen existiendo para historial y re-sincronización en Sync Novedades.
+    let data = enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'eliminado')
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(e => [e.nombre_estudiante, e.documento, e.codigo_asignatura, e.nombre_asignatura]
-        .some(v => v && String(v).toLowerCase().includes(q)))
+      data = data.filter(e => Object.values(e).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
     if (filterPeriodo)  data = data.filter(e => e.periodo === filterPeriodo)
     if (filterPrograma) data = data.filter(e => e.programa === filterPrograma)
@@ -327,6 +373,8 @@ export default function ModulosMatriculas() {
     else if (filterEstado === 'pendiente')    data = data.filter(e => syncResults[e.id]?.status === 'pendiente')
     else if (filterEstado === 'usuario_no_existe') data = data.filter(e => syncResults[e.id]?.status === 'usuario_no_existe')
     else if (filterEstado === 'error')        data = data.filter(e => syncResults[e.id]?.status === 'error')
+    else if (filterEstado === 'traslado')     data = data.filter(e => e.estado_sync === 'traslado')
+    else if (filterEstado === 'desmatriculando') data = data.filter(e => syncResults[e.id]?.status === 'desmatriculando' || e.estado_sync === 'desmatriculando')
     data.sort((a, b) => {
       const av = String(a[sortKey] || '')
       const bv = String(b[sortKey] || '')
@@ -372,6 +420,8 @@ export default function ModulosMatriculas() {
   const handleSync = async () => {
     if (selectedEnrollments.length === 0) return
     setSyncing(true)
+    const syncingIds = new Set(selectedEnrollments.map(e => e.id))
+    setEnrollments(prev => prev.map(e => syncingIds.has(e.id) ? { ...e, _syncing: true } : e))
     try {
       const res = await syncEnrollments(selectedEnrollments)
       const results = res?.body?.results || []
@@ -386,12 +436,14 @@ export default function ModulosMatriculas() {
     } catch (e) {
       console.error('Error sincronizando:', e.message)
       alert('Error al sincronizar matrículas: ' + e.message)
+      setEnrollments(prev => prev.map(e => syncingIds.has(e.id) ? { ...e, _syncing: false } : e))
     }
     setSyncing(false)
   }
 
   const handleRetry = async (enrollment) => {
     setRetryingId(enrollment.id)
+    setEnrollments(prev => prev.map(e => e.id === enrollment.id ? { ...e, _syncing: true } : e))
     try {
       const res = await syncEnrollments([enrollment])
       const results = res?.body?.results || []
@@ -402,17 +454,35 @@ export default function ModulosMatriculas() {
     } catch (e) {
       console.error('Error reintentando:', e.message)
       alert('Error al reintentar: ' + e.message)
+      setEnrollments(prev => prev.map(e => e.id === enrollment.id ? { ...e, _syncing: false } : e))
     }
     setRetryingId(null)
   }
 
   const handleDelete = async (enrollment) => {
-    if (!confirm(`¿Eliminar la matrícula de ${enrollment.nombre_estudiante} en ${enrollment.nombre_asignatura}?`)) return
+    if (!confirm(`¿Eliminar la matrícula de ${enrollment.nombre_estudiante} en ${enrollment.nombre_asignatura}?\n\nSe desmatriculará de Moodle (vía BD externa) y quedará con historial en Sync > Novedades.`)) return
     try {
       await deleteEnrollment(enrollment.id)
       await loadEnrollments()
     } catch (e) {
       console.error('Error eliminando:', e.message)
+    }
+  }
+
+  // Solo tiene sentido con más de una seleccionada: para una sola ya está el
+  // ícono de eliminar individual en la fila.
+  const handleBulkDelete = async () => {
+    if (selectedEnrollments.length <= 1) return
+    if (!confirm(`¿Eliminar ${selectedEnrollments.length} matrículas?\n\nSe desmatricularán de Moodle (vía BD externa) y quedarán con historial en Sync > Novedades.`)) return
+    setDeleting(true)
+    const results = await Promise.allSettled(selectedEnrollments.map(e => deleteEnrollment(e.id)))
+    const failed = results.filter(r => r.status === 'rejected')
+    await loadEnrollments()
+    setSelected({})
+    setDeleting(false)
+    if (failed.length > 0) {
+      alert(`${failed.length} de ${selectedEnrollments.length} matrículas no se pudieron eliminar:\n` +
+        failed.map(f => `- ${f.reason?.message || 'Error desconocido'}`).join('\n'))
     }
   }
 
@@ -429,6 +499,16 @@ export default function ModulosMatriculas() {
           </button>
           <button className="btn-primary" onClick={() => setShowCreate(true)}>
             <UserPlus size={15} /> Crear Matrícula
+          </button>
+          <button
+            className="btn-icon btn-icon-delete"
+            onClick={handleBulkDelete}
+            disabled={selectedEnrollments.length <= 1 || deleting}
+            title={selectedEnrollments.length <= 1 ? 'Selecciona más de una matrícula para eliminar en masa (para una sola usa el ícono de la fila)' : `Eliminar ${selectedEnrollments.length} matrículas`}
+            style={{ padding: '9px 14px', border: '1px solid #e2e8f0', borderRadius: 8 }}
+          >
+            <Trash2 size={15} />
+            {deleting ? 'Eliminando...' : `Eliminar (${selectedEnrollments.length})`}
           </button>
         </div>
       </div>
@@ -462,6 +542,8 @@ export default function ModulosMatriculas() {
           <option value="pendiente">Pendiente</option>
           <option value="usuario_no_existe">Usuario no existe en Moodle</option>
           <option value="error">Error</option>
+          <option value="traslado">Duplicado (cambió de curso)</option>
+          <option value="desmatriculando">Desmatriculando...</option>
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
@@ -515,7 +597,7 @@ export default function ModulosMatriculas() {
                       <td><StatusBadge row={enrollment} syncResult={syncResults[enrollment.id]} /></td>
                       <td>
                         <div className="action-btns">
-                          {['pendiente', 'usuario_no_existe', 'error'].includes(syncResults[enrollment.id]?.status) && (
+                          {['pendiente', 'usuario_no_existe', 'error', 'desmatriculando'].includes(syncResults[enrollment.id]?.status) && (
                             <button
                               className="btn-icon"
                               onClick={() => handleRetry(enrollment)}
@@ -547,23 +629,21 @@ export default function ModulosMatriculas() {
                             <div className="expand-grid">
                               <div className="expand-item">
                                 <span className="expand-label">Rol</span>
-                                <span className="expand-value">{enrollment.role || '-'}</span>
+                                <span className="expand-value">
+                                  {ROLE_OPTIONS.find(r => r.value === enrollment.role)?.label || enrollment.role || '-'}
+                                  {' '}<span className="badge badge-moodle moodle-hint">{ROLE_MOODLE_HINT[enrollment.role] || ''}</span>
+                                </span>
                               </div>
                               <div className="expand-item">
                                 <span className="expand-label">Estado Académico</span>
-                                <span className="expand-value">{enrollment.estado || '-'}</span>
+                                <span className="expand-value">
+                                  {enrollment.estado || '-'}
+                                  {' '}<span className="badge badge-moodle moodle-hint">{ESTADO_MOODLE_HINT[enrollment.estado] || ''}</span>
+                                </span>
                               </div>
                               <div className="expand-item">
                                 <span className="expand-label">Código Nexo</span>
                                 <span className="expand-value">{enrollment.codigo_journey || '-'}</span>
-                              </div>
-                              <div className="expand-item">
-                                <span className="expand-label">ID Curso Moodle</span>
-                                <span className="expand-value">{enrollment.courseid || '-'}</span>
-                              </div>
-                              <div className="expand-item">
-                                <span className="expand-label">ID Matrícula Moodle</span>
-                                <span className="expand-value">{enrollment.moodle_enrollment_id || '-'}</span>
                               </div>
                               <div className="expand-item">
                                 <span className="expand-label">Documento</span>
