@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { Filter } from 'lucide-react'
+import { Filter, Eye } from 'lucide-react'
 import { fetchLogs } from '../../../services/admin/fetchLogs'
 import { menuItems } from '../../../components/sidenav/SideNavItems'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
@@ -76,6 +76,78 @@ const COLUMNS = [
   { key: 'description', label: 'Descripción' },
   { key: 'fecha',       label: 'Fecha-hora' },
 ]
+
+// Nombres legibles para las claves que arman los `detalle` de saveLog en el
+// backend (api/**/network.js). Lo que no está acá se humaniza (quita guiones
+// bajos, mayúscula inicial) en vez de mostrar la clave cruda.
+const FIELD_LABELS = {
+  id: 'ID', userid: 'ID usuario', courseid: 'ID curso', role_id: 'ID rol', submodule_id: 'ID submódulo',
+  username: 'Usuario', nombre: 'Nombre', estudiante: 'Estudiante', email: 'Correo', documento: 'Documento',
+  cedula: 'Cédula', curso: 'Curso', codigo_asignatura: 'Código asignatura', nombre_asignatura: 'Asignatura',
+  codigo_journey: 'Código Nexo', grupo: 'Grupo', periodo: 'Período', role: 'Rol', rol: 'Rol',
+  estado: 'Estado', estado_anterior: 'Estado anterior', estado_nuevo: 'Estado nuevo', status: 'Resultado',
+  fullname: 'Nombre completo', shortname: 'Nombre corto', idnumber: 'Código', categoryid: 'ID categoría',
+  name: 'Nombre', code: 'Código', module_id: 'ID módulo', archivo: 'Archivo', seed_shortname: 'Semilla',
+  departamento: 'Departamento', programa: 'Programa', docente: 'Docente', suspend: 'Suspendido',
+  estado_curso: 'Estado del curso', cedulas_matriculadas: 'Cédulas matriculadas',
+  modulo: 'Módulo', submodulo: 'Submódulo', activo: 'Activo',
+}
+
+function fieldLabel(key) {
+  if (FIELD_LABELS[key]) return FIELD_LABELS[key]
+  return key.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
+}
+
+// El detalle (columna logs.detail) es un array de objetos con los campos
+// puntuales de cada item afectado (ej. correo/curso de cada matrícula
+// enviada por SICAU). Va en un modal aparte (no inline en la fila): esta
+// info es más sensible que el resto de la tabla (documentos, correos, etc.)
+// y el patrón del resto del sistema (ver ModulosUsuarios > "Ver matrículas",
+// SyncNovedades > fila expandida) es un grid de campo/valor etiquetado, no
+// un volcado crudo de "clave: valor" pegado con puntos.
+function DetailItem({ item }) {
+  const entries = Object.entries(item || {}).filter(([, v]) => v !== null && v !== undefined && v !== '')
+  return (
+    <div className="log-detail-grid">
+      {entries.map(([k, v]) => (
+        <div className="log-detail-field" key={k}>
+          <span className="log-detail-label">{fieldLabel(k)}</span>
+          <span className="log-detail-value">{String(v)}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function LogDetailModal({ row, onClose }) {
+  // Logs viejos (o rutas que todavía no mandan `detalle` a saveLog) no tienen
+  // logs.detail: se arma un detalle genérico con los campos que sí hay,
+  // para que el botón de detalle sea consistente en todas las filas.
+  const items = row.detail
+    ? (Array.isArray(row.detail) ? row.detail : [row.detail])
+    : [{ usuario: row.username, aplicacion: row.aplicacion, modulo: row.modulo, fecha: row.fecha }]
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box" style={{ maxWidth: '640px', width: '90vw' }}>
+        <div className="modal-header">
+          <h3>Detalle del registro</h3>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-form">
+          {items.length > 1 && <p className="log-detail-count">{items.length} elementos</p>}
+          {items.map((item, i) => (
+            <div key={i} className={i > 0 ? 'log-detail-divider' : ''}>
+              <DetailItem item={item} />
+            </div>
+          ))}
+        </div>
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Filtro de columna estilo Excel: lista los valores presentes en esa columna
 // con checkboxes. `selected === null` = todos visibles; si no, solo los del Set.
@@ -178,6 +250,7 @@ export default function AdminLogs() {
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState('')
   const [filters, setFilters] = useState({})   // { colKey: Set<string> }
+  const [detailRow, setDetailRow] = useState(null)
 
   const submoduleIndex = useMemo(() => buildSubmoduleIndex(), [])
 
@@ -192,6 +265,7 @@ export default function AdminLogs() {
       modulo: r.modulo,
       description: l.description || '-',
       fecha: l.date ? new Date(l.date).toLocaleString() : '-',
+      detail: l.detail || null,
     }
   }), [logs, submoduleIndex])
 
@@ -265,18 +339,26 @@ export default function AdminLogs() {
                     />
                   </th>
                 ))}
+                <th style={{ width: 60 }}>Detalle</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(row => (
                 <tr key={row.id}>
                   {COLUMNS.map(c => <td key={c.key}>{row[c.key]}</td>)}
+                  <td>
+                    <button className="btn-icon" onClick={() => setDetailRow(row)} title="Ver detalle">
+                      <Eye size={14} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {detailRow && <LogDetailModal row={detailRow} onClose={() => setDetailRow(null)} />}
     </div>
   )
 }
