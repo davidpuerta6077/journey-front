@@ -33,7 +33,7 @@ function tipoNovedad(enr) {
   if (['retirado', 'retirada'].includes(estado))   return 'Retiro'
   if (['finalizado', 'finalizada'].includes(estado)) return 'Finalización'
   if (['suspendido', 'suspendida'].includes(estado)) return 'Suspensión'
-  if (estado === 'eliminado') return 'Eliminado'
+  if (estado === 'desmatriculado') return 'Desmatriculado'
   if (estado === 'pendiente') return 'Pendiente'
   return enr.estado || 'Otro'
 }
@@ -82,7 +82,7 @@ function findDuplicadosPorGrupo(all) {
 const COLUMNS = [
   { key: 'codigo_journey',      label: 'Código Nexo' },
   { key: 'nombre_asignatura',   label: 'Asignatura' },
-  { key: 'nombre',              label: 'Estudiante' },
+  { key: 'nombre',              label: 'Nombre' },
   { key: 'periodo',             label: 'Período' },
   { key: 'estado_anterior',     label: 'Estado anterior' },
   { key: 'estado',              label: 'Estado actual' },
@@ -94,7 +94,7 @@ const NOVEDAD_BADGE_CLASS = {
   'Cancelación':             'badge-pending',
   'Retiro':                  'badge-error',
   'Finalización':            'badge-error',
-  'Eliminado':               'badge-error',
+  'Desmatriculado':          'badge-error',
   'Suspensión':              'badge-pending',
   'Desmatriculando':         'badge-syncing',
   'Pendiente':               'badge-pending',

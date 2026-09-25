@@ -20,7 +20,7 @@ const ROLE_LABEL = {
 const COLUMNS = [
   { key: 'codigo_journey',    label: 'Código Nexo' },
   { key: 'nombre_asignatura', label: 'Asignatura' },
-  { key: 'nombre',            label: 'Estudiante' },
+  { key: 'nombre',            label: 'Nombre' },
   { key: 'email',             label: 'Email' },
   { key: 'periodo',           label: 'Período' },
   { key: 'grupo',             label: 'Grupo' },

@@ -356,9 +356,9 @@ export default function ModulosMatriculas() {
   useEffect(() => { loadEnrollments() }, [loadEnrollments])
 
   const filtered = useMemo(() => {
-    // Las eliminadas (borrado lógico: estado='Eliminado') no se muestran aquí
+    // Las desmatriculadas (borrado lógico: estado='Desmatriculado') no se muestran aquí
     // — siguen existiendo para historial y re-sincronización en Sync Novedades.
-    let data = enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'eliminado')
+    let data = enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'desmatriculado')
     if (search) {
       const q = search.toLowerCase()
       data = data.filter(e => Object.values(e).some(v =>
@@ -460,20 +460,20 @@ export default function ModulosMatriculas() {
   }
 
   const handleDelete = async (enrollment) => {
-    if (!confirm(`¿Eliminar la matrícula de ${enrollment.nombre_estudiante} en ${enrollment.nombre_asignatura}?\n\nSe desmatriculará de Moodle (vía BD externa) y quedará con historial en Sync > Novedades.`)) return
+    if (!confirm(`¿Desmatricular a ${enrollment.nombre_estudiante} de ${enrollment.nombre_asignatura}?\n\nNo se borra de la base de datos (se conserva el historial): se desmatriculará de Moodle (vía BD externa) y quedará registrado en Sync > Novedades.`)) return
     try {
       await deleteEnrollment(enrollment.id)
       await loadEnrollments()
     } catch (e) {
-      console.error('Error eliminando:', e.message)
+      console.error('Error desmatriculando:', e.message)
     }
   }
 
   // Solo tiene sentido con más de una seleccionada: para una sola ya está el
-  // ícono de eliminar individual en la fila.
+  // ícono de desmatricular individual en la fila.
   const handleBulkDelete = async () => {
     if (selectedEnrollments.length <= 1) return
-    if (!confirm(`¿Eliminar ${selectedEnrollments.length} matrículas?\n\nSe desmatricularán de Moodle (vía BD externa) y quedarán con historial en Sync > Novedades.`)) return
+    if (!confirm(`¿Desmatricular ${selectedEnrollments.length} matrículas?\n\nNo se borran de la base de datos (se conserva el historial): se desmatricularán de Moodle (vía BD externa) y quedarán registradas en Sync > Novedades.`)) return
     setDeleting(true)
     const results = await Promise.allSettled(selectedEnrollments.map(e => deleteEnrollment(e.id)))
     const failed = results.filter(r => r.status === 'rejected')
@@ -481,7 +481,7 @@ export default function ModulosMatriculas() {
     setSelected({})
     setDeleting(false)
     if (failed.length > 0) {
-      alert(`${failed.length} de ${selectedEnrollments.length} matrículas no se pudieron eliminar:\n` +
+      alert(`${failed.length} de ${selectedEnrollments.length} matrículas no se pudieron desmatricular:\n` +
         failed.map(f => `- ${f.reason?.message || 'Error desconocido'}`).join('\n'))
     }
   }
@@ -504,11 +504,11 @@ export default function ModulosMatriculas() {
             className="btn-icon btn-icon-delete"
             onClick={handleBulkDelete}
             disabled={selectedEnrollments.length <= 1 || deleting}
-            title={selectedEnrollments.length <= 1 ? 'Selecciona más de una matrícula para eliminar en masa (para una sola usa el ícono de la fila)' : `Eliminar ${selectedEnrollments.length} matrículas`}
+            title={selectedEnrollments.length <= 1 ? 'Selecciona más de una matrícula para desmatricular en masa (para una sola usa el ícono de la fila)' : `Desmatricular ${selectedEnrollments.length} matrículas`}
             style={{ padding: '9px 14px', border: '1px solid #e2e8f0', borderRadius: 8 }}
           >
             <Trash2 size={15} />
-            {deleting ? 'Eliminando...' : `Eliminar (${selectedEnrollments.length})`}
+            {deleting ? 'Desmatriculando...' : `Desmatricular (${selectedEnrollments.length})`}
           </button>
         </div>
       </div>
@@ -616,7 +616,7 @@ export default function ModulosMatriculas() {
                           <button className="btn-icon btn-icon-edit" onClick={() => setEditEnrollment(enrollment)} title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button className="btn-icon btn-icon-delete" onClick={() => handleDelete(enrollment)} title="Eliminar">
+                          <button className="btn-icon btn-icon-delete" onClick={() => handleDelete(enrollment)} title="Desmatricular">
                             <Trash2 size={14} />
                           </button>
                         </div>

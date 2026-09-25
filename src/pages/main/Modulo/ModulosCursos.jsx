@@ -20,14 +20,14 @@ const COLUMNS = [
   { key: 'fullname',     label: 'Nombre Completo' },
   { key: 'shortname',    label: 'Nombre Corto' },
   { key: 'idnumber',     label: 'Código' },
-  { key: 'docente',      label: 'Profesor' },
+  { key: 'nombre_profesor', label: 'Profesor' },
   { key: 'periodo',      label: 'Periodo' },
   { key: 'moodle_id',    label: 'Moodle ID' },
 ]
 
 const EMPTY_FORM = {
   seed_shortname: '', categoryid: '', fullname: '', shortname: '', idnumber: '',
-  docente: '', periodo: '', grupo: '', departamento: '', programa: '',
+  nombre_profesor: '', periodo: '', grupo: '', departamento: '', programa: '',
   codigo_asignatura: '', nombre_asignatura: '', fecha_inicio: '', fecha_fin: ''
 }
 
@@ -117,7 +117,7 @@ function CreateCourseModal({ onClose, onSave }) {
                 </div>
                 <div className="modal-field">
                   <label>Profesor</label>
-                  <input name="docente" value={form.docente} onChange={handleChange} />
+                  <input name="nombre_profesor" value={form.nombre_profesor} onChange={handleChange} />
                 </div>
               </div>
               <div className="modal-section-title">Datos Académicos</div>
