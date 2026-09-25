@@ -25,7 +25,7 @@ export const menuItems = [
       { label: 'Carga Masiva', icon: Upload, children: [
           { label: 'Usuarios', path: '/carga/usuarios', submoduleCode: 'bulk_upload_users' },
           { label: 'Matrículas', path: '/carga/matriculas', submoduleCode: 'bulk_upload_enrollments' },
-          { label: 'Novedades (carga manual)', path: '/carga/novedades', submoduleCode: 'bulk_upload_updates' },
+          { label: 'Novedades', path: '/carga/novedades', submoduleCode: 'bulk_upload_updates' },
           { label: 'Desmatrículas', path: '/carga/desmatriculas', submoduleCode: 'bulk_upload_unenrollments' },
       ]},
       { label: 'Reglas', icon: Shield, children: [

@@ -14,7 +14,7 @@ const COLUMNS = [
   { key: 'fullname',     label: 'Nombre Completo' },
   { key: 'shortname',    label: 'Nombre Corto' },
   { key: 'idnumber',     label: 'Código' },
-  { key: 'docente',      label: 'Profesor' },
+  { key: 'nombre_profesor', label: 'Profesor' },
   { key: 'periodo',      label: 'Periodo' },
   { key: 'departamento', label: 'Departamento' },
   { key: 'programa',     label: 'Programa' },
