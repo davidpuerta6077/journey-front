@@ -11,6 +11,7 @@ import HomeNexo from './pages/main/HomeNexo'
 import SyncUsuariosP from './pages/main/Sync/SyncUsuariosP'
 import SyncCursos from './pages/main/Sync/SyncCursos'
 import SyncMatriculas from './pages/main/Sync/SyncMatriculas'
+import SyncNovedades from './pages/main/Sync/SyncNovedades'
 
 import ModulosUsuarios from './pages/main/Modulo/ModulosUsuarios'
 import ModulosCursos from './pages/main/Modulo/ModulosCursos'
@@ -74,6 +75,11 @@ function App() {
           <Route path="sync/matriculas" element={
             <PrivateRoute submoduleCode="sync_enrollments">
               <SyncMatriculas />
+            </PrivateRoute>
+          } />
+          <Route path="sync/novedades" element={
+            <PrivateRoute submoduleCode="sync_enrollments_novedades">
+              <SyncNovedades />
             </PrivateRoute>
           } />
 

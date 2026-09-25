@@ -7,7 +7,7 @@ import { togglePlatformUserEstado } from '../../../services/admin/togglePlatform
 import { fetchRoles } from '../../../services/admin/fetchRoles'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
-const EMPTY_FORM = { username: '', email: '', role_id: '' }
+const EMPTY_FORM = { username: '', email: '', role_id: '', departamento: '' }
 
 function UserModal({ title, initial, roles, disableEmail, onClose, onSave }) {
   const [form, setForm] = useState(initial)
@@ -62,6 +62,10 @@ function UserModal({ title, initial, roles, disableEmail, onClose, onSave }) {
               <option value="">Seleccionar rol...</option>
               {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
+          </div>
+          <div className="modal-field">
+            <label>Departamento</label>
+            <input name="departamento" value={form.departamento || ''} onChange={handleChange} placeholder="Departamento" />
           </div>
           <p className="modal-hint">El acceso se valida contra el correo institucional (Cognito), aquí solo se asigna el rol.</p>
         </div>
@@ -151,6 +155,7 @@ export default function AdminUsuarios() {
                 <th>Username</th>
                 <th>Email</th>
                 <th>Rol</th>
+                <th>Departamento</th>
                 <th>Estado</th>
                 <th>Último acceso</th>
                 <th>Acciones</th>
@@ -162,6 +167,7 @@ export default function AdminUsuarios() {
                   <td>{user.username}</td>
                   <td>{user.email}</td>
                   <td>{user.role_name || '-'}</td>
+                  <td>{user.departamento || '-'}</td>
                   <td>
                     <span className={`badge ${user.estado ? 'badge-synced' : 'badge-pending'}`}>
                       {user.estado ? 'Activo' : 'Inactivo'}
@@ -197,11 +203,11 @@ export default function AdminUsuarios() {
       {editUser && (
         <UserModal
           title="Editar Usuario de Plataforma"
-          initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id || '' }}
+          initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id || '', departamento: editUser.departamento || '' }}
           roles={roles}
           disableEmail
           onClose={() => setEditUser(null)}
-          onSave={(form) => updatePlatformUser(editUser.id, { username: form.username, role_id: form.role_id }).then(loadData)}
+          onSave={(form) => updatePlatformUser(editUser.id, { username: form.username, role_id: form.role_id, departamento: form.departamento }).then(loadData)}
         />
       )}
     </div>

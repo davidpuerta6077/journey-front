@@ -1,40 +1,130 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Pencil, Trash2, Power, Plus } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { Pencil, Trash2, Power } from 'lucide-react'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
 import { createRegla } from '../../../services/admin/createRegla'
 import { updateRegla } from '../../../services/admin/updateRegla'
 import { deleteRegla } from '../../../services/admin/deleteRegla'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
-import { createMoodleCategoria } from '../../../services/admin/createMoodleCategoria'
 import { fetchAsignaturas } from '../../../services/admin/fetchAsignaturas'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
+import "../../../styles/main/Modulo/ModulosMatriculas.css"
 
 const EMPTY_FORM = { codigo_asignatura: '', programa: '', departamento: '', seed_shortname: '', categoryid: '', activo: true }
 
-function ReglaModal({ title, initial, categorias, semillas, asignaturas, onCategoriaCreada, onClose, onSave }) {
+// Combobox con filtro en vivo: las categorías ya vienen cargadas de Moodle
+// (fetchMoodleCategorias), así que el filtro es puro cliente, sin más
+// llamadas de red — necesario porque con muchas categorías un <select> plano
+// se vuelve imposible de recorrer a ojo.
+function CategoriaSearchSelect({ categorias, value, onSelect }) {
+  const selectedCategoria = categorias.find(c => String(c.id) === String(value))
+  const [query, setQuery] = useState(selectedCategoria ? `${selectedCategoria.name} (id ${selectedCategoria.id})` : (value ? `categoryid ${value}` : ''))
+  const [open, setOpen] = useState(false)
+  const wrapperRef = useRef(null)
+
+  useEffect(() => {
+    const cat = categorias.find(c => String(c.id) === String(value))
+    setQuery(cat ? `${cat.name} (id ${cat.id})` : (value ? `categoryid ${value} (actual, no está en la lista)` : ''))
+  }, [value, categorias])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return categorias
+    return categorias.filter(c => c.name.toLowerCase().includes(q) || String(c.id).includes(q))
+  }, [categorias, query])
+
+  const pick = (cat) => {
+    setQuery(`${cat.name} (id ${cat.id})`)
+    setOpen(false)
+    onSelect(cat)
+  }
+
+  return (
+    <div className="searchable-select" ref={wrapperRef}>
+      <input
+        value={query}
+        onChange={e => { setQuery(e.target.value); setOpen(true); if (!e.target.value) onSelect(null) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="Busca por nombre o id de categoría..."
+        autoComplete="off"
+      />
+      {open && (
+        <div className="searchable-select-dropdown">
+          {filtered.length === 0
+            ? <div className="searchable-select-empty">Sin resultados</div>
+            : filtered.map(cat => (
+              <div key={cat.id} className="searchable-select-option" onMouseDown={() => pick(cat)}>
+                {cat.name} <span style={{ opacity: 0.6 }}>(id {cat.id})</span>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Igual que CategoriaSearchSelect, pero el valor ES el texto (seed_shortname
+// es un string, no un id numérico): escribir o pegar directo también deja el
+// shortname listo sin obligar a elegir de la lista — así lo que se copia
+// desde Reglas > Plantillas (botón "Copiar shortname") tiene dónde pegarse.
+function SemillaSearchSelect({ semillas, value, onSelect }) {
+  const [query, setQuery] = useState(value || '')
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => { setQuery(value || '') }, [value])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return semillas
+    return semillas.filter(s => s.shortname.toLowerCase().includes(q) || s.fullname.toLowerCase().includes(q))
+  }, [semillas, query])
+
+  const handleChange = (e) => {
+    setQuery(e.target.value)
+    setOpen(true)
+    onSelect(e.target.value)
+  }
+
+  const pick = (s) => {
+    setQuery(s.shortname)
+    setOpen(false)
+    onSelect(s.shortname)
+  }
+
+  return (
+    <div className="searchable-select">
+      <input
+        value={query}
+        onChange={handleChange}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="Busca por shortname o nombre, o pega el shortname copiado..."
+        autoComplete="off"
+      />
+      {open && (
+        <div className="searchable-select-dropdown">
+          {filtered.length === 0
+            ? <div className="searchable-select-empty">Sin coincidencias — se usará el texto tal cual</div>
+            : filtered.map(s => (
+              <div key={s.id} className="searchable-select-option" onMouseDown={() => pick(s)}>
+                {s.fullname} <span style={{ opacity: 0.6 }}>({s.shortname})</span>
+              </div>
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReglaModal({ title, initial, categorias, semillas, asignaturas, onClose, onSave }) {
   const [form, setForm] = useState(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [creandoCategoria, setCreandoCategoria] = useState(false)
-  const [nuevaCategoriaNombre, setNuevaCategoriaNombre] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
-  }
-
-  const handleCrearCategoria = async () => {
-    if (!nuevaCategoriaNombre.trim()) return
-    setError('')
-    try {
-      const nueva = await onCategoriaCreada(nuevaCategoriaNombre.trim())
-      setForm(f => ({ ...f, categoryid: String(nueva.id) }))
-      setNuevaCategoriaNombre('')
-      setCreandoCategoria(false)
-    } catch (e) {
-      setError(e.message)
-    }
   }
 
   const handleSubmit = async () => {
@@ -94,43 +184,23 @@ function ReglaModal({ title, initial, categorias, semillas, asignaturas, onCateg
           </div>
           <div className="modal-field">
             <label>Semilla en Moodle *</label>
-            <select name="seed_shortname" value={form.seed_shortname} onChange={handleChange}>
-              <option value="">Selecciona un curso semilla...</option>
-              {semillas.map(s => (
-                <option key={s.id} value={s.shortname}>{s.fullname} ({s.shortname})</option>
-              ))}
-              {form.seed_shortname && !semillas.some(s => s.shortname === form.seed_shortname) && (
-                <option value={form.seed_shortname}>{form.seed_shortname} (actual, no está en la lista)</option>
-              )}
-            </select>
+            <SemillaSearchSelect
+              semillas={semillas}
+              value={form.seed_shortname}
+              onSelect={(shortname) => setForm(f => ({ ...f, seed_shortname: shortname }))}
+            />
           </div>
           <div className="modal-field">
             <label>Categoría Moodle destino *</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <select name="categoryid" value={form.categoryid} onChange={handleChange} style={{ flex: 1 }}>
-                <option value="">Selecciona una categoría...</option>
-                {categorias.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} (id {c.id})</option>
-                ))}
-                {form.categoryid && !categorias.some(c => String(c.id) === String(form.categoryid)) && (
-                  <option value={form.categoryid}>categoryid {form.categoryid} (actual, no está en la lista)</option>
-                )}
-              </select>
-              <button type="button" className="btn-icon" title="Crear categoría nueva en Moodle" onClick={() => setCreandoCategoria(v => !v)}>
-                <Plus size={16} />
-              </button>
-            </div>
-            {creandoCategoria && (
-              <div className="modal-row" style={{ marginTop: 8 }}>
-                <input
-                  placeholder="Nombre de la nueva categoría"
-                  value={nuevaCategoriaNombre}
-                  onChange={e => setNuevaCategoriaNombre(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <button type="button" className="btn-secondary" onClick={handleCrearCategoria}>Crear</button>
-              </div>
-            )}
+            <CategoriaSearchSelect
+              categorias={categorias}
+              value={form.categoryid}
+              onSelect={(cat) => setForm(f => ({ ...f, categoryid: cat ? String(cat.id) : '' }))}
+            />
+            <p className="modal-hint">
+              Las categorías se crean y administran directo en Moodle — este buscador solo elige
+              entre las que ya existen. Consúltalas en Reglas &gt; Plantillas.
+            </p>
           </div>
           <details className="modal-field">
             <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: '#64748b' }}>
@@ -199,12 +269,6 @@ export default function ReglasActivas() {
   }, [])
 
   useEffect(() => { loadReglas(); loadCatalogos() }, [loadReglas, loadCatalogos])
-
-  const handleCategoriaCreada = async (nombre) => {
-    const nueva = await createMoodleCategoria({ name: nombre })
-    setCategorias(prev => [...prev, nueva])
-    return nueva
-  }
 
   const handleToggleActivo = async (regla) => {
     try {
@@ -303,7 +367,6 @@ export default function ReglasActivas() {
           categorias={categorias}
           semillas={semillas}
           asignaturas={asignaturas}
-          onCategoriaCreada={handleCategoriaCreada}
           onClose={() => setShowCreate(false)}
           onSave={(form) => createRegla(form).then(loadReglas)}
         />
@@ -314,7 +377,6 @@ export default function ReglasActivas() {
           categorias={categorias}
           semillas={semillas}
           asignaturas={asignaturas}
-          onCategoriaCreada={handleCategoriaCreada}
           initial={{
             codigo_asignatura: editRegla.codigo_asignatura || '',
             programa: editRegla.programa || '',

@@ -144,6 +144,8 @@
 .expand-item { display: flex; flex-direction: column; gap: 4px; }
 .expand-label { font-size: 0.72rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
 .expand-value { font-size: 0.88rem; color: #334155; }
+.expand-link { display: inline-flex; align-items: center; gap: 4px; color: #5b84ff; text-decoration: none; font-weight: 500; }
+.expand-link:hover { text-decoration: underline; }
 
 .pagination {
   display: flex;

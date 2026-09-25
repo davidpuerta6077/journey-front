@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
-import { ChevronDown, ChevronUp, RefreshCw, Search } from 'lucide-react'
+import { ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, RefreshCw, Search } from 'lucide-react'
 import axios from 'axios'
 import config from '../../../config'
 import awsAuth from '../../../services/AwsAuthService'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
+import { getCached, setCached } from '../../../services/swrCache'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 
 const BASE = config.api_domain.url_base
+const CACHE_KEY = 'courses-sync-preview'
 
 const COLUMNS = [
   { key: 'fullname',     label: 'Nombre Completo' },
@@ -28,10 +30,10 @@ function StatusBadge({ row }) {
 }
 
 export default function SyncCursos() {
-  const [courses, setCourses]         = useState([])
+  const [courses, setCourses]         = useState(() => getCached(CACHE_KEY) || [])
   const [reglas, setReglas]           = useState([])
   const [bulkRuleId, setBulkRuleId]   = useState('')
-  const [loading, setLoading]         = useState(true)
+  const [loading, setLoading]         = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]         = useState(false)
   const [search, setSearch]           = useState('')
   const [filterPeriodo, setFilterPeriodo] = useState('')
@@ -50,14 +52,15 @@ export default function SyncCursos() {
       const res = await axios.post(`${BASE}/courses/sync/preview`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      setCourses(res.data?.body || [])
+      const data = res.data?.body || []
+      setCached(CACHE_KEY, data)
+      setCourses(data)
     } catch (e) {
       console.error('Error cargando cursos:', e.message)
     }
   }, [])
 
   const loadCourses = useCallback(async () => {
-    setLoading(true)
     await refreshCourses()
     setLoading(false)
   }, [refreshCourses])
@@ -90,7 +93,9 @@ export default function SyncCursos() {
     let data = [...courses]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(c => Object.values(c).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+      data = data.filter(c => Object.values(c).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
     if (filterPeriodo) data = data.filter(c => c.periodo === filterPeriodo)
     if (filterDepto)   data = data.filter(c => c.departamento === filterDepto)
@@ -240,8 +245,8 @@ export default function SyncCursos() {
                       <td><StatusBadge row={course} /></td>
                       <td>
                         <div className="action-btns">
-                          <button className="btn-icon" onClick={() => toggleExpand(course.id)} title="Ver más">
-                            {expandedRows[course.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          <button className="btn-icon" onClick={() => toggleExpand(course.id)} title="Ver detalles">
+                            {expandedRows[course.id] ? <EyeOff size={14} /> : <Eye size={14} />}
                           </button>
                         </div>
                       </td>
@@ -276,8 +281,26 @@ export default function SyncCursos() {
                                 <span className="expand-value">{course.moodle_id || '-'}</span>
                               </div>
                               <div className="expand-item">
+                                <span className="expand-label">Link del curso en Moodle</span>
+                                <span className="expand-value">
+                                  {course.moodle_course_url
+                                    ? <a href={course.moodle_course_url} target="_blank" rel="noopener noreferrer" className="expand-link">
+                                        Abrir en Moodle <ExternalLink size={12} />
+                                      </a>
+                                    : '-'}
+                                </span>
+                              </div>
+                              <div className="expand-item">
                                 <span className="expand-label">Categoría (regla aplicada)</span>
                                 <span className="expand-value">{course.categoryid || 'Sin aplicar todavía'}</span>
+                              </div>
+                              <div className="expand-item">
+                                <span className="expand-label">Fecha recibido (SICAU)</span>
+                                <span className="expand-value">{course.created_at ? String(course.created_at).split('T')[0] : '-'}</span>
+                              </div>
+                              <div className="expand-item">
+                                <span className="expand-label">Fecha sincronizado</span>
+                                <span className="expand-value">{course.synced_at ? String(course.synced_at).split('T')[0] : '-'}</span>
                               </div>
                               {course.estado_sync === 'error' && course.ultimo_error_sync && (
                                 <div className="expand-item">

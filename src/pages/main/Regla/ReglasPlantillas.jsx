@@ -1,11 +1,45 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Copy, RefreshCw } from 'lucide-react'
+import { Copy, Check, RefreshCw } from 'lucide-react'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
+// navigator.clipboard requiere un contexto seguro (HTTPS o localhost): si la
+// app se sirve por HTTP en un dominio interno, navigator.clipboard es
+// undefined y el `?.` hacía que el botón no copiara NADA sin avisar — parecía
+// "no funciona" porque fallaba en silencio. Este fallback con un textarea
+// oculto + execCommand('copy') funciona igual en esos casos.
 function copyToClipboard(value) {
-  navigator.clipboard?.writeText(String(value)).catch(() => {})
+  const text = String(value)
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyToClipboardFallback(text))
+  }
+  return Promise.resolve(copyToClipboardFallback(text))
+}
+
+function copyToClipboardFallback(text) {
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  try { document.execCommand('copy') } catch { /* nada más que intentar */ }
+  document.body.removeChild(textarea)
+}
+
+function CopyButton({ value, title }) {
+  const [copied, setCopied] = useState(false)
+  const handleClick = async () => {
+    await copyToClipboard(value)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+  return (
+    <button className="btn-icon" onClick={handleClick} title={copied ? 'Copiado' : title}>
+      {copied ? <Check size={14} color="#15803d" /> : <Copy size={14} />}
+    </button>
+  )
 }
 
 export default function ReglasPlantillas() {
@@ -89,9 +123,7 @@ export default function ReglasPlantillas() {
                     <td>{cat.parent || '-'}</td>
                     <td>{cat.coursecount ?? '-'}</td>
                     <td>
-                      <button className="btn-icon" onClick={() => copyToClipboard(cat.id)} title="Copiar categoryid">
-                        <Copy size={14} />
-                      </button>
+                      <CopyButton value={cat.id} title="Copiar categoryid" />
                     </td>
                   </tr>
                 ))}
@@ -129,9 +161,7 @@ export default function ReglasPlantillas() {
                     <td>{s.fullname}</td>
                     <td>{s.categoryname || s.categoryid || '-'}</td>
                     <td>
-                      <button className="btn-icon" onClick={() => copyToClipboard(s.shortname)} title="Copiar shortname">
-                        <Copy size={14} />
-                      </button>
+                      <CopyButton value={s.shortname} title="Copiar shortname" />
                     </td>
                   </tr>
                 ))}
