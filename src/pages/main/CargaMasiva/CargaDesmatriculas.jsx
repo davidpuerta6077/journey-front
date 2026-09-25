@@ -119,7 +119,7 @@ export default function CargaDesmatriculas() {
             </li>
           </ol>
           <p>
-            <b>Nota:</b> La matrícula no se elimina, queda <b>suspendida</b> en Moodle (reversible, conserva notas e historial). Para cargar un nuevo archivo, usar la opción&nbsp;
+            <b>Nota:</b> La matrícula se desmatricula igual que con <b>Desmatricular</b> en el Módulo de Matrículas: Moodle desmatriculará al estudiante en su próxima sincronización. Para cargar un nuevo archivo, usar la opción&nbsp;
             <button className="btn-reiniciar-inline" onClick={resetForm}>
               Reiniciar <RefreshCw size={13} />
             </button>
@@ -173,7 +173,7 @@ export default function CargaDesmatriculas() {
             <div className={`carga-result ${resultado.errorCount > 0 ? 'result-warning' : 'result-success'}`}>
               <div className="result-row">
                 <CheckCircle size={15} />
-                <span><b>{resultado.successCount}</b> matrículas suspendidas correctamente</span>
+                <span><b>{resultado.successCount}</b> matrículas desmatriculadas correctamente</span>
               </div>
               {resultado.errorCount > 0 && (
                 <div className="result-row">
@@ -201,7 +201,7 @@ export default function CargaDesmatriculas() {
         <div className="carga-info">
           <h5>Información</h5>
           <p className="info-desc">
-            La desmatrícula masiva <b>suspende</b> al estudiante en Moodle (no lo elimina). El estudiante y el curso deben existir y estar sincronizados previamente.
+            La desmatrícula masiva <b>desmatricula</b> al estudiante, igual que "Desmatricular" en el Módulo de Matrículas. El estudiante y el curso deben existir y estar sincronizados previamente.
           </p>
           <button className="btn-ver-campos" onClick={() => setVerCampos(v => !v)}>
             VER DESCRIPCIÓN DE LOS CAMPOS <Info size={15} />
