@@ -564,6 +564,12 @@ export default function ModulosMatriculas() {
                       : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
                   </th>
                   <th>Asignatura</th>
+                  <th onClick={() => handleSort('codigo_journey')} className="sortable">
+                    Código Curso
+                    {sortKey === 'codigo_journey'
+                      ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                      : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                  </th>
                   <th onClick={() => handleSort('programa')} className="sortable">
                     Programa
                     {sortKey === 'programa'
@@ -591,6 +597,7 @@ export default function ModulosMatriculas() {
                         {enrollment.nombre_asignatura || '-'}
                         <span className="asignatura-code">{enrollment.codigo_asignatura || '-'}</span>
                       </td>
+                      <td><span className="codigo-journey">{enrollment.codigo_journey || '-'}</span></td>
                       <td>{enrollment.programa || '-'}</td>
                       <td>{enrollment.periodo || '-'} / Grupo {enrollment.grupo || '-'}</td>
                       <td>{enrollment.created_at ? String(enrollment.created_at).split('T')[0] : '-'}</td>
@@ -624,7 +631,7 @@ export default function ModulosMatriculas() {
                     </tr>
                     {expandedRows[enrollment.id] && (
                       <tr className="expand-row">
-                        <td colSpan={8}>
+                        <td colSpan={9}>
                           <div className="expand-content">
                             <div className="expand-grid">
                               <div className="expand-item">

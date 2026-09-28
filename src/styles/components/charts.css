@@ -12,6 +12,11 @@
 .kpi-tile-value { font-size: 26px; font-weight: 600; line-height: 1.1; }
 .kpi-tile-label { font-size: 13px; color: #4b5563; margin-top: 4px; }
 .kpi-tile-hint { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+.kpi-tile-clickable { cursor: pointer; text-align: left; font: inherit; transition: border-color .15s, box-shadow .15s; }
+.kpi-tile-clickable:hover { border-color: #93a8f4; box-shadow: 0 1px 4px rgba(74,112,224,.15); }
+.kpi-tile-clickable:focus-visible { outline: 2px solid #4a70e0; outline-offset: 2px; }
+.kpi-tile-active { border-color: #4a70e0; box-shadow: 0 0 0 1px #4a70e0 inset; }
+.chart-card-hint { font-weight: 400; font-size: 12px; color: #9ca3af; }
 
 .chart-grid {
   display: grid; gap: 16px;

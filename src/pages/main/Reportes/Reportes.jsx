@@ -5,7 +5,8 @@ import { fetchTiposReporte } from '../../../services/reportes/fetchTiposReporte'
 import { createReporte } from '../../../services/reportes/createReporte'
 import { deleteReporte } from '../../../services/reportes/deleteReporte'
 import { runReporteAdHoc } from '../../../services/reportes/runReporteAdHoc'
-import TablaResultado from './TablaResultado'
+import ReporteDashboard from './ReporteDashboard'
+import '../../../styles/main/Reportes/ReporteDetalle.css'
 import '../../../styles/main/Reportes/Reportes.css'
 
 const paramsIniciales = (tipo) => {
@@ -194,7 +195,7 @@ export default function Reportes() {
       )}
 
       {ejecutando && <div className="loading-box"><span className="loader"></span>Ejecutando reporte...</div>}
-      {!ejecutando && resultado && <TablaResultado resultado={resultado} />}
+      {!ejecutando && resultado && <ReporteDashboard resultado={resultado} tipo={tipoCode} nombre={nombre || 'previsualizacion'} />}
     </div>
   )
 }

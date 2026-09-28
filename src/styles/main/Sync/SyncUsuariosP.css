@@ -316,3 +316,21 @@
 .col-filter-opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .col-filter-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .col-filter-actions button { padding: 4px 10px; font-size: 12px; }
+/* DETALLE DE USUARIO (modal con matrículas, Módulos > Usuarios) */
+.expand-grid.user-detail-grid {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 0.7fr);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.user-detail-grid .expand-value { overflow-wrap: anywhere; }
+.user-detail-subtitle { margin: 18px 0 10px; font-size: 0.95rem; color: #1e293b; }
+.user-detail-subtitle span { font-weight: 400; color: #64748b; font-size: 0.85rem; }
+.user-detail-empty { padding: 1rem 0; color: #64748b; }
+.user-detail-table-wrap { overflow-x: auto; max-height: 55vh; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+.user-detail-table-wrap td { white-space: nowrap; vertical-align: top; }
+.user-detail-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 3px; }
+@media (max-width: 700px) {
+  .expand-grid.user-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
