@@ -1,10 +1,6 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { menuItems } from './SideNavItems';
-import {
-  Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut,
-  ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings
-} from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { BookOpen, ChevronDown, ExternalLink } from 'lucide-react'
 
 
 // allowedPairs: Set de claves "module_code::submodule_code" realmente concedidas al rol.

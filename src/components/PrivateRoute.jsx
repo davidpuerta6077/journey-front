@@ -4,7 +4,7 @@ import { usePermissions } from "../services/PermissionsContext";
 
 export default function PrivateRoute({ children, submoduleCode }) {
   const auth = useAuth();
-  const { permissions, loadingPermissions } = usePermissions();
+  const { permissions, loadingPermissions, permissionsError } = usePermissions();
 
   if (auth.isLoading || loadingPermissions) {
     return (
@@ -14,6 +14,17 @@ export default function PrivateRoute({ children, submoduleCode }) {
     );
   }
   if (!auth.isAuthenticated) return <Navigate to="/login" replace />;
+
+  // La API no respondió al cargar permisos: no es falta de permisos, así que
+  // no se manda a /no-autorizado (parecería que la sesión se perdió).
+  if (permissionsError) {
+    return (
+      <div className="loading-box" style={{ minHeight: '100vh', flexDirection: 'column', gap: '1rem' }}>
+        <p>No se pudieron cargar tus permisos. Verifica tu conexión e intenta de nuevo.</p>
+        <button className="btn-primary" onClick={() => window.location.reload()}>Reintentar</button>
+      </div>
+    );
+  }
 
   if (submoduleCode) {
     const hasAccess = permissions?.modules?.some((m) =>

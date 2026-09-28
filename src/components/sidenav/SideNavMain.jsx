@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from "react-oidc-context";
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import {
-  Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut,
-  ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings
-} from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import config from "../../config.js";

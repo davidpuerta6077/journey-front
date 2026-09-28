@@ -6,8 +6,6 @@ import { fetchIndicadorCursos } from '../../services/home/fetchIndicadorCursos'
 import { fetchIndicadorMatriculas } from '../../services/home/fetchIndicadorMatriculas'
 import '../../styles/global/Global.css'
 
-import config from "../../config"
-const BASE = config.api_domain.url_base
 
 export default function HomeNexo() {
   const navigate = useNavigate()

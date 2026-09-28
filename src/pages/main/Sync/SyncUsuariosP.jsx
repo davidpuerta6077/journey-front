@@ -5,7 +5,7 @@ import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
 import { updateUser } from '../../../services/usuarios/updateUser'
 import { getCached, setCached } from '../../../services/swrCache'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 // Misma key que Módulos Usuarios: consultan exactamente el mismo preview.
@@ -133,7 +133,6 @@ function EditModal({ user, onClose, onSave }) {
 }
 
 export default function SyncUsuariosP() {
-  const navigate = useNavigate()
   const location = useLocation()
 
   const [users, setUsers]               = useState(() => getCached(CACHE_KEY) || [])

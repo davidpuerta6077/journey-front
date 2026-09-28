@@ -37,25 +37,25 @@ const ROLE_MOODLE_HINT = {
 // demás sí son valores reales que SICAU puede mandar en su campo `estado`, así
 // que se dejan disponibles aquí por si hay que crear o corregir una matrícula
 // a mano con ese mismo estado.
-const ESTADO_ACADEMICO_OPTIONS = ['Activa', 'Suspendido', 'Cancelada', 'Finalizada', 'Pendiente']
+const ESTADO_ACADEMICO_OPTIONS = ['Matriculado', 'Suspendido', 'Cancelado', 'Finalizado', 'Pendiente']
 
 // Con el sync por BD externa (ver database/seeds/fixMoodleExternalDbViews.js)
-// cualquier estado que no sea "Activa" simplemente desaparece de la vista
+// cualquier estado que no sea "Matriculado" simplemente desaparece de la vista
 // moodle_enrol, y Moodle aplica su unenrolaction configurada ("Desmatricular
 // al usuario del curso") por igual para los cuatro — ya no hay distinción
 // entre suspender y desmatricular como en el webservice viejo.
 const ESTADO_MOODLE_HINT = {
-  Activa:      'Moodle: Active — se matricula por BD externa en el próximo cron.',
+  Matriculado: 'Moodle: Active — se matricula por BD externa en el próximo cron.',
   Suspendido:  'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Cancelada:   'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Finalizada:  'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Cancelado:   'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Finalizado:  'Moodle: se desmatricula por BD externa en el próximo cron.',
   Pendiente:   'Aún no se sincroniza con Moodle.',
 }
 
 const EMPTY_FORM = {
   userid: '', studentLabel: '', role: 'student',
   codigo_asignatura: '', nombre_asignatura: '', grupo: '', periodo: '', programa: '',
-  estado: 'Activa', codigo_journey: ''
+  estado: 'Matriculado', codigo_journey: ''
 }
 
 function StatusBadge({ row, syncResult }) {
@@ -186,7 +186,7 @@ function EnrollmentFormFields({ form, setForm, studentDisabled }) {
               <option value={form.estado}>{form.estado} (actual — gestionado desde Sync)</option>
             )}
           </select>
-          <span className="badge badge-moodle moodle-hint">{ESTADO_MOODLE_HINT[form.estado] || 'Cambios de estado distintos de "Activa" se gestionan desde Sync > Novedades.'}</span>
+          <span className="badge badge-moodle moodle-hint">{ESTADO_MOODLE_HINT[form.estado] || 'Cambios de estado distintos de "Matriculado" se gestionan desde Sync > Novedades.'}</span>
         </div>
       </div>
 
@@ -266,7 +266,7 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
     grupo: enrollment.grupo || '',
     periodo: enrollment.periodo || '',
     programa: enrollment.programa || '',
-    estado: enrollment.estado || 'Activa',
+    estado: enrollment.estado || 'Matriculado',
     codigo_journey: enrollment.codigo_journey || ''
   })
   const [error, setError] = useState('')

@@ -1,10 +1,8 @@
 import {
-  Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut,
+  Home, RefreshCw, BookOpen, FileText,
   ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings,
   Search, UserCog, Eye
 } from 'lucide-react'
-
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 
 
 export const menuItems = [
