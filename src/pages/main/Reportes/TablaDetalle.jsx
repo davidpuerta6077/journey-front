@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Download, ExternalLink, Search, X } from 'lucide-react'
 import { exportarExcel } from './exportarExcel'
-
-const POR_PAGINA = 25
+import Paginacion from '../../../components/Paginacion'
 const ES_FECHA_HORA = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/
 
 function formatear(v) {
@@ -33,6 +32,7 @@ export default function TablaDetalle({ titulo, columns = [], rows = [], filtro, 
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState({ key: null, dir: 'asc' })
   const [pagina, setPagina] = useState(1)
+  const [porPagina, setPorPagina] = useState(10)
 
   const visibles = useMemo(() => {
     let data = filtro ? rows.filter(filtro.fn) : rows
@@ -44,9 +44,9 @@ export default function TablaDetalle({ titulo, columns = [], rows = [], filtro, 
     return data
   }, [rows, columns, filtro, busqueda, orden])
 
-  const totalPaginas = Math.max(1, Math.ceil(visibles.length / POR_PAGINA))
+  const totalPaginas = Math.max(1, Math.ceil(visibles.length / porPagina))
   const paginaActual = Math.min(pagina, totalPaginas)
-  const pageRows = visibles.slice((paginaActual - 1) * POR_PAGINA, paginaActual * POR_PAGINA)
+  const pageRows = visibles.slice((paginaActual - 1) * porPagina, paginaActual * porPagina)
 
   const ordenarPor = (key) => {
     setOrden((o) => ({ key, dir: o.key === key && o.dir === 'asc' ? 'desc' : 'asc' }))
@@ -125,13 +125,7 @@ export default function TablaDetalle({ titulo, columns = [], rows = [], filtro, 
         </table>
       </div>
 
-      {totalPaginas > 1 && (
-        <div className="tabla-detalle-paginacion">
-          <button type="button" className="btn-secondary" onClick={() => setPagina(paginaActual - 1)} disabled={paginaActual === 1}>Anterior</button>
-          <span>Página {paginaActual} de {totalPaginas}</span>
-          <button type="button" className="btn-secondary" onClick={() => setPagina(paginaActual + 1)} disabled={paginaActual === totalPaginas}>Siguiente</button>
-        </div>
-      )}
+      <Paginacion page={paginaActual} totalPages={totalPaginas} total={visibles.length} perPage={porPagina} onPage={setPagina} onPerPage={n => { setPorPagina(n); setPagina(1) }} />
     </section>
   )
 }

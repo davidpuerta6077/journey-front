@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
+import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
@@ -147,8 +148,7 @@ export default function SyncUsuariosP() {
   const [editUser, setEditUser]         = useState(null)
   const [selected, setSelected]         = useState({})
   const [page, setPage]                 = useState(1)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const documento = params.get('documento')
@@ -188,8 +188,8 @@ export default function SyncUsuariosP() {
     return data
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const jornadas   = [...new Set(users.map(u => u.jornada).filter(Boolean))]
 
   const handleSort = (key) => {
@@ -376,23 +376,7 @@ export default function SyncUsuariosP() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 

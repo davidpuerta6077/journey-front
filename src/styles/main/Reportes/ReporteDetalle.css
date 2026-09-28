@@ -52,7 +52,6 @@
 .tabla-detalle .reportes-tabla th.sortable svg { vertical-align: middle; margin-left: 2px; }
 .tabla-detalle .reportes-tabla td { font-size: 13px; }
 .tabla-detalle-vacio { text-align: center !important; color: #6b7280; padding: 24px !important; }
-.tabla-detalle-paginacion { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; font-size: 13px; color: #4b5563; }
 @media (max-width: 700px) {
   .tabla-detalle-search input { min-width: 0; width: 100%; }
 }

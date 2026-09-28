@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Filter, Eye } from 'lucide-react'
 import { fetchLogs } from '../../../services/admin/fetchLogs'
 import { menuItems } from '../../../components/sidenav/SideNavItems'
+import Paginacion from '../../../components/Paginacion'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 // El menú lateral es la fuente de verdad de la jerarquía: cada submódulo
@@ -251,6 +252,8 @@ export default function AdminLogs() {
   const [error, setError]     = useState('')
   const [filters, setFilters] = useState({})   // { colKey: Set<string> }
   const [detailRow, setDetailRow] = useState(null)
+  const [page, setPage]       = useState(1)
+  const [perPage, setPerPage] = useState(10)
 
   const submoduleIndex = useMemo(() => buildSubmoduleIndex(), [])
 
@@ -301,7 +304,11 @@ export default function AdminLogs() {
     })
   ), [rows, filters])
 
-  const setColFilter = (key, set) => setFilters(f => ({ ...f, [key]: set || undefined }))
+  const setColFilter = (key, set) => { setFilters(f => ({ ...f, [key]: set || undefined })); setPage(1) }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
+  const pageActual = Math.min(page, totalPages)
+  const paginated  = filtered.slice((pageActual - 1) * perPage, pageActual * perPage)
   const anyFilter = Object.values(filters).some(Boolean)
 
   return (
@@ -314,7 +321,7 @@ export default function AdminLogs() {
 
       <div className="filters-bar">
         {anyFilter && (
-          <button className="btn-secondary" onClick={() => setFilters({})}>Limpiar filtros</button>
+          <button className="btn-secondary" onClick={() => { setFilters({}); setPage(1) }}>Limpiar filtros</button>
         )}
         <span className="results-count">{filtered.length} de {rows.length} registro{rows.length !== 1 ? 's' : ''}</span>
         {rows.length >= LIMITE_LOGS && (
@@ -325,6 +332,7 @@ export default function AdminLogs() {
       {loading ? (
         <div className="loading-box"><span className="loader"></span>Cargando logs...</div>
       ) : (
+        <>
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
@@ -343,7 +351,7 @@ export default function AdminLogs() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(row => (
+              {paginated.map(row => (
                 <tr key={row.id}>
                   {COLUMNS.map(c => <td key={c.key}>{row[c.key]}</td>)}
                   <td>
@@ -356,6 +364,8 @@ export default function AdminLogs() {
             </tbody>
           </table>
         </div>
+        <Paginacion page={pageActual} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
+        </>
       )}
 
       {detailRow && <LogDetailModal row={detailRow} onClose={() => setDetailRow(null)} />}

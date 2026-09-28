@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
+import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, BookOpen } from 'lucide-react'
 import { fetchEnrollmentsList } from '../../../services/matriculas/fetchEnrollmentsList'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
@@ -335,8 +336,7 @@ export default function ModulosMatriculas() {
   const [editEnrollment, setEditEnrollment] = useState(null)
   const [syncResults, setSyncResults] = useState({}) // { [enrollmentId]: { status, message } }
   const [retryingId, setRetryingId]   = useState(null)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   // Sin setLoading(true) al principio a propósito: esto se llama también
   // después de crear/editar/eliminar/sincronizar una fila, y forzar el
   // spinner de página completa cada vez volaba la tabla a blanco por una
@@ -383,8 +383,8 @@ export default function ModulosMatriculas() {
     return data
   }, [enrollments, search, filterPeriodo, filterPrograma, filterRol, filterEstado, syncResults, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const periodos   = [...new Set(enrollments.map(e => e.periodo).filter(Boolean))]
   const programas  = [...new Set(enrollments.map(e => e.programa).filter(Boolean))]
   const roles      = [...new Set(enrollments.map(e => e.role).filter(Boolean))]
@@ -671,23 +671,7 @@ export default function ModulosMatriculas() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 
