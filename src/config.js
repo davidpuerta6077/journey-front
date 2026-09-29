@@ -8,7 +8,7 @@ const config = {
     //     backend_uri: "http://localhost:3001",
     // }
     aws: {
-        redirect_uri: "https://journey.pascualbravovirtual.edu.co",
+        redirect_uri: "https://bravohub.pascualbravovirtual.edu.co",
         backend_uri: "https://ywjmda93pu.us-east-1.awsapprunner.com",
     }
 }
