@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
+import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
 import { updateUser } from '../../../services/usuarios/updateUser'
 import { getCached, setCached } from '../../../services/swrCache'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 // Misma key que Módulos Usuarios: consultan exactamente el mismo preview.
@@ -133,7 +134,6 @@ function EditModal({ user, onClose, onSave }) {
 }
 
 export default function SyncUsuariosP() {
-  const navigate = useNavigate()
   const location = useLocation()
 
   const [users, setUsers]               = useState(() => getCached(CACHE_KEY) || [])
@@ -148,8 +148,7 @@ export default function SyncUsuariosP() {
   const [editUser, setEditUser]         = useState(null)
   const [selected, setSelected]         = useState({})
   const [page, setPage]                 = useState(1)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const documento = params.get('documento')
@@ -189,8 +188,8 @@ export default function SyncUsuariosP() {
     return data
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const jornadas   = [...new Set(users.map(u => u.jornada).filter(Boolean))]
 
   const handleSort = (key) => {
@@ -302,16 +301,16 @@ export default function SyncUsuariosP() {
                 {paginated.map(user => (
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'created_at'
                             ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={user} /></td>
-                      <td>
+                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
                             {expandedRows[user.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -377,23 +376,7 @@ export default function SyncUsuariosP() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 

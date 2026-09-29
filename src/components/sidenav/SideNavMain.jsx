@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useAuth } from "react-oidc-context";
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import {
-  Home, RefreshCw, BookOpen, FileText, ChevronDown, Menu, User, LogOut,
-  ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings
-} from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut, X } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import config from "../../config.js";
+
+// Debe coincidir con el breakpoint móvil del sidebar en Layout.css
+const MOBILE_QUERY = '(max-width: 768px)'
 
 
 const Layout = () => {
@@ -37,18 +37,36 @@ const Layout = () => {
   const filteredMenu = filterMenuByPermissions(menuItems, allowedModuleCodes, allowedPairs)
 
   const [sidebarMini, setSidebarMini] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // En móvil la hamburguesa abre el menú a pantalla completa; en escritorio alterna el modo mini
+  const toggleSidebar = () => {
+    if (window.matchMedia(MOBILE_QUERY).matches) setMobileMenuOpen(o => !o)
+    else setSidebarMini(m => !m)
+  }
+
+  // Al elegir una página (o un enlace externo) el menú móvil se cierra solo
+  const closeMobileMenuOnLink = (e) => {
+    if (e.target.closest('a')) setMobileMenuOpen(false)
+  }
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
   const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
   const userPhoto = profile?.photo_url
+  // Guarda la URL que falló (no un booleano) para que una foto nueva se vuelva a intentar
+  const [failedPhoto, setFailedPhoto] = useState(null)
   const userRole = permissions?.role
 
   return (
     <div className="app">
       <nav className="navbar">
         <div className="navbar-left">
-          <button className="toggle-btn" onClick={() => setSidebarMini(!sidebarMini)}>
-            <Menu size={20} />
+          <button
+            className="toggle-btn"
+            onClick={toggleSidebar}
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="navbar-brand">
             Bravo Hub
@@ -56,9 +74,16 @@ const Layout = () => {
         </div>
         <div className="user-menu">
           <button className="user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-            {userPhoto
-              ? <img className="user-btn-avatar" src={`${config.api_domain.url_base}${userPhoto}`} alt={userName} />
-              : <User size={16} />}
+            {userPhoto && failedPhoto !== userPhoto
+              ? (
+                <img
+                  className="user-btn-avatar"
+                  src={`${config.api_domain.url_base}${userPhoto}`}
+                  alt={userName}
+                  onError={() => setFailedPhoto(userPhoto)}
+                />
+              )
+              : <span className="user-btn-avatar user-btn-avatar-placeholder"><User size={14} /></span>}
             <span className="user-btn-info">
               <span className="user-btn-name">{userName}</span>
               {userRole && <span className="user-btn-role">{userRole}</span>}
@@ -83,13 +108,20 @@ const Layout = () => {
         </div>
       </nav>
       <div className="app-body">
-        <aside className={`sidebar ${sidebarMini ? 'sidebar-mini' : ''}`}>
-          <ul>
-            {filteredMenu.map((item, i) => (
-              <SidebarItem key={i} item={item} />
-            ))}
-          </ul>
-        </aside>
+        {/* sidebar-slot reserva el ancho en la página; el aside se expande por encima
+            del contenido al pasar el mouse en modo mini, sin empujar la página */}
+        <div className={`sidebar-slot ${sidebarMini ? 'sidebar-slot-mini' : ''}`}>
+          <aside
+            className={`sidebar ${sidebarMini ? 'sidebar-mini' : ''} ${mobileMenuOpen ? 'sidebar-mobile-open' : ''}`}
+            onClick={closeMobileMenuOnLink}
+          >
+            <ul>
+              {filteredMenu.map((item, i) => (
+                <SidebarItem key={i} item={item} />
+              ))}
+            </ul>
+          </aside>
+        </div>
         <main className="main-content">
           <Outlet />
         </main>

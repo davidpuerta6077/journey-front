@@ -7,8 +7,9 @@ import '../../styles/components/charts.css'
 // Barras. `series`: [{ key, label }] (>=2 -> apiladas si stacked, con leyenda).
 // `orientation`: 'y' = barras horizontales (bueno para listas de categorías con
 // nombres largos); 'x' = verticales.
+// `onSelect(valor)`: clic en una barra -> valor de xKey de esa barra (drill-down).
 export default function BarChartCard({
-  title, data = [], xKey, series = [], stacked = false, orientation = 'x', colorByEstado = false, height = 320,
+  title, data = [], xKey, series = [], stacked = false, orientation = 'x', colorByEstado = false, height = 320, onSelect,
 }) {
   const multi = series.length > 1
   const horizontal = orientation === 'y'
@@ -16,7 +17,7 @@ export default function BarChartCard({
 
   return (
     <figure className="chart-card">
-      {title && <figcaption className="chart-card-title">{title}</figcaption>}
+      {title && <figcaption className="chart-card-title">{title}{onSelect && <span className="chart-card-hint"> · clic para ver el detalle</span>}</figcaption>}
       <div className="chart-card-body" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -52,6 +53,8 @@ export default function BarChartCard({
                 fill={CATEGORICAL[si]}
                 radius={stacked ? 0 : (horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0])}
                 maxBarSize={horizontal ? 22 : 48}
+                cursor={onSelect ? 'pointer' : undefined}
+                onClick={onSelect ? (d) => onSelect(d?.payload?.[xKey] ?? d?.[xKey]) : undefined}
               >
                 {!multi && colorByEstado && data.map((d, di) => (
                   <Cell key={di} fill={colorForEstado(d[xKey], di)} />

@@ -3,12 +3,13 @@ import { INK, GRID, colorForEstado } from './palette'
 
 // Donut para composición (pocas categorías). `nameKey`/`valueKey` sobre `data`.
 // Usa colores de estado cuando los nombres son estados conocidos.
-export default function DonutChartCard({ title, data = [], nameKey, valueKey, height = 320 }) {
+// `onSelect(nombre)`: clic en una porción -> su nameKey (drill-down).
+export default function DonutChartCard({ title, data = [], nameKey, valueKey, height = 320, onSelect }) {
   const total = data.reduce((a, d) => a + (Number(d[valueKey]) || 0), 0)
 
   return (
     <figure className="chart-card">
-      {title && <figcaption className="chart-card-title">{title}</figcaption>}
+      {title && <figcaption className="chart-card-title">{title}{onSelect && <span className="chart-card-hint"> · clic para ver el detalle</span>}</figcaption>}
       <div className="chart-card-body" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -23,6 +24,8 @@ export default function DonutChartCard({ title, data = [], nameKey, valueKey, he
               strokeWidth={2}
               label={(e) => `${e[nameKey]}: ${e[valueKey]}`}
               labelLine={false}
+              cursor={onSelect ? 'pointer' : undefined}
+              onClick={onSelect ? (d) => onSelect(d?.payload?.[nameKey] ?? d?.[nameKey]) : undefined}
             >
               {data.map((d, i) => (
                 <Cell key={i} fill={colorForEstado(d[nameKey], i)} />

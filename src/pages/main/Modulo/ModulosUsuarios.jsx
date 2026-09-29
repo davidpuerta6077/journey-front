@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
-import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, KeyRound, BookOpen } from 'lucide-react'
+import Paginacion from '../../../components/Paginacion'
+import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, KeyRound, Eye, ExternalLink } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
@@ -248,60 +249,149 @@ function EditModal({ user, onClose, onSave }) {
   )
 }
 
-function EnrollmentsModal({ user, onClose }) {
+const ROLE_LABEL = {
+  student:        'Estudiante',
+  editingteacher: 'Profesor',
+  teacher:        'Tutor',
+}
+
+// Estado académico (ya normalizado en la BD, ver services/normalize.js del API).
+const ESTADO_BADGE = {
+  Matriculado:    'badge-success',
+  Trasladado:     'badge-novedad',
+  Pendiente:      'badge-pending',
+  Suspendido:     'badge-suspended',
+  Cancelado:      'badge-error',
+  Desmatriculado: 'badge-error',
+  Retirado:       'badge-error',
+  Finalizado:     'badge-db',
+}
+
+// Estado frente a Moodle (columna estado_sync de enrollments).
+const SYNC_BADGE = {
+  sincronizado:    { cls: 'badge-synced',  label: 'Sincronizado' },
+  error:           { cls: 'badge-error',   label: 'Error' },
+  traslado:        { cls: 'badge-novedad', label: 'Traslado' },
+  desmatriculando: { cls: 'badge-syncing', label: 'Desmatriculando' },
+}
+
+function formatFecha(value) {
+  if (!value) return '-'
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: '2-digit' })
+}
+
+function formatPeriodo(periodo) {
+  if (!periodo) return '-'
+  const p = String(periodo)
+  return p.length === 5 ? `${p.slice(0, 4)}-${p.slice(4)}` : p
+}
+
+function UserDetailModal({ user, onClose }) {
   const [enrollments, setEnrollments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     getUserEnrollments(user.id)
       .then(setEnrollments)
-      .catch(e => console.error(e.message))
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [user.id])
 
+  const activas = enrollments.filter(e => e.estado === 'Matriculado').length
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box" style={{ maxWidth: '900px', width: '90vw' }}>
+      <div className="modal-box" style={{ maxWidth: '1150px', width: '95vw' }}>
         <div className="modal-header">
-          <h3>Matrículas de {user.nombre}</h3>
+          <h3>Detalle de {user.nombre}</h3>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
-        <div className="modal-form" style={{ padding: 0 }}>
+        <div className="modal-form">
+          <div className="expand-grid user-detail-grid">
+            <div className="expand-item">
+              <span className="expand-label">Documento</span>
+              <span className="expand-value">{user.documento || '-'}</span>
+            </div>
+            <div className="expand-item">
+              <span className="expand-label">Email</span>
+              <span className="expand-value">{user.email || '-'}</span>
+            </div>
+            <div className="expand-item">
+              <span className="expand-label">Programa</span>
+              <span className="expand-value">{user.plan_estudios || '-'}</span>
+            </div>
+            <div className="expand-item">
+              <span className="expand-label">Jornada</span>
+              <span className="expand-value">{user.jornada || '-'}</span>
+            </div>
+          </div>
+
+          <h4 className="user-detail-subtitle">
+            Matrículas
+            {!loading && !error && <span> · {enrollments.length} en total, {activas} activa{activas === 1 ? '' : 's'}</span>}
+          </h4>
+
           {loading ? (
             <div className="loading-box" style={{ padding: '1rem' }}><span className="loader"></span>Cargando matrículas...</div>
+          ) : error ? (
+            <p className="user-detail-empty">{error}</p>
           ) : enrollments.length === 0 ? (
-            <p style={{ padding: '1rem' }}>Este usuario no tiene matrículas registradas.</p>
+            <p className="user-detail-empty">Este usuario no tiene matrículas registradas.</p>
           ) : (
-            <table className="data-table" style={{ margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Código Nexo</th>
-                  <th>Asignatura</th>
-                  <th>Período</th>
-                  <th>Grupo</th>
-                  <th>Programa</th>
-                  <th>Rol</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {enrollments.map(e => (
-                  <tr key={e.id}>
-                    <td><span className="codigo-journey">{e.codigo_journey || '-'}</span></td>
-                    <td>{e.nombre_asignatura || e.fullname || '-'}</td>
-                    <td>{e.periodo || '-'}</td>
-                    <td>{e.grupo || '-'}</td>
-                    <td>{e.programa || '-'}</td>
-                    <td>{e.role || '-'}</td>
-                    <td>
-                      <span className={`badge ${e.sincronizado ? 'badge-synced' : 'badge-pending'}`}>
-                        {e.sincronizado ? 'Sincronizado' : 'Pendiente'}
-                      </span>
-                    </td>
+            <div className="user-detail-table-wrap">
+              <table className="data-table" style={{ margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Período</th>
+                    <th>Asignatura</th>
+                    <th>Código Curso</th>
+                    <th>Grupo</th>
+                    <th>Rol</th>
+                    <th>Estado académico</th>
+                    <th>Moodle</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {enrollments.map(e => {
+                    const sync = SYNC_BADGE[e.estado_sync] || { cls: 'badge-pending', label: 'Pendiente' }
+                    return (
+                      <tr key={e.id}>
+                        <td data-label="Fecha">{formatFecha(e.fecha_matricula)}</td>
+                        <td data-label="Período">{formatPeriodo(e.periodo)}</td>
+                        <td data-label="Asignatura">
+                          {e.nombre_asignatura || e.fullname || '-'}
+                          <span className="asignatura-code">{e.codigo_asignatura || '-'}</span>
+                        </td>
+                        <td data-label="Código Curso"><span className="codigo-journey">{e.codigo_journey || e.idnumber || '-'}</span></td>
+                        <td data-label="Grupo">{e.grupo || '-'}</td>
+                        <td data-label="Rol">{ROLE_LABEL[e.role] || e.role || '-'}</td>
+                        <td data-label="Estado académico">
+                          <span className={`badge ${ESTADO_BADGE[e.estado] || 'badge-pending'}`}>{e.estado || '-'}</span>
+                          {e.fecha_cambio_estado && (
+                            <div className="user-detail-hint" title={e.estado_anterior ? `Antes: ${e.estado_anterior}` : undefined}>
+                              desde {formatFecha(e.fecha_cambio_estado)}
+                            </div>
+                          )}
+                        </td>
+                        <td data-label="Moodle">
+                          <span className={`badge ${sync.cls}`} title={e.ultimo_error_sync || undefined}>{sync.label}</span>
+                          {e.moodle_course_url && (
+                            <div>
+                              <a href={e.moodle_course_url} target="_blank" rel="noopener noreferrer" className="expand-link">
+                                Ver curso <ExternalLink size={12} />
+                              </a>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
         <div className="modal-actions">
@@ -328,8 +418,7 @@ export default function ModulosUsuarios() {
   const [showCreate, setShowCreate]     = useState(false)
   const [editUser, setEditUser]         = useState(null)
   const [detailUser, setDetailUser]     = useState(null)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   const loadUsers = useCallback(async () => {
     try {
       const data = await fetchUsers()
@@ -363,8 +452,8 @@ export default function ModulosUsuarios() {
     return data
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const jornadas   = [...new Set(users.map(u => u.jornada).filter(Boolean))]
 
   const handleSort = (key) => {
@@ -518,22 +607,22 @@ export default function ModulosUsuarios() {
                 {paginated.map(user => (
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'created_at'
                             ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={user} /></td>
-                      <td>
+                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
                             {expandedRows[user.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
-                          <button className="btn-icon" onClick={() => setDetailUser(user)} title="Ver matrículas">
-                            <BookOpen size={14} />
+                          <button className="btn-icon" onClick={() => setDetailUser(user)} title="Ver detalle y matrículas">
+                            <Eye size={14} />
                           </button>
                           <button className="btn-icon btn-icon-edit" onClick={() => setEditUser(user)} title="Editar">
                             <Pencil size={14} />
@@ -599,23 +688,7 @@ export default function ModulosUsuarios() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 
@@ -626,7 +699,7 @@ export default function ModulosUsuarios() {
         <EditModal user={editUser} onClose={() => setEditUser(null)} onSave={loadUsers} />
       )}
       {detailUser && (
-        <EnrollmentsModal user={detailUser} onClose={() => setDetailUser(null)} />
+        <UserDetailModal user={detailUser} onClose={() => setDetailUser(null)} />
       )}
     </div>
   )

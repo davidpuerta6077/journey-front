@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
+import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, BookOpen } from 'lucide-react'
 import { fetchEnrollmentsList } from '../../../services/matriculas/fetchEnrollmentsList'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
@@ -37,25 +38,25 @@ const ROLE_MOODLE_HINT = {
 // demás sí son valores reales que SICAU puede mandar en su campo `estado`, así
 // que se dejan disponibles aquí por si hay que crear o corregir una matrícula
 // a mano con ese mismo estado.
-const ESTADO_ACADEMICO_OPTIONS = ['Activa', 'Suspendido', 'Cancelada', 'Finalizada', 'Pendiente']
+const ESTADO_ACADEMICO_OPTIONS = ['Matriculado', 'Suspendido', 'Cancelado', 'Finalizado', 'Pendiente']
 
 // Con el sync por BD externa (ver database/seeds/fixMoodleExternalDbViews.js)
-// cualquier estado que no sea "Activa" simplemente desaparece de la vista
+// cualquier estado que no sea "Matriculado" simplemente desaparece de la vista
 // moodle_enrol, y Moodle aplica su unenrolaction configurada ("Desmatricular
 // al usuario del curso") por igual para los cuatro — ya no hay distinción
 // entre suspender y desmatricular como en el webservice viejo.
 const ESTADO_MOODLE_HINT = {
-  Activa:      'Moodle: Active — se matricula por BD externa en el próximo cron.',
+  Matriculado: 'Moodle: Active — se matricula por BD externa en el próximo cron.',
   Suspendido:  'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Cancelada:   'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Finalizada:  'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Cancelado:   'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Finalizado:  'Moodle: se desmatricula por BD externa en el próximo cron.',
   Pendiente:   'Aún no se sincroniza con Moodle.',
 }
 
 const EMPTY_FORM = {
   userid: '', studentLabel: '', role: 'student',
   codigo_asignatura: '', nombre_asignatura: '', grupo: '', periodo: '', programa: '',
-  estado: 'Activa', codigo_journey: ''
+  estado: 'Matriculado', codigo_journey: ''
 }
 
 function StatusBadge({ row, syncResult }) {
@@ -186,7 +187,7 @@ function EnrollmentFormFields({ form, setForm, studentDisabled }) {
               <option value={form.estado}>{form.estado} (actual — gestionado desde Sync)</option>
             )}
           </select>
-          <span className="badge badge-moodle moodle-hint">{ESTADO_MOODLE_HINT[form.estado] || 'Cambios de estado distintos de "Activa" se gestionan desde Sync > Novedades.'}</span>
+          <span className="badge badge-moodle moodle-hint">{ESTADO_MOODLE_HINT[form.estado] || 'Cambios de estado distintos de "Matriculado" se gestionan desde Sync > Novedades.'}</span>
         </div>
       </div>
 
@@ -266,7 +267,7 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
     grupo: enrollment.grupo || '',
     periodo: enrollment.periodo || '',
     programa: enrollment.programa || '',
-    estado: enrollment.estado || 'Activa',
+    estado: enrollment.estado || 'Matriculado',
     codigo_journey: enrollment.codigo_journey || ''
   })
   const [error, setError] = useState('')
@@ -335,8 +336,7 @@ export default function ModulosMatriculas() {
   const [editEnrollment, setEditEnrollment] = useState(null)
   const [syncResults, setSyncResults] = useState({}) // { [enrollmentId]: { status, message } }
   const [retryingId, setRetryingId]   = useState(null)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   // Sin setLoading(true) al principio a propósito: esto se llama también
   // después de crear/editar/eliminar/sincronizar una fila, y forzar el
   // spinner de página completa cada vez volaba la tabla a blanco por una
@@ -383,8 +383,8 @@ export default function ModulosMatriculas() {
     return data
   }, [enrollments, search, filterPeriodo, filterPrograma, filterRol, filterEstado, syncResults, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const periodos   = [...new Set(enrollments.map(e => e.periodo).filter(Boolean))]
   const programas  = [...new Set(enrollments.map(e => e.programa).filter(Boolean))]
   const roles      = [...new Set(enrollments.map(e => e.role).filter(Boolean))]
@@ -564,6 +564,12 @@ export default function ModulosMatriculas() {
                       : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
                   </th>
                   <th>Asignatura</th>
+                  <th onClick={() => handleSort('codigo_journey')} className="sortable">
+                    Código Curso
+                    {sortKey === 'codigo_journey'
+                      ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                      : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                  </th>
                   <th onClick={() => handleSort('programa')} className="sortable">
                     Programa
                     {sortKey === 'programa'
@@ -585,17 +591,18 @@ export default function ModulosMatriculas() {
                 {paginated.map(enrollment => (
                   <Fragment key={enrollment.id}>
                     <tr className={selected[enrollment.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[enrollment.id]} onChange={() => toggleSelect(enrollment.id)} /></td>
-                      <td>{enrollment.nombre_estudiante || enrollment.documento || '-'}</td>
-                      <td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[enrollment.id]} onChange={() => toggleSelect(enrollment.id)} /></td>
+                      <td data-label="Estudiante / Usuario">{enrollment.nombre_estudiante || enrollment.documento || '-'}</td>
+                      <td data-label="Asignatura">
                         {enrollment.nombre_asignatura || '-'}
                         <span className="asignatura-code">{enrollment.codigo_asignatura || '-'}</span>
                       </td>
-                      <td>{enrollment.programa || '-'}</td>
-                      <td>{enrollment.periodo || '-'} / Grupo {enrollment.grupo || '-'}</td>
-                      <td>{enrollment.created_at ? String(enrollment.created_at).split('T')[0] : '-'}</td>
-                      <td><StatusBadge row={enrollment} syncResult={syncResults[enrollment.id]} /></td>
-                      <td>
+                      <td data-label="Código Curso"><span className="codigo-journey">{enrollment.codigo_journey || '-'}</span></td>
+                      <td data-label="Programa">{enrollment.programa || '-'}</td>
+                      <td data-label="Periodo / Grupo">{enrollment.periodo || '-'} / Grupo {enrollment.grupo || '-'}</td>
+                      <td data-label="Fecha Matrícula">{enrollment.created_at ? String(enrollment.created_at).split('T')[0] : '-'}</td>
+                      <td data-label="Estado"><StatusBadge row={enrollment} syncResult={syncResults[enrollment.id]} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           {['pendiente', 'usuario_no_existe', 'error', 'desmatriculando'].includes(syncResults[enrollment.id]?.status) && (
                             <button
@@ -624,7 +631,7 @@ export default function ModulosMatriculas() {
                     </tr>
                     {expandedRows[enrollment.id] && (
                       <tr className="expand-row">
-                        <td colSpan={8}>
+                        <td colSpan={9}>
                           <div className="expand-content">
                             <div className="expand-grid">
                               <div className="expand-item">
@@ -664,23 +671,7 @@ export default function ModulosMatriculas() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 

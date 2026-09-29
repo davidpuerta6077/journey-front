@@ -164,17 +164,17 @@ export default function AdminUsuarios() {
             <tbody>
               {filtered.map(user => (
                 <tr key={user.id}>
-                  <td>{user.username}</td>
-                  <td>{user.email}</td>
-                  <td>{user.role_name || '-'}</td>
-                  <td>{user.departamento || '-'}</td>
-                  <td>
+                  <td data-label="Username">{user.username}</td>
+                  <td data-label="Email">{user.email}</td>
+                  <td data-label="Rol">{user.role_name || '-'}</td>
+                  <td data-label="Departamento">{user.departamento || '-'}</td>
+                  <td data-label="Estado">
                     <span className={`badge ${user.estado ? 'badge-synced' : 'badge-pending'}`}>
                       {user.estado ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
-                  <td>{user.last_login ? String(user.last_login).split('T')[0] : '-'}</td>
-                  <td>
+                  <td data-label="Último acceso">{user.last_login ? String(user.last_login).split('T')[0] : '-'}</td>
+                  <td data-label="Acciones">
                     <div className="action-btns">
                       <button className="btn-icon btn-icon-edit" onClick={() => setEditUser(user)} title="Editar">
                         <Pencil size={14} />

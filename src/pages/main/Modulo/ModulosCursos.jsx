@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
+import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Search, RefreshCw, BookPlus, UploadCloud } from 'lucide-react'
 import { fetchCourses } from '../../../services/cursos/fetchCourses'
 import { createCourseManual } from '../../../services/cursos/createCourseManual'
@@ -188,8 +189,7 @@ export default function ModulosCursos() {
   const [expandedRows, setExpandedRows] = useState({})
   const [page, setPage]           = useState(1)
   const [showCreate, setShowCreate] = useState(false)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   const refreshCourses = useCallback(async () => {
     try {
       const data = await fetchCourses()
@@ -250,8 +250,8 @@ export default function ModulosCursos() {
     return data
   }, [courses, search, filterPeriodo, filterDepto, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const periodos   = [...new Set(courses.map(c => c.periodo).filter(Boolean))]
   const deptos     = [...new Set(courses.map(c => c.departamento).filter(Boolean))]
 
@@ -330,9 +330,9 @@ export default function ModulosCursos() {
                 {paginated.map(course => (
                   <Fragment key={course.id}>
                     <tr>
-                      {COLUMNS.map(col => <td key={col.key}>{course[col.key] || '-'}</td>)}
-                      <td><StatusBadge row={course} /></td>
-                      <td>
+                      {COLUMNS.map(col => <td data-label={col.label} key={col.key}>{course[col.key] || '-'}</td>)}
+                      <td data-label="Estado"><StatusBadge row={course} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           {course.estado_sync === 'novedad' && (
                             <button
@@ -397,23 +397,7 @@ export default function ModulosCursos() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 

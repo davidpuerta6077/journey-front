@@ -102,14 +102,14 @@ export default function AdminRoles() {
             <tbody>
               {roles.map(role => (
                 <tr key={role.id}>
-                  <td>{role.name}</td>
-                  <td>{role.description || '-'}</td>
-                  <td>
+                  <td data-label="Nombre">{role.name}</td>
+                  <td data-label="Descripción">{role.description || '-'}</td>
+                  <td data-label="Tipo">
                     {role.is_system_default
                       ? <span className="badge badge-db">Sistema</span>
                       : <span className="badge badge-pending">Personalizado</span>}
                   </td>
-                  <td>
+                  <td data-label="Acciones">
                     <div className="action-btns">
                       <button className="btn-icon btn-icon-edit" onClick={() => setEditRole(role)} title="Editar">
                         <Pencil size={14} />

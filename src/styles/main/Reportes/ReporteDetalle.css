@@ -1,4 +1,4 @@
-.reporte-detalle-page { padding: 24px; max-width: 1100px; }
+.reporte-detalle-page { padding: 24px; max-width: 1400px; }
 
 .reporte-detalle-header {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;
@@ -26,3 +26,32 @@
 .reporte-tabla-wrap[open] > summary { margin-bottom: 8px; }
 .reporte-tabla-wrap .reportes-tabla-scroll,
 .reporte-tabla-wrap .reportes-resultado { overflow-x: auto; }
+
+/* ─── tabla de detalle (TablaDetalle.jsx) ──────────────────────────────── */
+.tabla-detalle { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 14px 16px; }
+.tabla-detalle-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.tabla-detalle-header h2 { margin: 0; font-size: 16px; color: #1f2937; display: flex; align-items: baseline; gap: 8px; }
+.tabla-detalle-count { font-size: 13px; font-weight: 400; color: #6b7280; }
+.tabla-detalle-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tabla-detalle-search {
+  display: flex; align-items: center; gap: 6px; border: 1px solid #d1d5db; border-radius: 8px;
+  padding: 6px 10px; color: #9ca3af; background: #fff;
+}
+.tabla-detalle-search input { border: none; outline: none; font-size: 13px; min-width: 200px; color: #1f2937; }
+.tabla-detalle-chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 6px 4px 10px;
+  border-radius: 999px; background: #eef2ff; color: #3b5bdb; border: 1px solid #c7d2fe;
+}
+.tabla-detalle-chip button {
+  display: inline-flex; border: none; background: transparent; color: inherit; cursor: pointer; padding: 2px; border-radius: 50%;
+}
+.tabla-detalle-chip button:hover { background: #c7d2fe; }
+.tabla-detalle .reportes-tabla th.sortable { cursor: pointer; white-space: nowrap; user-select: none; }
+.tabla-detalle .reportes-tabla th.sortable svg { vertical-align: middle; margin-left: 2px; }
+.tabla-detalle .reportes-tabla td { font-size: 13px; }
+.tabla-detalle-vacio { text-align: center !important; color: #6b7280; padding: 24px !important; }
+@media (max-width: 700px) {
+  .tabla-detalle-search input { min-width: 0; width: 100%; }
+}

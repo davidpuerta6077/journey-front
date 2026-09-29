@@ -52,8 +52,9 @@ export default function ReporteDetalle() {
           </button>
           <button
             className="btn-primary"
-            onClick={() => exportarExcel(resultado, def?.nombre || 'reporte')}
-            disabled={loading || !resultado || !resultado.rows?.length}
+            onClick={() => exportarExcel(resultado.detalle || resultado, def?.nombre || 'reporte')}
+            disabled={loading || !resultado || !(resultado.detalle || resultado).rows?.length}
+            title="Descargar todo el detalle del reporte"
           >
             <Download size={16} /> Excel
           </button>
@@ -67,7 +68,7 @@ export default function ReporteDetalle() {
         <div className="loading-box"><span className="loader"></span>Ejecutando reporte...</div>
       ) : !error && resultado && (
         <>
-          <ReporteDashboard resultado={resultado} tipo={def?.tipo} />
+          <ReporteDashboard resultado={resultado} tipo={def?.tipo} nombre={def?.nombre} />
           {resultado.meta?.generatedAt && (
             <p className="reporte-detalle-meta">
               Generado {new Date(resultado.meta.generatedAt).toLocaleString('es-CO')}

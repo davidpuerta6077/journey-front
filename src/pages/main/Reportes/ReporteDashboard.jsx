@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import TablaResultado from './TablaResultado'
+import { useMemo, useState } from 'react'
+import TablaDetalle from './TablaDetalle'
 import KpiTile from '../../../components/charts/KpiTile'
 import BarChartCard from '../../../components/charts/BarChartCard'
 import LineChartCard from '../../../components/charts/LineChartCard'
@@ -12,7 +12,7 @@ const esNumerica = (rows, key) =>
   rows.every((r) => r[key] == null || (r[key] !== '' && Number.isFinite(numOrNaN(r[key]))))
 
 // Dashboard genérico: infiere KPIs y un gráfico del shape de los datos.
-function generico({ columns, rows }) {
+function generico({ columns, rows }, ctx) {
   const keys = columns.map((c) => c.key)
   const numericas = keys.filter((k) => esNumerica(rows, k))
   const dimensiones = keys.filter((k) => !numericas.includes(k))
@@ -44,32 +44,62 @@ function generico({ columns, rows }) {
       <BarChartCard key="b" title={`${columns.find((c) => c.key === numericas[0])?.label || numericas[0]} por ${columns.find((c) => c.key === xKey)?.label || xKey}`}
         data={rows} xKey={xKey}
         series={numericas.slice(0, 2).map((k) => ({ key: k, label: columns.find((c) => c.key === k)?.label || k }))}
-        orientation="y" height={Math.max(240, rows.length * 30)} />
+        orientation="y" height={Math.max(240, rows.length * 30)}
+        onSelect={ctx.drill(xKey)} />
     )
   }
   return { kpis, charts }
 }
 
-export default function ReporteDashboard({ resultado, tipo }) {
-  // Inferir tipos de columna y agregados recorre todas las filas; se memoiza
-  // para no repetirlo en cada render (re-ejecuciones, toggles del <details>).
+// Resumen arriba (KPIs + gráficos) y, debajo, siempre visible, la tabla con el
+// detalle real del reporte (resultado.detalle si el backend lo manda; si no,
+// las mismas filas del resultado). Clic en un KPI o en una barra/porción
+// filtra el detalle a esas filas.
+export default function ReporteDashboard({ resultado, tipo, nombre }) {
+  // El filtro se guarda junto al resultado al que pertenece: al re-ejecutar
+  // el reporte (resultado nuevo) deja de aplicar solo.
+  const [filtroDe, setFiltroDe] = useState({ resultado: null, filtro: null })
+  const filtro = filtroDe.resultado === resultado ? filtroDe.filtro : null
+
+  const detalle = useMemo(() => {
+    if (!resultado) return null
+    return resultado.detalle || { titulo: 'Resultados', columns: resultado.columns || [], rows: resultado.rows || [] }
+  }, [resultado])
+
+  const ctx = useMemo(() => {
+    const labelDe = (key) =>
+      detalle?.columns.find((c) => c.key === key)?.label ||
+      resultado?.columns?.find((c) => c.key === key)?.label || key
+    const aplicar = (f) => setFiltroDe({ resultado, filtro: f })
+    return {
+      // Filtra el detalle por una columna: drill('estado')('error').
+      drill: (key) => (value) => aplicar({
+        label: `${labelDe(key)}: ${value}`,
+        fn: (r) => String(r[key] ?? '(sin valor)') === String(value),
+      }),
+      // Filtro con condición propia (KPIs): filtrar('Nunca accedieron', r => ...).
+      filtrar: (label, fn) => () => aplicar({ label, fn }),
+    }
+  }, [resultado, detalle])
+
   const { kpis, charts } = useMemo(() => {
     const rows = resultado?.rows ?? []
     if (!resultado) return { kpis: [], charts: [] }
     const derivado =
-      (rows.length ? dashboardParaTipo(tipo, resultado) : null) ||
-      (rows.length ? generico(resultado) : { kpis: [{ label: 'Filas', value: 0 }], charts: [] })
+      (rows.length ? dashboardParaTipo(tipo, resultado, ctx) : null) ||
+      (rows.length ? generico(resultado, ctx) : { kpis: [{ label: 'Filas', value: 0 }], charts: [] })
     return { kpis: derivado.kpis ?? [], charts: derivado.charts ?? [] }
-  }, [resultado, tipo])
+  }, [resultado, tipo, ctx])
 
   if (!resultado) return null
-  const { rows = [] } = resultado
 
   return (
     <div className="reporte-dashboard">
       {kpis.length > 0 && (
         <div className="kpi-row">
-          {kpis.map((k, i) => <KpiTile key={i} {...k} />)}
+          {kpis.map(({ filtroLabel, ...k }, i) => (
+            <KpiTile key={i} {...k} active={!!filtroLabel && filtro?.label === filtroLabel} />
+          ))}
         </div>
       )}
       {charts.length > 0 && (
@@ -77,10 +107,20 @@ export default function ReporteDashboard({ resultado, tipo }) {
           {charts}
         </div>
       )}
-      <details className="reporte-tabla-wrap" open={charts.length === 0}>
-        <summary>Ver datos ({rows.length} fila{rows.length === 1 ? '' : 's'})</summary>
-        <TablaResultado resultado={resultado} />
-      </details>
+      <TablaDetalle
+        titulo={detalle.titulo}
+        columns={detalle.columns}
+        rows={detalle.rows}
+        filtro={filtro}
+        onQuitarFiltro={() => setFiltroDe({ resultado, filtro: null })}
+        nombreArchivo={nombre}
+      />
+      {resultado.detalle && (
+        <details className="reporte-tabla-wrap">
+          <summary>Ver tabla resumen ({resultado.rows.length} fila{resultado.rows.length === 1 ? '' : 's'})</summary>
+          <TablaDetalle titulo="Resumen" columns={resultado.columns} rows={resultado.rows} nombreArchivo={`${nombre || 'reporte'}-resumen`} />
+        </details>
+      )}
     </div>
   )
 }
