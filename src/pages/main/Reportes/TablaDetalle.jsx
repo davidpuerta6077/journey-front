@@ -111,7 +111,7 @@ export default function TablaDetalle({ titulo, columns = [], rows = [], filtro, 
             ) : pageRows.map((row, i) => (
               <tr key={i}>
                 {columns.map((c) => (
-                  <td key={c.key}>
+                  <td data-label={c.label} key={c.key}>
                     {c.link && row[c.link]
                       ? <a href={row[c.link]} target="_blank" rel="noopener noreferrer" className="expand-link">
                           {formatear(row[c.key])} <ExternalLink size={12} />

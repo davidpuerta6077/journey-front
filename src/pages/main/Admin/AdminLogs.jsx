@@ -353,8 +353,8 @@ export default function AdminLogs() {
             <tbody>
               {paginated.map(row => (
                 <tr key={row.id}>
-                  {COLUMNS.map(c => <td key={c.key}>{row[c.key]}</td>)}
-                  <td>
+                  {COLUMNS.map(c => <td data-label={c.label} key={c.key}>{row[c.key]}</td>)}
+                  <td data-label="Detalle">
                     <button className="btn-icon" onClick={() => setDetailRow(row)} title="Ver detalle">
                       <Eye size={14} />
                     </button>

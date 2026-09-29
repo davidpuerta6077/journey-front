@@ -1,0 +1,114 @@
+/* ─── TABLAS RESPONSIVAS ─────────────────────────────────────────────────────
+   En pantallas chicas cada fila se convierte en una tarjeta y cada celda
+   muestra su columna con el atributo data-label (ver <td data-label="...">).
+   Aplica a .data-table y .reportes-tabla. Se usa "table.clase" para ganarle
+   en especificidad a los estilos de cada página, que se cargan después.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 768px) {
+  table.data-table,
+  table.reportes-tabla {
+    border: 0;
+    background: transparent;
+  }
+
+  /* Encabezados: los de solo texto se ocultan (ya aparecen como etiqueta en
+     cada celda). Los interactivos (ordenar, seleccionar todo, filtros) se
+     mantienen como una barra de botones arriba de las tarjetas. */
+  table.data-table thead tr,
+  table.reportes-tabla thead tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  table.data-table thead th,
+  table.reportes-tabla thead th {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: auto !important;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    font-size: 0.72rem;
+  }
+
+  table.data-table thead th:not(.sortable):not(:has(input, button, select)),
+  table.reportes-tabla thead th:not(.sortable):not(:has(input, button, select)) {
+    display: none;
+  }
+
+  table.data-table tbody,
+  table.reportes-tabla tbody {
+    display: block;
+    padding: 8px;
+  }
+
+  table.data-table tbody tr,
+  table.reportes-tabla tbody tr {
+    display: block;
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  table.data-table tbody td,
+  table.reportes-tabla tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.85rem;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  table.data-table tbody td:last-child,
+  table.reportes-tabla tbody td:last-child {
+    border-bottom: 0;
+  }
+
+  table.data-table tbody td[data-label]::before,
+  table.reportes-tabla tbody td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    font-weight: 600;
+    font-size: 0.72rem;
+    color: #64748b;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Celdas sin data-label (mensajes vacíos, filas expandidas con colSpan):
+     ocupan todo el ancho, sin etiqueta. */
+  table.data-table tbody td:not([data-label]),
+  table.reportes-tabla tbody td:not([data-label]) {
+    display: block;
+    text-align: left;
+  }
+
+  table.data-table .action-btns,
+  table.reportes-tabla .reportes-acciones {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  /* La fila expandida queda pegada a la tarjeta de arriba */
+  table.data-table tbody tr.expand-row {
+    margin-top: -10px;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+  }
+
+  table.data-table .expand-grid {
+    grid-template-columns: 1fr;
+  }
+}

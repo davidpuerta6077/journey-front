@@ -330,9 +330,9 @@ export default function ModulosCursos() {
                 {paginated.map(course => (
                   <Fragment key={course.id}>
                     <tr>
-                      {COLUMNS.map(col => <td key={col.key}>{course[col.key] || '-'}</td>)}
-                      <td><StatusBadge row={course} /></td>
-                      <td>
+                      {COLUMNS.map(col => <td data-label={col.label} key={col.key}>{course[col.key] || '-'}</td>)}
+                      <td data-label="Estado"><StatusBadge row={course} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           {course.estado_sync === 'novedad' && (
                             <button

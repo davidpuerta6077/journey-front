@@ -79,6 +79,15 @@
   object-fit: cover;
   flex-shrink: 0;
 }
+/* Mismo placeholder que .perfil-avatar-placeholder de Mi Perfil, en chico */
+.user-btn-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  color: #5b84ff;
+  border: 1px solid #e2e8f0;
+}
 .user-btn-info { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.25; }
 .user-btn-name { font-size: 0.95rem; }
 .user-btn-role { font-size: 0.72rem; color: rgba(255,255,255,0.55); text-transform: capitalize; }
@@ -90,20 +99,40 @@
 }
 
 /* ─── SIDEBAR ─── */
-.sidebar {
+/* .sidebar-slot ocupa el lugar en el layout; el .sidebar va posicionado encima
+   para que en modo mini pueda expandirse con hover sin empujar el contenido. */
+.sidebar-slot {
+  position: relative;
   width: 260px;
-  min-height: calc(100vh - 56px);
+  flex-shrink: 0;
+  transition: width 0.25s ease;
+}
+.sidebar-slot-mini { width: 52px; }
+
+.sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 90; /* debajo del navbar (100) para no tapar el menú de usuario */
+  width: 260px;
   background: #0f172a;
   border-right: 1px solid rgba(148,163,184,0.1);
   padding-top: 8px;
-  flex-shrink: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  transition: width 0.25s ease;
+  /* Scrollbar oculto pero el menú sigue desplazándose con rueda/touch */
+  scrollbar-width: none;
+  transition: width 0.25s ease, box-shadow 0.25s ease;
 }
+.sidebar::-webkit-scrollbar { display: none; }
 
-.sidebar-mini {
-  width: 52px;
+@media (min-width: 769px) {
+  .sidebar-mini { width: 52px; }
+  .sidebar-mini:hover {
+    width: 260px;
+    box-shadow: 8px 0 24px rgba(0,0,0,0.25);
+  }
 }
 
 .sidebar ul { list-style: none; margin: 0; padding: 0; }
@@ -229,22 +258,61 @@
 .chevron.open { transform: rotate(180deg); }
 
 /* ─── MINI SIDEBAR ─── */
-.sidebar-mini a span,
-.sidebar-mini .sidebar-toggle span,
-.sidebar-mini .sidebar-external span,
-.sidebar-mini .sidebar-disabled span,
-.sidebar-mini .chevron {
-  display: none;
+/* Solo escritorio y solo mientras no tenga el mouse encima (con hover se ve completo).
+   Todas las reglas de .sidebar-mini viven acá: una regla sin :not(:hover) en otro
+   archivo vuelve a ocultar el contenido cuando el menú se expande con hover. */
+@media (min-width: 769px) {
+  .sidebar-mini:not(:hover) a span,
+  .sidebar-mini:not(:hover) .sidebar-toggle span,
+  .sidebar-mini:not(:hover) .sidebar-external span,
+  .sidebar-mini:not(:hover) .sidebar-disabled span,
+  .sidebar-mini:not(:hover) .chevron,
+  .sidebar-mini:not(:hover) .sidebar-external svg:last-child {
+    display: none;
+  }
+  .sidebar-mini:not(:hover) a,
+  .sidebar-mini:not(:hover) .sidebar-toggle,
+  .sidebar-mini:not(:hover) .sidebar-external,
+  .sidebar-mini:not(:hover) .sidebar-disabled {
+    justify-content: center;
+    padding: 12px 0;
+  }
+  .sidebar-mini:not(:hover) .submenu { display: none; }
+  .sidebar-mini:not(:hover) .sidebar-section-divider { margin: 6px 4px; }
 }
-.sidebar-mini a,
-.sidebar-mini .sidebar-toggle,
-.sidebar-mini .sidebar-external,
-.sidebar-mini .sidebar-disabled {
-  justify-content: center;
-  padding: 12px 0;
+
+/* ─── SIDEBAR MÓVIL ─── */
+/* Oculto por defecto; la hamburguesa lo abre a pantalla completa (debajo del navbar)
+   y se cierra al elegir una página (ver closeMobileMenuOnLink en SideNavMain.jsx). */
+@media (max-width: 768px) {
+  .sidebar-slot,
+  .sidebar-slot-mini { width: 0; }
+
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    right: 0;
+    width: 100%;
+    border-right: 0;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s;
+  }
+  .sidebar-mobile-open {
+    transform: none;
+    visibility: visible;
+  }
+
+  /* Áreas de toque más grandes */
+  .sidebar a,
+  .sidebar-toggle,
+  .sidebar-external,
+  .sidebar-disabled {
+    padding-top: 13px;
+    padding-bottom: 13px;
+    font-size: 1rem;
+  }
 }
-.sidebar-mini .submenu { display: none; }
-.sidebar-mini .sidebar-section-divider { margin: 6px 4px; }
 
 /* ─── MAIN CONTENT ─── */
 .main-content {

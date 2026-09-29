@@ -132,10 +132,10 @@ export default function Reportes() {
               <tr><td colSpan={4}>No hay reportes guardados</td></tr>
             ) : reportes.map((r) => (
               <tr key={r.id}>
-                <td>{r.nombre}</td>
-                <td>{(tipos.find((t) => t.tipo === r.tipo) || {}).label || r.tipo}</td>
-                <td>{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</td>
-                <td className="reportes-acciones">
+                <td data-label="Nombre">{r.nombre}</td>
+                <td data-label="Tipo">{(tipos.find((t) => t.tipo === r.tipo) || {}).label || r.tipo}</td>
+                <td data-label="Creado">{r.created_at ? new Date(r.created_at).toLocaleString() : '—'}</td>
+                <td data-label="Acciones" className="reportes-acciones">
                   <button className="btn-secondary" onClick={() => ejecutar(r.id)}>Ver</button>
                   <button className="btn-secondary" onClick={() => eliminar(r.id)} disabled={eliminandoId === r.id}>Eliminar</button>
                 </td>

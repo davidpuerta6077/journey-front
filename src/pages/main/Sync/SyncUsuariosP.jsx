@@ -301,16 +301,16 @@ export default function SyncUsuariosP() {
                 {paginated.map(user => (
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'created_at'
                             ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={user} /></td>
-                      <td>
+                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
                             {expandedRows[user.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

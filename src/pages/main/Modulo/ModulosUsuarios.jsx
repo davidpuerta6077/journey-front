@@ -359,16 +359,16 @@ function UserDetailModal({ user, onClose }) {
                     const sync = SYNC_BADGE[e.estado_sync] || { cls: 'badge-pending', label: 'Pendiente' }
                     return (
                       <tr key={e.id}>
-                        <td>{formatFecha(e.fecha_matricula)}</td>
-                        <td>{formatPeriodo(e.periodo)}</td>
-                        <td>
+                        <td data-label="Fecha">{formatFecha(e.fecha_matricula)}</td>
+                        <td data-label="Período">{formatPeriodo(e.periodo)}</td>
+                        <td data-label="Asignatura">
                           {e.nombre_asignatura || e.fullname || '-'}
                           <span className="asignatura-code">{e.codigo_asignatura || '-'}</span>
                         </td>
-                        <td><span className="codigo-journey">{e.codigo_journey || e.idnumber || '-'}</span></td>
-                        <td>{e.grupo || '-'}</td>
-                        <td>{ROLE_LABEL[e.role] || e.role || '-'}</td>
-                        <td>
+                        <td data-label="Código Curso"><span className="codigo-journey">{e.codigo_journey || e.idnumber || '-'}</span></td>
+                        <td data-label="Grupo">{e.grupo || '-'}</td>
+                        <td data-label="Rol">{ROLE_LABEL[e.role] || e.role || '-'}</td>
+                        <td data-label="Estado académico">
                           <span className={`badge ${ESTADO_BADGE[e.estado] || 'badge-pending'}`}>{e.estado || '-'}</span>
                           {e.fecha_cambio_estado && (
                             <div className="user-detail-hint" title={e.estado_anterior ? `Antes: ${e.estado_anterior}` : undefined}>
@@ -376,7 +376,7 @@ function UserDetailModal({ user, onClose }) {
                             </div>
                           )}
                         </td>
-                        <td>
+                        <td data-label="Moodle">
                           <span className={`badge ${sync.cls}`} title={e.ultimo_error_sync || undefined}>{sync.label}</span>
                           {e.moodle_course_url && (
                             <div>
@@ -607,16 +607,16 @@ export default function ModulosUsuarios() {
                 {paginated.map(user => (
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'created_at'
                             ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={user} /></td>
-                      <td>
+                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
                             {expandedRows[user.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

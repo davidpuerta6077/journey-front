@@ -1,10 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/global/index.css";
+import "./styles/global/Tables.css";
 import App from "./App.jsx";
 import config from "./config.js";
 
 import { AuthProvider } from "react-oidc-context";
+import { WebStorageStateStore } from "oidc-client-ts";
 import { PermissionsProvider } from "./services/PermissionsContext";
 
 const cognitoAuthConfig = {
@@ -14,6 +16,8 @@ const cognitoAuthConfig = {
   response_type: "code",
   scope: "phone openid email",
   automaticSilentRenew: true,
+  // localStorage (no sessionStorage) para que la sesión se comparta entre pestañas
+  userStore: new WebStorageStateStore({ store: window.localStorage }),
   onSigninCallback: () => {
     window.history.replaceState({}, document.title, window.location.pathname);
   },

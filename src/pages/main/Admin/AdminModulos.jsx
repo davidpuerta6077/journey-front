@@ -171,9 +171,9 @@ export default function AdminModulos() {
               <tbody>
                 {modulos.map(m => (
                   <tr key={m.id}>
-                    <td><code>{m.code}</code></td>
-                    <td>{m.name}</td>
-                    <td>
+                    <td data-label="Código"><code>{m.code}</code></td>
+                    <td data-label="Nombre">{m.name}</td>
+                    <td data-label="Acciones">
                       <div className="action-btns">
                         <button className="btn-icon btn-icon-edit" onClick={() => setEditModulo(m)} title="Editar">
                           <Pencil size={14} />
@@ -205,10 +205,10 @@ export default function AdminModulos() {
               <tbody>
                 {filteredSubs.map(s => (
                   <tr key={s.id}>
-                    <td>{s.module_name}</td>
-                    <td><code>{s.code}</code></td>
-                    <td>{s.name}</td>
-                    <td>
+                    <td data-label="Módulo">{s.module_name}</td>
+                    <td data-label="Código"><code>{s.code}</code></td>
+                    <td data-label="Nombre">{s.name}</td>
+                    <td data-label="Acciones">
                       <div className="action-btns">
                         <button className="btn-icon btn-icon-edit" onClick={() => setEditSub(s)} title="Editar">
                           <Pencil size={14} />

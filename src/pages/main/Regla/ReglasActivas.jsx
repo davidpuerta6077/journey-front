@@ -330,17 +330,17 @@ export default function ReglasActivas() {
               )}
               {reglas.map(r => (
                 <tr key={r.id}>
-                  <td>{r.codigo_asignatura || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
-                  <td>{r.programa || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
-                  <td>{r.departamento || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
-                  <td><code>{r.seed_shortname}</code></td>
-                  <td>{r.categoryid}</td>
-                  <td>
+                  <td data-label="Código Asignatura">{r.codigo_asignatura || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
+                  <td data-label="Programa">{r.programa || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
+                  <td data-label="Departamento">{r.departamento || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
+                  <td data-label="Semilla"><code>{r.seed_shortname}</code></td>
+                  <td data-label="Categoría">{r.categoryid}</td>
+                  <td data-label="Estado">
                     <span className={`badge ${r.activo ? 'badge-synced' : 'badge-pending'}`}>
                       {r.activo ? 'Activa' : 'Inactiva'}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Acciones">
                     <div className="action-btns">
                       <button className="btn-icon btn-icon-edit" onClick={() => setEditRegla(r)} title="Editar">
                         <Pencil size={14} />

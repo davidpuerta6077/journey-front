@@ -105,6 +105,7 @@ Always run the Pre-Delivery Checklist before delivering UI code (icons, interact
 ## CSS
 
 - No hay scoping por componente: Vite bundlea todas las hojas de estilo globalmente, así que un `.className` definido en un archivo aplica en cualquier página que lo use, aunque no importe ese archivo directamente. Antes de nombrar una clase nueva, `grep` el nombre en `src/styles/` para no pisar una ya usada en otra página con otro significado (ej: no reusar `.expand-grid` de `SyncMatriculas.css` para algo con otra cantidad de columnas — mejor un nombre propio tipo `.log-detail-grid`).
+- Tablas responsivas: toda `<td>` de datos de una `.data-table`/`.reportes-tabla` lleva `data-label` con el nombre de su columna (en columnas generadas con `COLUMNS.map`, `data-label={col.label}`). En ≤768px `styles/global/Tables.css` convierte cada fila en tarjeta y muestra esa etiqueta; las celdas con `colSpan` (vacío, fila expandida) van sin `data-label`. Una tabla nueva sin `data-label` se ve con valores sin nombre en celular.
 - Clases genéricas ya establecidas para reusar: `.data-table`, `.badge` (+ `badge-pending`, `badge-error`, `badge-synced`, etc.), `.btn-primary`/`.btn-secondary`/`.btn-icon`, `.filters-bar`, `.loading-box`.
 
 ## Permisos y navegación
@@ -115,7 +116,7 @@ Always run the Pre-Delivery Checklist before delivering UI code (icons, interact
   - Un fallo de red/API al pedir `/auth/permissions` NO es "sin permisos": se reintenta y, si sigue fallando, se marca `permissionsError` y `PrivateRoute` muestra "Reintentar". Nunca redirigir a `/no-autorizado` por un error de carga; solo cuando la API respondió y el rol realmente no tiene el submódulo.
   - Si al cargar la sesión guardada está vencida (`auth.user?.expired`), intentar `signinSilent()` (refresh token) antes de mandar a `/login`.
   - `GetServiceAuth` lleva `timeout`: sin él, una API colgada deja la app en el loader para siempre.
-  - Cualquier cambio en autenticación/permisos se verifica en el navegador: F5 en rutas anidadas (`/admin/logs`, `/sync/novedades`, `/modulos/matriculas`) y F5 con `expires_at` forzado al pasado en `sessionStorage`; la URL debe mantenerse.
+  - Cualquier cambio en autenticación/permisos se verifica en el navegador: F5 en rutas anidadas (`/admin/logs`, `/sync/novedades`, `/modulos/matriculas`) y F5 con `expires_at` forzado al pasado en `localStorage`; la URL debe mantenerse.
 - Usuarios y matrículas llegan a Moodle solo por BD externa: el botón "Sincronizar" del front solo marca el registro en Nexo y el cron de Moodle lo toma. No agregar servicios que llamen endpoints de la API que crean/matriculan directo en Moodle (regla completa en `journey-api/CLAUDE.md`).
 - Cache tipo SWR en `services/swrCache.js` (`getCached`/`setCached`): páginas relacionadas (ej. Sync Usuarios y Módulo Usuarios) comparten la misma `CACHE_KEY` porque consultan el mismo preview — no crear una key nueva si ya existe una para los mismos datos.
 
