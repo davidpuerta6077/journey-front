@@ -117,12 +117,12 @@ export default function ReglasPlantillas() {
                 )}
                 {categorias.map(cat => (
                   <tr key={cat.id}>
-                    <td><code>{cat.id}</code></td>
-                    <td>{cat.name}</td>
-                    <td>{cat.idnumber || '-'}</td>
-                    <td>{cat.parent || '-'}</td>
-                    <td>{cat.coursecount ?? '-'}</td>
-                    <td>
+                    <td data-label="ID"><code>{cat.id}</code></td>
+                    <td data-label="Nombre">{cat.name}</td>
+                    <td data-label="Idnumber">{cat.idnumber || '-'}</td>
+                    <td data-label="Padre">{cat.parent || '-'}</td>
+                    <td data-label="Cursos">{cat.coursecount ?? '-'}</td>
+                    <td data-label="Copiar">
                       <CopyButton value={cat.id} title="Copiar categoryid" />
                     </td>
                   </tr>
@@ -156,11 +156,11 @@ export default function ReglasPlantillas() {
                 )}
                 {!loadingSemillas && semillas.map(s => (
                   <tr key={s.id}>
-                    <td><code>{s.id}</code></td>
-                    <td><code>{s.shortname}</code></td>
-                    <td>{s.fullname}</td>
-                    <td>{s.categoryname || s.categoryid || '-'}</td>
-                    <td>
+                    <td data-label="ID"><code>{s.id}</code></td>
+                    <td data-label="Shortname"><code>{s.shortname}</code></td>
+                    <td data-label="Nombre completo">{s.fullname}</td>
+                    <td data-label="Categoría">{s.categoryname || s.categoryid || '-'}</td>
+                    <td data-label="Copiar">
                       <CopyButton value={s.shortname} title="Copiar shortname" />
                     </td>
                   </tr>

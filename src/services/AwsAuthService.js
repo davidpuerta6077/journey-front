@@ -6,7 +6,7 @@ const oidcConfig = {
 };
 
 function getUser() {
-  const oidcStorage = sessionStorage.getItem(
+  const oidcStorage = localStorage.getItem(
     `oidc.user:${oidcConfig.authority}:${oidcConfig.client_id}`
   );
   if (!oidcStorage) return null;

@@ -222,9 +222,9 @@ export default function SyncMatriculas() {
                 {paginated.map(enr => (
                   <Fragment key={enr.id}>
                     <tr className={selected[enr.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[enr.id]} onChange={() => toggleSelect(enr.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[enr.id]} onChange={() => toggleSelect(enr.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'codigo_journey'
                             ? <span className="codigo-journey">{enr[col.key] || '-'}</span>
                             : col.key === 'role'
@@ -232,8 +232,8 @@ export default function SyncMatriculas() {
                             : enr[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={enr} /></td>
-                      <td>
+                      <td data-label="Sync"><StatusBadge row={enr} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(enr.id)} title="Ver más">
                             {expandedRows[enr.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}

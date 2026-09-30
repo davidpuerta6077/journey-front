@@ -591,18 +591,18 @@ export default function ModulosMatriculas() {
                 {paginated.map(enrollment => (
                   <Fragment key={enrollment.id}>
                     <tr className={selected[enrollment.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[enrollment.id]} onChange={() => toggleSelect(enrollment.id)} /></td>
-                      <td>{enrollment.nombre_estudiante || enrollment.documento || '-'}</td>
-                      <td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[enrollment.id]} onChange={() => toggleSelect(enrollment.id)} /></td>
+                      <td data-label="Estudiante / Usuario">{enrollment.nombre_estudiante || enrollment.documento || '-'}</td>
+                      <td data-label="Asignatura">
                         {enrollment.nombre_asignatura || '-'}
                         <span className="asignatura-code">{enrollment.codigo_asignatura || '-'}</span>
                       </td>
-                      <td><span className="codigo-journey">{enrollment.codigo_journey || '-'}</span></td>
-                      <td>{enrollment.programa || '-'}</td>
-                      <td>{enrollment.periodo || '-'} / Grupo {enrollment.grupo || '-'}</td>
-                      <td>{enrollment.created_at ? String(enrollment.created_at).split('T')[0] : '-'}</td>
-                      <td><StatusBadge row={enrollment} syncResult={syncResults[enrollment.id]} /></td>
-                      <td>
+                      <td data-label="Código Curso"><span className="codigo-journey">{enrollment.codigo_journey || '-'}</span></td>
+                      <td data-label="Programa">{enrollment.programa || '-'}</td>
+                      <td data-label="Periodo / Grupo">{enrollment.periodo || '-'} / Grupo {enrollment.grupo || '-'}</td>
+                      <td data-label="Fecha Matrícula">{enrollment.created_at ? String(enrollment.created_at).split('T')[0] : '-'}</td>
+                      <td data-label="Estado"><StatusBadge row={enrollment} syncResult={syncResults[enrollment.id]} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           {['pendiente', 'usuario_no_existe', 'error', 'desmatriculando'].includes(syncResults[enrollment.id]?.status) && (
                             <button

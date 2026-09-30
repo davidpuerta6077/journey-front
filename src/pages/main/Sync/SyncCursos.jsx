@@ -240,10 +240,10 @@ export default function SyncCursos() {
                 {paginated.map(course => (
                   <Fragment key={course.id}>
                     <tr className={selected[course.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[course.id]} onChange={() => toggleSelect(course.id)} /></td>
-                      {COLUMNS.map(col => <td key={col.key}>{course[col.key] || '-'}</td>)}
-                      <td><StatusBadge row={course} /></td>
-                      <td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[course.id]} onChange={() => toggleSelect(course.id)} /></td>
+                      {COLUMNS.map(col => <td data-label={col.label} key={col.key}>{course[col.key] || '-'}</td>)}
+                      <td data-label="Sync"><StatusBadge row={course} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(course.id)} title="Ver detalles">
                             {expandedRows[course.id] ? <EyeOff size={14} /> : <Eye size={14} />}
