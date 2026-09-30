@@ -27,8 +27,14 @@ function normEstado(estado) {
   return (estado || '').trim().toLowerCase()
 }
 
+// Cambio de grupo: marcado 'traslado' mientras está pendiente; ya sincronizado
+// conserva solo el estado interno "Trasladado".
+function esCambioDeGrupo(enr) {
+  return enr.estado_sync === 'traslado' || normEstado(enr.estado) === 'trasladado'
+}
+
 function tipoNovedad(enr) {
-  if (enr.estado_sync === 'traslado')        return 'Duplicado'
+  if (esCambioDeGrupo(enr))                  return 'Cambio de grupo'
   if (enr.estado_sync === 'desmatriculando') return 'Desmatriculando'
   const estado = normEstado(enr.estado)
   if (['cancelada', 'cancelado'].includes(estado)) return 'Cancelación'
@@ -46,7 +52,7 @@ function tipoNovedad(enr) {
 // no guarda un enlace directo entre la matrícula vieja y la nueva, así que se
 // reconstruye por descarte igual que hace el backend al detectar el traslado.
 function findCursoNuevo(enr, all) {
-  if (enr.estado_sync !== 'traslado') return null
+  if (!esCambioDeGrupo(enr)) return null
   const match = all.find(o =>
     o.id !== enr.id && o.userid === enr.userid &&
     o.codigo_asignatura === enr.codigo_asignatura && o.periodo === enr.periodo &&
@@ -92,7 +98,7 @@ const COLUMNS = [
 ]
 
 const NOVEDAD_BADGE_CLASS = {
-  'Duplicado':              'badge-novedad',
+  'Cambio de grupo':        'badge-novedad',
   'Cancelación':             'badge-pending',
   'Retiro':                  'badge-error',
   'Finalización':            'badge-error',
@@ -323,6 +329,11 @@ export default function SyncNovedades() {
                             ? <span className="codigo-journey">{enr[col.key] || '-'}</span>
                             : col.key === 'fecha_cambio_estado'
                             ? (enr.fecha_cambio_estado ? String(enr.fecha_cambio_estado).split('T')[0] : '-')
+                            // Un cambio de grupo guarda estado interno "Trasladado", pero en
+                            // ese curso el efecto real es que quedó desmatriculado; se muestra
+                            // así y se indica a qué curso pasó.
+                            : col.key === 'estado' && esCambioDeGrupo(enr)
+                            ? <>Desmatriculado{enr._cursoNuevo && <div className="novedades-sicau-sub">Pasó a {enr._cursoNuevo}</div>}</>
                             : enr[col.key] || '-'}
                         </td>
                       ))}
