@@ -170,3 +170,10 @@
 .page-info { color: #64748b; font-size: 0.82rem; margin-left: 8px; }
 
 .loading-box { text-align: center; padding: 40px; color: #64748b; font-size: 0.95rem; }
+/* Pestañas de Sync > Novedades (Detectadas por Nexo / Reportadas por SICAU) */
+.novedades-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px; }
+.novedades-tabs button { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; font-size: 0.9rem; color: #64748b; cursor: pointer; margin-bottom: -1px; }
+.novedades-tabs button:hover { color: #1e293b; }
+.novedades-tabs button.active { color: #1e293b; font-weight: 600; border-bottom-color: #2563eb; }
+.novedades-tabs button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.novedades-sicau-sub { font-size: 0.8rem; color: #64748b; }

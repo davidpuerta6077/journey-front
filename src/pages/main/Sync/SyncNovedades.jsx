@@ -6,6 +6,7 @@ import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
 import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncMatriculas.css"
 import { useNavigate } from 'react-router-dom'
+import NovedadesSicau from './NovedadesSicau'
 
 // Misma key que Sync Matrículas: mismo preview de matrículas exactamente.
 const CACHE_KEY = 'enrollments-preview'
@@ -135,6 +136,7 @@ export default function SyncNovedades() {
   const [selected, setSelected]             = useState({})
   const [page, setPage]                     = useState(1)
   const [perPage, setPerPage] = useState(10)
+  const [tab, setTab] = useState('nexo')
   const loadEnrollments = useCallback(async () => {
     try {
       const data = await fetchEnrollments()
@@ -232,11 +234,24 @@ export default function SyncNovedades() {
     <div className="sync-page">
       <div className="sync-page-header">
         <h2>Novedades de Matrícula</h2>
-        <button className="btn-primary" onClick={handleSync} disabled={selectedItems.length === 0 || syncing}>
-          <RefreshCw size={15} />
-          {syncing ? 'Sincronizando...' : `Sincronizar (${selectedItems.length})`}
+        {tab === 'nexo' && (
+          <button className="btn-primary" onClick={handleSync} disabled={selectedItems.length === 0 || syncing}>
+            <RefreshCw size={15} />
+            {syncing ? 'Sincronizando...' : `Sincronizar (${selectedItems.length})`}
+          </button>
+        )}
+      </div>
+
+      <div className="novedades-tabs" role="tablist" aria-label="Origen de la novedad">
+        <button type="button" role="tab" aria-selected={tab === 'nexo'} className={tab === 'nexo' ? 'active' : ''} onClick={() => setTab('nexo')}>
+          Detectadas por Nexo
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'sicau'} className={tab === 'sicau' ? 'active' : ''} onClick={() => setTab('sicau')}>
+          Reportadas por SICAU
         </button>
       </div>
+
+      {tab === 'sicau' ? <NovedadesSicau /> : (<>
       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: 16 }}>
         Matrículas cuyo estado cambió y ya no es "Matriculado": traslados de grupo/curso, cancelaciones,
         retiros, finalizaciones y suspensiones. Selecciona filas y sincroniza para aplicar el cambio en Moodle
@@ -387,6 +402,7 @@ export default function SyncNovedades() {
           <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
+      </>)}
     </div>
   )
 }
