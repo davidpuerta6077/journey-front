@@ -2,23 +2,12 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
+import { humanize, nombreNovedadSicau, claseNovedad } from './novedadNombres'
 
 // Novedades tal como las reporta SICAU (ya calculadas de su lado). Solo
 // lectura: la lógica de Nexo sigue por `estado`; esto muestra el "por qué"
 // que manda SICAU. Un RETIRO de curso sí desmatricula a sus estudiantes
 // (lo hace la API al recibirlo) y aquí se ve cuántos.
-const TIPOS = {
-  CAMBIO_DE_GRUPO:  { label: 'Cambio de grupo',  cls: 'badge-novedad' },
-  CAMBIO_DE_ESTADO: { label: 'Cambio de estado', cls: 'badge-pending' },
-  RETIRO:           { label: 'Retiro de curso',  cls: 'badge-error' },
-}
-
-const humanize = (s) => {
-  const t = String(s || '').replace(/_/g, ' ').toLowerCase()
-  return t.charAt(0).toUpperCase() + t.slice(1)
-}
-
-const tipoInfo = (tipo) => TIPOS[tipo] || { label: humanize(tipo) || 'Sin tipo', cls: 'badge-pending' }
 
 function describirCambio(n) {
   const cambios = Array.isArray(n.cambios) ? n.cambios : []
@@ -46,12 +35,12 @@ export default function NovedadesSicau() {
       .finally(() => setLoading(false))
   }, [])
 
-  const tiposPresentes = useMemo(() => [...new Set(rows.map(r => r.tipo).filter(Boolean))], [rows])
+  const tiposPresentes = useMemo(() => [...new Set(rows.map(nombreNovedadSicau))], [rows])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return rows.filter(r =>
-      (!filterTipo || r.tipo === filterTipo) &&
+      (!filterTipo || nombreNovedadSicau(r) === filterTipo) &&
       (!q || [r.codigo_journey, r.nombre_asignatura, r.cedula, r.nombre_estudiante, r.usuario_sicau]
         .some(v => String(v || '').toLowerCase().includes(q)))
     )
@@ -79,7 +68,7 @@ export default function NovedadesSicau() {
         </div>
         <select className="filter-select" value={filterTipo} onChange={e => { setFilterTipo(e.target.value); setPage(1) }} aria-label="Tipo de novedad">
           <option value="">Todos los tipos de novedad</option>
-          {tiposPresentes.map(t => <option key={t} value={t}>{tipoInfo(t).label}</option>)}
+          {tiposPresentes.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
@@ -107,11 +96,11 @@ export default function NovedadesSicau() {
                 {paginated.length === 0 ? (
                   <tr><td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: 24 }}>Aún no han llegado novedades de SICAU.</td></tr>
                 ) : paginated.map(n => {
-                  const tipo = tipoInfo(n.tipo)
+                  const tipo = nombreNovedadSicau(n)
                   return (
                     <tr key={n.id}>
                       <td data-label="Fecha">{formatFecha(n.fecha)}</td>
-                      <td data-label="Tipo"><span className={`badge ${tipo.cls}`}>{tipo.label}</span></td>
+                      <td data-label="Tipo"><span className={`badge ${claseNovedad(tipo)}`}>{tipo}</span></td>
                       <td data-label="Curso">
                         {n.nombre_asignatura || n.codigo_asignatura || '—'}
                         <div className="novedades-sicau-sub">{n.codigo_journey}</div>
