@@ -97,14 +97,13 @@ const COLUMNS = [
   { key: 'nombre_asignatura',   label: 'Asignatura' },
   { key: 'nombre',              label: 'Nombre' },
   { key: 'periodo',             label: 'Período' },
-  { key: 'estado_anterior',     label: 'Estado anterior' },
-  { key: 'estado',              label: 'Estado actual' },
-  { key: 'fecha_cambio_estado', label: 'Fecha de cambio' },
+  { key: 'estado',              label: 'Estado' },
+  { key: 'fecha_cambio_estado', label: 'Fecha' },
 ]
 
 function NovedadBadge({ enr }) {
   const tipo = enr._tipoNovedad
-  return <span className={`badge ${claseNovedad(tipo)}`} title={enr._duplicadoCon ? `También matriculado en: ${enr._duplicadoCon.join(', ')}` : ''}>{tipo}</span>
+  return <span className={`badge novedad-badge ${claseNovedad(tipo)}`} title={enr._duplicadoCon ? `También matriculado en: ${enr._duplicadoCon.join(', ')}` : ''}>{tipo}</span>
 }
 
 function StatusBadge({ row }) {
@@ -339,12 +338,18 @@ export default function SyncNovedades() {
                           {col.key === 'codigo_journey'
                             ? <span className="codigo-journey">{enr[col.key] || '-'}</span>
                             : col.key === 'fecha_cambio_estado'
-                            ? (enr.fecha_cambio_estado ? String(enr.fecha_cambio_estado).split('T')[0] : '-')
+                            ? <span style={{ whiteSpace: 'nowrap' }}>{enr.fecha_cambio_estado ? String(enr.fecha_cambio_estado).split('T')[0] : '-'}</span>
                             // Un cambio de grupo guarda estado interno "Trasladado", pero en
                             // ese curso el efecto real es que quedó desmatriculado; se muestra
                             // así y se indica a qué curso pasó.
-                            : col.key === 'estado' && esCambioDeGrupo(enr)
-                            ? <>Desmatriculado{enr._cursoNuevo && <div className="novedades-sicau-sub">Pasó a {enr._cursoNuevo}</div>}</>
+                            // Estado anterior → actual en una sola celda para que la
+                            // tabla quepa sin scroll horizontal.
+                            : col.key === 'estado'
+                            ? <>
+                                <span className="novedades-sicau-sub">{enr.estado_anterior || '-'} →</span>{' '}
+                                {esCambioDeGrupo(enr) ? 'Desmatriculado' : (enr.estado || '-')}
+                                {esCambioDeGrupo(enr) && enr._cursoNuevo && <div className="novedades-sicau-sub">Pasó a {enr._cursoNuevo}</div>}
+                              </>
                             : enr[col.key] || '-'}
                         </td>
                       ))}
