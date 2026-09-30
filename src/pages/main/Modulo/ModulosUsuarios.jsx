@@ -8,6 +8,7 @@ import { updateUser } from '../../../services/usuarios/updateUser'
 import { createUser } from '../../../services/usuarios/createUser'
 import { resetPassword } from '../../../services/usuarios/resetPassword'
 import { getUserEnrollments } from '../../../services/usuarios/getUserEnrollments'
+import MoodleAccountPanel from './MoodleAccountPanel'
 import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
@@ -328,6 +329,8 @@ function UserDetailModal({ user, onClose }) {
             </div>
           </div>
 
+          <MoodleAccountPanel user={user} />
+
           <h4 className="user-detail-subtitle">
             Matrículas
             {!loading && !error && <span> · {enrollments.length} en total, {activas} activa{activas === 1 ? '' : 's'}</span>}
@@ -523,10 +526,10 @@ export default function ModulosUsuarios() {
   }
 
   const handleResetPassword = async (user) => {
-    if (!confirm(`¿Resetear la contraseña de ${user.nombre} a su documento?`)) return
+    if (!confirm(`¿Restablecer la contraseña de Moodle de ${user.nombre} a su documento?`)) return
     try {
       await resetPassword(user.id)
-      alert('Contraseña restablecida correctamente')
+      alert('Contraseña de Moodle restablecida al documento')
     } catch (e) {
       console.error('Error reseteando contraseña:', e.message)
     }
@@ -627,7 +630,7 @@ export default function ModulosUsuarios() {
                           <button className="btn-icon btn-icon-edit" onClick={() => setEditUser(user)} title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button className="btn-icon" onClick={() => handleResetPassword(user)} title="Resetear contraseña">
+                          <button className="btn-icon" onClick={() => handleResetPassword(user)} title="Restablecer contraseña de Moodle al documento" aria-label="Restablecer contraseña de Moodle al documento">
                             <KeyRound size={14} />
                           </button>
                           <button className="btn-icon btn-icon-delete" onClick={() => handleDelete(user)} title="Eliminar">

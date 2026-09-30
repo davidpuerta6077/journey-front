@@ -6,6 +6,9 @@ import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
 import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncMatriculas.css"
 import { useNavigate } from 'react-router-dom'
+import NovedadesSicau from './NovedadesSicau'
+import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
+import { nombreCambioEstado, esEstadoDeNovedad, nombreNovedadSicau, claseNovedad, TIPOS_SICAU_CONOCIDOS } from './novedadNombres'
 
 // Misma key que Sync Matrículas: mismo preview de matrículas exactamente.
 const CACHE_KEY = 'enrollments-preview'
@@ -26,15 +29,24 @@ function normEstado(estado) {
   return (estado || '').trim().toLowerCase()
 }
 
-function tipoNovedad(enr) {
-  if (enr.estado_sync === 'traslado')        return 'Duplicado'
+// Cambio de grupo: marcado 'traslado' mientras está pendiente; ya sincronizado
+// conserva solo el estado interno "Trasladado".
+function esCambioDeGrupo(enr) {
+  return enr.estado_sync === 'traslado' || normEstado(enr.estado) === 'trasladado'
+}
+
+// Nombre de la novedad con el vocabulario de SICAU. La detección sigue siendo
+// la de Nexo (estado); lo que reportó SICAU solo se usa para nombrar lo que
+// Nexo no puede saber: que una desmatrícula vino de un RETIRO del curso, o un
+// tipo de novedad nuevo que SICAU empiece a mandar.
+function tipoNovedad(enr, sicau) {
+  if (esCambioDeGrupo(enr))                  return 'Cambio de grupo'
   if (enr.estado_sync === 'desmatriculando') return 'Desmatriculando'
   const estado = normEstado(enr.estado)
-  if (['cancelada', 'cancelado'].includes(estado)) return 'Cancelación'
-  if (['retirado', 'retirada'].includes(estado))   return 'Retiro'
-  if (['finalizado', 'finalizada'].includes(estado)) return 'Finalización'
-  if (['suspendido', 'suspendida'].includes(estado)) return 'Suspensión'
-  if (estado === 'desmatriculado') return 'Desmatriculado'
+  if (estado === 'desmatriculado') return sicau.retirosCurso.has(enr.codigo_journey) ? 'Retiro de curso' : 'Desmatriculado'
+  const reportada = sicau.porMatricula[`${enr.documento}|${enr.codigo_journey}`]
+  if (reportada && !TIPOS_SICAU_CONOCIDOS.includes(reportada.tipo)) return nombreNovedadSicau(reportada)
+  if (esEstadoDeNovedad(estado)) return nombreCambioEstado(estado)
   if (estado === 'pendiente') return 'Pendiente'
   return enr.estado || 'Otro'
 }
@@ -45,7 +57,7 @@ function tipoNovedad(enr) {
 // no guarda un enlace directo entre la matrícula vieja y la nueva, así que se
 // reconstruye por descarte igual que hace el backend al detectar el traslado.
 function findCursoNuevo(enr, all) {
-  if (enr.estado_sync !== 'traslado') return null
+  if (!esCambioDeGrupo(enr)) return null
   const match = all.find(o =>
     o.id !== enr.id && o.userid === enr.userid &&
     o.codigo_asignatura === enr.codigo_asignatura && o.periodo === enr.periodo &&
@@ -85,26 +97,13 @@ const COLUMNS = [
   { key: 'nombre_asignatura',   label: 'Asignatura' },
   { key: 'nombre',              label: 'Nombre' },
   { key: 'periodo',             label: 'Período' },
-  { key: 'estado_anterior',     label: 'Estado anterior' },
-  { key: 'estado',              label: 'Estado actual' },
-  { key: 'fecha_cambio_estado', label: 'Fecha de cambio' },
+  { key: 'estado',              label: 'Estado' },
+  { key: 'fecha_cambio_estado', label: 'Fecha' },
 ]
 
-const NOVEDAD_BADGE_CLASS = {
-  'Duplicado':              'badge-novedad',
-  'Cancelación':             'badge-pending',
-  'Retiro':                  'badge-error',
-  'Finalización':            'badge-error',
-  'Desmatriculado':          'badge-error',
-  'Suspensión':              'badge-pending',
-  'Desmatriculando':         'badge-syncing',
-  'Pendiente':               'badge-pending',
-  'Duplicado (2 grupos)':    'badge-error',
-}
-
 function NovedadBadge({ enr }) {
-  const tipo = enr._duplicadoCon ? 'Duplicado (2 grupos)' : tipoNovedad(enr)
-  return <span className={`badge ${NOVEDAD_BADGE_CLASS[tipo] || 'badge-db'}`} title={enr._duplicadoCon ? `También matriculado en: ${enr._duplicadoCon.join(', ')}` : ''}>{tipo}</span>
+  const tipo = enr._tipoNovedad
+  return <span className={`badge novedad-badge ${claseNovedad(tipo)}`} title={enr._duplicadoCon ? `También matriculado en: ${enr._duplicadoCon.join(', ')}` : ''}>{tipo}</span>
 }
 
 function StatusBadge({ row }) {
@@ -135,6 +134,7 @@ export default function SyncNovedades() {
   const [selected, setSelected]             = useState({})
   const [page, setPage]                     = useState(1)
   const [perPage, setPerPage] = useState(10)
+  const [tab, setTab] = useState('nexo')
   const loadEnrollments = useCallback(async () => {
     try {
       const data = await fetchEnrollments()
@@ -148,6 +148,24 @@ export default function SyncNovedades() {
 
   useEffect(() => { loadEnrollments() }, [loadEnrollments])
 
+  // Lo que reportó SICAU, solo para nombrar novedades (ver tipoNovedad).
+  // Best-effort: si falla, la página sigue con los nombres derivados del estado.
+  const [sicauNovedades, setSicauNovedades] = useState([])
+  useEffect(() => {
+    fetchSicauNovedades().then(setSicauNovedades).catch(() => {})
+  }, [])
+  const sicau = useMemo(() => {
+    const retirosCurso = new Set()
+    const porMatricula = {}
+    // Vienen de la más reciente a la más vieja: gana la última reportada.
+    sicauNovedades.forEach(n => {
+      if (n.nivel === 'curso' && n.tipo === 'RETIRO') retirosCurso.add(n.codigo_journey)
+      const key = `${n.cedula}|${n.codigo_journey}`
+      if (n.nivel === 'matricula' && !porMatricula[key]) porMatricula[key] = n
+    })
+    return { retirosCurso, porMatricula }
+  }, [sicauNovedades])
+
   // Novedades = cualquier matrícula que no esté en un estado activo normal, MÁS
   // las que sí están "Matriculado" pero duplicadas en dos grupos de la misma
   // asignatura/periodo (esas no cambian de estado, así que no las agarra el
@@ -159,10 +177,10 @@ export default function SyncNovedades() {
       .map(e => ({
         ...e,
         _duplicadoCon: duplicados[e.id] || null,
-        _tipoNovedad: duplicados[e.id] ? 'Duplicado (2 grupos)' : tipoNovedad(e),
+        _tipoNovedad: duplicados[e.id] ? 'Duplicado (2 grupos)' : tipoNovedad(e, sicau),
         _cursoNuevo: findCursoNuevo(e, allEnrollments)
       })),
-    [allEnrollments, duplicados]
+    [allEnrollments, duplicados, sicau]
   )
 
   const periodos = [...new Set(novedades.map(e => e.periodo).filter(Boolean))]
@@ -232,11 +250,24 @@ export default function SyncNovedades() {
     <div className="sync-page">
       <div className="sync-page-header">
         <h2>Novedades de Matrícula</h2>
-        <button className="btn-primary" onClick={handleSync} disabled={selectedItems.length === 0 || syncing}>
-          <RefreshCw size={15} />
-          {syncing ? 'Sincronizando...' : `Sincronizar (${selectedItems.length})`}
+        {tab === 'nexo' && (
+          <button className="btn-primary" onClick={handleSync} disabled={selectedItems.length === 0 || syncing}>
+            <RefreshCw size={15} />
+            {syncing ? 'Sincronizando...' : `Sincronizar (${selectedItems.length})`}
+          </button>
+        )}
+      </div>
+
+      <div className="novedades-tabs" role="tablist" aria-label="Origen de la novedad">
+        <button type="button" role="tab" aria-selected={tab === 'nexo'} className={tab === 'nexo' ? 'active' : ''} onClick={() => setTab('nexo')}>
+          Detectadas por Nexo
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'sicau'} className={tab === 'sicau' ? 'active' : ''} onClick={() => setTab('sicau')}>
+          Reportadas por SICAU
         </button>
       </div>
+
+      {tab === 'sicau' ? <NovedadesSicau /> : (<>
       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: 16 }}>
         Matrículas cuyo estado cambió y ya no es "Matriculado": traslados de grupo/curso, cancelaciones,
         retiros, finalizaciones y suspensiones. Selecciona filas y sincroniza para aplicar el cambio en Moodle
@@ -307,7 +338,18 @@ export default function SyncNovedades() {
                           {col.key === 'codigo_journey'
                             ? <span className="codigo-journey">{enr[col.key] || '-'}</span>
                             : col.key === 'fecha_cambio_estado'
-                            ? (enr.fecha_cambio_estado ? String(enr.fecha_cambio_estado).split('T')[0] : '-')
+                            ? <span style={{ whiteSpace: 'nowrap' }}>{enr.fecha_cambio_estado ? String(enr.fecha_cambio_estado).split('T')[0] : '-'}</span>
+                            // Un cambio de grupo guarda estado interno "Trasladado", pero en
+                            // ese curso el efecto real es que quedó desmatriculado; se muestra
+                            // así y se indica a qué curso pasó.
+                            // Estado anterior → actual en una sola celda para que la
+                            // tabla quepa sin scroll horizontal.
+                            : col.key === 'estado'
+                            ? <>
+                                <span className="novedades-sicau-sub">{enr.estado_anterior || '-'} →</span>{' '}
+                                {esCambioDeGrupo(enr) ? 'Desmatriculado' : (enr.estado || '-')}
+                                {esCambioDeGrupo(enr) && enr._cursoNuevo && <div className="novedades-sicau-sub">Pasó a {enr._cursoNuevo}</div>}
+                              </>
                             : enr[col.key] || '-'}
                         </td>
                       ))}
@@ -387,6 +429,7 @@ export default function SyncNovedades() {
           <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
+      </>)}
     </div>
   )
 }
