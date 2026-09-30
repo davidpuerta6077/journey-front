@@ -334,3 +334,11 @@
 @media (max-width: 700px) {
   .expand-grid.user-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Cuenta en Moodle (MoodleAccountPanel) */
+.moodle-account-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.75rem; }
+.moodle-account-hint { margin: 0.5rem 0 0; font-size: 0.85rem; color: #6b7280; }
+.moodle-account-confirm { margin-top: 0.75rem; padding: 0.75rem 1rem; border: 1px solid #f59e0b; border-radius: 8px; background: #fffbeb; }
+.moodle-account-confirm p { margin: 0; }
+.moodle-account-ok { margin: 0.5rem 0 0; color: #15803d; }
+.moodle-account-error { margin: 0.5rem 0 0; color: #b91c1c; }
