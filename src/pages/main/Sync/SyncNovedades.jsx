@@ -77,6 +77,10 @@ function findCursoNuevo(enr, all) {
 function findDuplicadosPorGrupo(all) {
   const grupos = {}
   all.forEach(e => {
+    // Solo estudiantes: un profesor/tutor sí puede estar activo a la vez en
+    // varios grupos de la misma asignatura y periodo (dicta más de un grupo),
+    // eso no es un error de matrícula como sí lo es para un estudiante.
+    if (e.role !== 'student') return
     if (!ESTADOS_ACTIVOS.includes(normEstado(e.estado))) return
     const key = `${e.userid}|${e.codigo_asignatura}|${e.periodo}`
     if (!grupos[key]) grupos[key] = []

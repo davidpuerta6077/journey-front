@@ -1,7 +1,7 @@
 import {
   Home, RefreshCw, BookOpen, FileText,
   ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings,
-  Search, UserCog, Eye
+  Search, UserCog, Eye, ClipboardList
 } from 'lucide-react'
 
 
@@ -50,6 +50,7 @@ export const menuItems = [
   { label: 'CodeX', icon: ExternalLink, moduleCode: 'codex', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
   { label: 'Encuestas', icon: ExternalLink, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
   { label: 'Laboratorios Virtuales', icon: LayoutGrid, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
+  { label: 'Formularios de Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
 
   { type: 'divider' },
 

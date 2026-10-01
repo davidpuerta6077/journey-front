@@ -5,6 +5,7 @@ import './styles/global/Layout.css'
 
 import Login from './pages/Login'
 import Home from './pages/Home'
+import FormularioPublico from './pages/main/Formularios/FormularioPublico'
 
 // ─── NEXO SYNC ─────────────────────────────────────────────────────────────
 import HomeNexo from './pages/main/HomeNexo'
@@ -35,6 +36,9 @@ import AdminPermisos from './pages/main/Admin/AdminPermisos'
 import AdminLogs from './pages/main/Admin/AdminLogs'
 import IntegracionApis from './pages/main/Integracion/IntegracionApis'
 import Reportes from './pages/main/Reportes/Reportes'
+import FormulariosList from './pages/main/Formularios/FormulariosList'
+import FormularioEditor from './pages/main/Formularios/FormularioEditor'
+import FormularioInscritos from './pages/main/Formularios/FormularioInscritos'
 import ReporteDetalle from './pages/main/Reportes/ReporteDetalle'
 import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Configuracion from './pages/main/Configuracion/Configuracion'
@@ -50,6 +54,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/no-autorizado" element={<NoAutorizado />} />
+        <Route path="/f/:publicToken" element={<FormularioPublico />} />
 
         <Route path="/" element={
           <PrivateRoute>
@@ -134,6 +139,28 @@ function App() {
           <Route path="busqueda" element={
             <PrivateRoute submoduleCode="search">
               <Busqueda />
+            </PrivateRoute>
+          } />
+
+          {/* ─── FORMULARIOS DE ASISTENCIA ─── */}
+          <Route path="formularios" element={
+            <PrivateRoute submoduleCode="attendance_forms_manage">
+              <FormulariosList />
+            </PrivateRoute>
+          } />
+          <Route path="formularios/nuevo" element={
+            <PrivateRoute submoduleCode="attendance_forms_manage">
+              <FormularioEditor />
+            </PrivateRoute>
+          } />
+          <Route path="formularios/:id/editar" element={
+            <PrivateRoute submoduleCode="attendance_forms_manage">
+              <FormularioEditor />
+            </PrivateRoute>
+          } />
+          <Route path="formularios/:id/inscritos" element={
+            <PrivateRoute submoduleCode="attendance_forms_manage">
+              <FormularioInscritos />
             </PrivateRoute>
           } />
 
