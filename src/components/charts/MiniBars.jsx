@@ -1,26 +1,27 @@
+import ChartBase from './ChartBase'
+import { colors } from './chartTheme'
+
 export default function MiniBars({
   data,
   max = Math.max(...data),
-  color = '#5b73c4',
-  track = '#dfe4f4',
+  color = colors.primary,
+  track = colors.track,
+  height = 100,
 }) {
-  const barW = 10
-  const gap = 5
-  const h = 100
-  const w = data.length * (barW + gap) - gap
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="hub-chart" role="img" aria-label="Barras">
-      {data.map((v, i) => {
-        const x = i * (barW + gap)
-        const bh = (v / max) * h
-        return (
-          <g key={i}>
-            <rect x={x} y={0} width={barW} height={h} rx="2" fill={track} />
-            <rect x={x} y={h - bh} width={barW} height={bh} rx="2" fill={color} />
-          </g>
-        )
-      })}
-    </svg>
-  )
+  const options = {
+    chart: { type: 'column', height, margin: 0, backgroundColor: 'transparent' },
+    xAxis: { visible: false },
+    yAxis: { visible: false, min: 0, max },
+    legend: { enabled: false },
+    exporting: { enabled: false },
+    tooltip: { headerFormat: '', pointFormat: '<b>{point.y}</b>' },
+    plotOptions: {
+      column: { grouping: false, pointPadding: 0.08, groupPadding: 0.05, borderRadius: 2, borderWidth: 0 },
+    },
+    series: [
+      { name: 'Fondo', data: data.map(() => max), color: track, enableMouseTracking: false },
+      { name: 'Valor', data, color },
+    ],
+  }
+  return <ChartBase options={options} />
 }
