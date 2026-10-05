@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
-import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, KeyRound, BookOpen } from 'lucide-react'
+import Paginacion from '../../../components/Paginacion'
+import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, KeyRound, Eye, ExternalLink } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
@@ -7,7 +8,12 @@ import { updateUser } from '../../../services/usuarios/updateUser'
 import { createUser } from '../../../services/usuarios/createUser'
 import { resetPassword } from '../../../services/usuarios/resetPassword'
 import { getUserEnrollments } from '../../../services/usuarios/getUserEnrollments'
+import MoodleAccountPanel from './MoodleAccountPanel'
+import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
+
+// Misma key que Sync Usuarios: consultan exactamente el mismo preview.
+const CACHE_KEY = 'users-preview'
 
 const COLUMNS = [
   { key: 'nombre',     label: 'Nombre' },
@@ -24,6 +30,7 @@ const EMPTY_FORM = {
 }
 
 function StatusBadge({ row }) {
+  if (row._syncing)               return <span className="badge badge-syncing">Sincronizando...</span>
   if (row._status === 'error')   return <span className="badge badge-error">Error</span>
   if (row._status === 'success') return <span className="badge badge-success">Creado</span>
   if (row._synced || (row._syncStatus?.inDB && row._syncStatus?.inMoodle)) return <span className="badge badge-synced">Sincronizado</span>
@@ -243,60 +250,151 @@ function EditModal({ user, onClose, onSave }) {
   )
 }
 
-function EnrollmentsModal({ user, onClose }) {
+const ROLE_LABEL = {
+  student:        'Estudiante',
+  editingteacher: 'Profesor',
+  teacher:        'Tutor',
+}
+
+// Estado académico (ya normalizado en la BD, ver services/normalize.js del API).
+const ESTADO_BADGE = {
+  Matriculado:    'badge-success',
+  Trasladado:     'badge-novedad',
+  Pendiente:      'badge-pending',
+  Suspendido:     'badge-suspended',
+  Cancelado:      'badge-error',
+  Desmatriculado: 'badge-error',
+  Retirado:       'badge-error',
+  Finalizado:     'badge-db',
+}
+
+// Estado frente a Moodle (columna estado_sync de enrollments).
+const SYNC_BADGE = {
+  sincronizado:    { cls: 'badge-synced',  label: 'Sincronizado' },
+  error:           { cls: 'badge-error',   label: 'Error' },
+  traslado:        { cls: 'badge-novedad', label: 'Traslado' },
+  desmatriculando: { cls: 'badge-syncing', label: 'Desmatriculando' },
+}
+
+function formatFecha(value) {
+  if (!value) return '-'
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? '-' : d.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: '2-digit' })
+}
+
+function formatPeriodo(periodo) {
+  if (!periodo) return '-'
+  const p = String(periodo)
+  return p.length === 5 ? `${p.slice(0, 4)}-${p.slice(4)}` : p
+}
+
+function UserDetailModal({ user, onClose }) {
   const [enrollments, setEnrollments] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     getUserEnrollments(user.id)
       .then(setEnrollments)
-      .catch(e => console.error(e.message))
+      .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [user.id])
 
+  const activas = enrollments.filter(e => e.estado === 'Matriculado').length
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box" style={{ maxWidth: '900px', width: '90vw' }}>
+      <div className="modal-box" style={{ maxWidth: '1150px', width: '95vw' }}>
         <div className="modal-header">
-          <h3>Matrículas de {user.nombre}</h3>
+          <h3>Detalle de {user.nombre}</h3>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
-        <div className="modal-form" style={{ padding: 0 }}>
+        <div className="modal-form">
+          <div className="expand-grid user-detail-grid">
+            <div className="expand-item">
+              <span className="expand-label">Documento</span>
+              <span className="expand-value">{user.documento || '-'}</span>
+            </div>
+            <div className="expand-item">
+              <span className="expand-label">Email</span>
+              <span className="expand-value">{user.email || '-'}</span>
+            </div>
+            <div className="expand-item">
+              <span className="expand-label">Programa</span>
+              <span className="expand-value">{user.plan_estudios || '-'}</span>
+            </div>
+            <div className="expand-item">
+              <span className="expand-label">Jornada</span>
+              <span className="expand-value">{user.jornada || '-'}</span>
+            </div>
+          </div>
+
+          <MoodleAccountPanel user={user} />
+
+          <h4 className="user-detail-subtitle">
+            Matrículas
+            {!loading && !error && <span> · {enrollments.length} en total, {activas} activa{activas === 1 ? '' : 's'}</span>}
+          </h4>
+
           {loading ? (
-            <p style={{ padding: '1rem' }}>Cargando matrículas...</p>
+            <div className="loading-box" style={{ padding: '1rem' }}><span className="loader"></span>Cargando matrículas...</div>
+          ) : error ? (
+            <p className="user-detail-empty">{error}</p>
           ) : enrollments.length === 0 ? (
-            <p style={{ padding: '1rem' }}>Este usuario no tiene matrículas registradas.</p>
+            <p className="user-detail-empty">Este usuario no tiene matrículas registradas.</p>
           ) : (
-            <table className="data-table" style={{ margin: 0 }}>
-              <thead>
-                <tr>
-                  <th>Código Journey</th>
-                  <th>Asignatura</th>
-                  <th>Período</th>
-                  <th>Grupo</th>
-                  <th>Programa</th>
-                  <th>Rol</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {enrollments.map(e => (
-                  <tr key={e.id}>
-                    <td><span className="codigo-journey">{e.codigo_journey || '-'}</span></td>
-                    <td>{e.nombre_asignatura || e.fullname || '-'}</td>
-                    <td>{e.periodo || '-'}</td>
-                    <td>{e.grupo || '-'}</td>
-                    <td>{e.programa || '-'}</td>
-                    <td>{e.role || '-'}</td>
-                    <td>
-                      <span className={`badge ${e.sincronizado ? 'badge-synced' : 'badge-pending'}`}>
-                        {e.sincronizado ? 'Sincronizado' : 'Pendiente'}
-                      </span>
-                    </td>
+            <div className="user-detail-table-wrap">
+              <table className="data-table" style={{ margin: 0 }}>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Período</th>
+                    <th>Asignatura</th>
+                    <th>Código Curso</th>
+                    <th>Grupo</th>
+                    <th>Rol</th>
+                    <th>Estado académico</th>
+                    <th>Moodle</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {enrollments.map(e => {
+                    const sync = SYNC_BADGE[e.estado_sync] || { cls: 'badge-pending', label: 'Pendiente' }
+                    return (
+                      <tr key={e.id}>
+                        <td data-label="Fecha">{formatFecha(e.fecha_matricula)}</td>
+                        <td data-label="Período">{formatPeriodo(e.periodo)}</td>
+                        <td data-label="Asignatura">
+                          {e.nombre_asignatura || e.fullname || '-'}
+                          <span className="asignatura-code">{e.codigo_asignatura || '-'}</span>
+                        </td>
+                        <td data-label="Código Curso"><span className="codigo-journey">{e.codigo_journey || e.idnumber || '-'}</span></td>
+                        <td data-label="Grupo">{e.grupo || '-'}</td>
+                        <td data-label="Rol">{ROLE_LABEL[e.role] || e.role || '-'}</td>
+                        <td data-label="Estado académico">
+                          <span className={`badge ${ESTADO_BADGE[e.estado] || 'badge-pending'}`}>{e.estado || '-'}</span>
+                          {e.fecha_cambio_estado && (
+                            <div className="user-detail-hint" title={e.estado_anterior ? `Antes: ${e.estado_anterior}` : undefined}>
+                              desde {formatFecha(e.fecha_cambio_estado)}
+                            </div>
+                          )}
+                        </td>
+                        <td data-label="Moodle">
+                          <span className={`badge ${sync.cls}`} title={e.ultimo_error_sync || undefined}>{sync.label}</span>
+                          {e.moodle_course_url && (
+                            <div>
+                              <a href={e.moodle_course_url} target="_blank" rel="noopener noreferrer" className="expand-link">
+                                Ver curso <ExternalLink size={12} />
+                              </a>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
         <div className="modal-actions">
@@ -308,9 +406,10 @@ function EnrollmentsModal({ user, onClose }) {
 }
 
 export default function ModulosUsuarios() {
-  const [users, setUsers]               = useState([])
-  const [loading, setLoading]           = useState(true)
+  const [users, setUsers]               = useState(() => getCached(CACHE_KEY) || [])
+  const [loading, setLoading]           = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]           = useState(false)
+  const [deleting, setDeleting]         = useState(false)
   const [search, setSearch]             = useState('')
   const [filterJornada, setFilterJornada]   = useState('')
   const [filterEstado, setFilterEstado]     = useState('')
@@ -322,12 +421,11 @@ export default function ModulosUsuarios() {
   const [showCreate, setShowCreate]     = useState(false)
   const [editUser, setEditUser]         = useState(null)
   const [detailUser, setDetailUser]     = useState(null)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   const loadUsers = useCallback(async () => {
-    setLoading(true)
     try {
       const data = await fetchUsers()
+      setCached(CACHE_KEY, data)
       setUsers(data)
     } catch (e) {
       console.error('Error cargando usuarios:', e.message)
@@ -341,7 +439,9 @@ export default function ModulosUsuarios() {
     let data = [...users]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(u => Object.values(u).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+      data = data.filter(u => Object.values(u).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
     if (filterJornada) data = data.filter(u => u.jornada === filterJornada)
     if (filterEstado === 'sincronizado')   data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
@@ -355,8 +455,8 @@ export default function ModulosUsuarios() {
     return data
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const jornadas   = [...new Set(users.map(u => u.jornada).filter(Boolean))]
 
   const handleSort = (key) => {
@@ -379,23 +479,27 @@ export default function ModulosUsuarios() {
   const handleSync = async () => {
     if (selectedUsers.length === 0) return
     setSyncing(true)
+    const syncingIds = new Set(selectedUsers.map(u => u.id))
+    setUsers(prev => prev.map(u => syncingIds.has(u.id) ? { ...u, _syncing: true } : u))
     try {
       await syncUsers(selectedUsers)
-      const syncedIds = new Set(selectedUsers.map(u => u.id))
       setUsers(prev => prev.map(u =>
-        syncedIds.has(u.id)
-          ? { ...u, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
+        syncingIds.has(u.id)
+          ? { ...u, _syncing: false, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
           : u
       ))
       setSelected({})
     } catch (e) {
       console.error('Error sincronizando:', e.message)
+      setUsers(prev => prev.map(u =>
+        syncingIds.has(u.id) ? { ...u, _syncing: false, _status: 'error' } : u
+      ))
     }
     setSyncing(false)
   }
 
   const handleDelete = async (user) => {
-    if (!confirm(`¿Eliminar a ${user.nombre} de Journey?`)) return
+    if (!confirm(`¿Eliminar a ${user.nombre} de Nexo?`)) return
     try {
       await deleteUser(user.id)
       await loadUsers()
@@ -404,11 +508,28 @@ export default function ModulosUsuarios() {
     }
   }
 
+  // Solo tiene sentido con más de un seleccionado: para uno solo ya está el
+  // ícono de eliminar individual en la fila.
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length <= 1) return
+    if (!confirm(`¿Eliminar ${selectedUsers.length} usuarios de Nexo? Esta acción no se puede deshacer.`)) return
+    setDeleting(true)
+    const results = await Promise.allSettled(selectedUsers.map(u => deleteUser(u.id)))
+    const failed = results.filter(r => r.status === 'rejected')
+    await loadUsers()
+    setSelected({})
+    setDeleting(false)
+    if (failed.length > 0) {
+      alert(`${failed.length} de ${selectedUsers.length} usuarios no se pudieron eliminar:\n` +
+        failed.map(f => `- ${f.reason?.message || 'Error desconocido'}`).join('\n'))
+    }
+  }
+
   const handleResetPassword = async (user) => {
-    if (!confirm(`¿Resetear la contraseña de ${user.nombre} a su documento?`)) return
+    if (!confirm(`¿Restablecer la contraseña de Moodle de ${user.nombre} a su documento?`)) return
     try {
       await resetPassword(user.id)
-      alert('Contraseña restablecida correctamente')
+      alert('Contraseña de Moodle restablecida al documento')
     } catch (e) {
       console.error('Error reseteando contraseña:', e.message)
     }
@@ -427,6 +548,16 @@ export default function ModulosUsuarios() {
           <button className="btn-primary" onClick={handleSync} disabled={selectedUsers.length === 0 || syncing}>
             <RefreshCw size={15} />
             {syncing ? 'Sincronizando...' : `Sincronizar (${selectedUsers.length})`}
+          </button>
+          <button
+            className="btn-icon btn-icon-delete"
+            onClick={handleBulkDelete}
+            disabled={selectedUsers.length <= 1 || deleting}
+            title={selectedUsers.length <= 1 ? 'Selecciona más de un usuario para eliminar en masa (para uno solo usa el ícono de la fila)' : `Eliminar ${selectedUsers.length} usuarios`}
+            style={{ padding: '9px 14px', border: '1px solid #e2e8f0', borderRadius: 8 }}
+          >
+            <Trash2 size={15} />
+            {deleting ? 'Eliminando...' : `Eliminar (${selectedUsers.length})`}
           </button>
         </div>
       </div>
@@ -455,7 +586,7 @@ export default function ModulosUsuarios() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando usuarios...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando usuarios...</div>
       ) : (
         <>
           <div className="table-wrapper">
@@ -479,27 +610,27 @@ export default function ModulosUsuarios() {
                 {paginated.map(user => (
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'created_at'
                             ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={user} /></td>
-                      <td>
+                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
                             {expandedRows[user.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>
-                          <button className="btn-icon" onClick={() => setDetailUser(user)} title="Ver matrículas">
-                            <BookOpen size={14} />
+                          <button className="btn-icon" onClick={() => setDetailUser(user)} title="Ver detalle y matrículas">
+                            <Eye size={14} />
                           </button>
                           <button className="btn-icon btn-icon-edit" onClick={() => setEditUser(user)} title="Editar">
                             <Pencil size={14} />
                           </button>
-                          <button className="btn-icon" onClick={() => handleResetPassword(user)} title="Resetear contraseña">
+                          <button className="btn-icon" onClick={() => handleResetPassword(user)} title="Restablecer contraseña de Moodle al documento" aria-label="Restablecer contraseña de Moodle al documento">
                             <KeyRound size={14} />
                           </button>
                           <button className="btn-icon btn-icon-delete" onClick={() => handleDelete(user)} title="Eliminar">
@@ -560,23 +691,7 @@ export default function ModulosUsuarios() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 
@@ -587,7 +702,7 @@ export default function ModulosUsuarios() {
         <EditModal user={editUser} onClose={() => setEditUser(null)} onSave={loadUsers} />
       )}
       {detailUser && (
-        <EnrollmentsModal user={detailUser} onClose={() => setDetailUser(null)} />
+        <UserDetailModal user={detailUser} onClose={() => setDetailUser(null)} />
       )}
     </div>
   )

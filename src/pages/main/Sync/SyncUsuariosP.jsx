@@ -1,11 +1,16 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
+import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
 import { updateUser } from '../../../services/usuarios/updateUser'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { getCached, setCached } from '../../../services/swrCache'
+import { useLocation } from 'react-router-dom'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
+
+// Misma key que Módulos Usuarios: consultan exactamente el mismo preview.
+const CACHE_KEY = 'users-preview'
 
 const COLUMNS = [
   { key: 'nombre',     label: 'Nombre' },
@@ -15,6 +20,7 @@ const COLUMNS = [
 ]
 
 function StatusBadge({ row }) {
+  if (row._syncing)               return <span className="badge badge-syncing">Sincronizando...</span>
   if (row._status === 'error')   return <span className="badge badge-error">Error</span>
   if (row._status === 'success') return <span className="badge badge-success">Creado</span>
   if (row._synced || (row._syncStatus?.inDB && row._syncStatus?.inMoodle)) return <span className="badge badge-synced">Sincronizado</span>
@@ -128,11 +134,10 @@ function EditModal({ user, onClose, onSave }) {
 }
 
 export default function SyncUsuariosP() {
-  const navigate = useNavigate()
   const location = useLocation()
 
-  const [users, setUsers]               = useState([])
-  const [loading, setLoading]           = useState(true)
+  const [users, setUsers]               = useState(() => getCached(CACHE_KEY) || [])
+  const [loading, setLoading]           = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]           = useState(false)
   const [search, setSearch]             = useState('')
   const [filterJornada, setFilterJornada] = useState('')
@@ -143,8 +148,7 @@ export default function SyncUsuariosP() {
   const [editUser, setEditUser]         = useState(null)
   const [selected, setSelected]         = useState({})
   const [page, setPage]                 = useState(1)
-  const PER_PAGE = 15
-
+  const [perPage, setPerPage] = useState(10)
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const documento = params.get('documento')
@@ -152,9 +156,9 @@ export default function SyncUsuariosP() {
   }, [location.search])
 
   const loadUsers = useCallback(async () => {
-    setLoading(true)
     try {
       const data = await fetchUsers()
+      setCached(CACHE_KEY, data)
       setUsers(data)
     } catch (e) {
       console.error('Error cargando usuarios:', e.message)
@@ -168,12 +172,14 @@ export default function SyncUsuariosP() {
     let data = [...users]
     if (search) {
       const q = search.toLowerCase()
-      data = data.filter(u => Object.values(u).some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+      data = data.filter(u => Object.values(u).some(v =>
+        (typeof v === 'string' || typeof v === 'number') && String(v).toLowerCase().includes(q)
+      ))
     }
     if (filterJornada) data = data.filter(u => u.jornada === filterJornada)
     if (filterEstado === 'sincronizado')   data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
     else if (filterEstado === 'solo_bd')   data = data.filter(u => !u._synced && u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
-    else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inDB)
+    else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inMoodle && !u._synced)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
@@ -182,8 +188,8 @@ export default function SyncUsuariosP() {
     return data
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
 
-  const totalPages = Math.ceil(filtered.length / PER_PAGE)
-  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const totalPages = Math.ceil(filtered.length / perPage)
+  const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
   const jornadas   = [...new Set(users.map(u => u.jornada).filter(Boolean))]
 
   const handleSort = (key) => {
@@ -206,23 +212,27 @@ export default function SyncUsuariosP() {
   const handleSync = async () => {
     if (selectedUsers.length === 0) return
     setSyncing(true)
+    const syncingIds = new Set(selectedUsers.map(u => u.id))
+    setUsers(prev => prev.map(u => syncingIds.has(u.id) ? { ...u, _syncing: true } : u))
     try {
       await syncUsers(selectedUsers)
-      const syncedIds = new Set(selectedUsers.map(u => u.id))
       setUsers(prev => prev.map(u =>
-        syncedIds.has(u.id)
-          ? { ...u, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
+        syncingIds.has(u.id)
+          ? { ...u, _syncing: false, _syncStatus: { inDB: true, inMoodle: false }, _synced: true }
           : u
       ))
       setSelected({})
     } catch (e) {
       console.error('Error sincronizando:', e.message)
+      setUsers(prev => prev.map(u =>
+        syncingIds.has(u.id) ? { ...u, _syncing: false, _status: 'error' } : u
+      ))
     }
     setSyncing(false)
   }
 
   const handleDelete = async (user) => {
-    if (!confirm(`¿Eliminar a ${user.nombre} de Journey?`)) return
+    if (!confirm(`¿Eliminar a ${user.nombre} de Nexo?`)) return
     try {
       await deleteUser(user.id)
       await loadUsers()
@@ -267,7 +277,7 @@ export default function SyncUsuariosP() {
       </div>
 
       {loading ? (
-        <div className="loading-box">Cargando usuarios...</div>
+        <div className="loading-box"><span className="loader"></span>Cargando usuarios...</div>
       ) : (
         <>
           <div className="table-wrapper">
@@ -291,16 +301,16 @@ export default function SyncUsuariosP() {
                 {paginated.map(user => (
                   <Fragment key={user.id}>
                     <tr className={selected[user.id] ? 'row-selected' : ''}>
-                      <td><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
+                      <td data-label="Seleccionar"><input type="checkbox" checked={!!selected[user.id]} onChange={() => toggleSelect(user.id)} /></td>
                       {COLUMNS.map(col => (
-                        <td key={col.key}>
+                        <td data-label={col.label} key={col.key}>
                           {col.key === 'created_at'
                             ? user[col.key] ? String(user[col.key]).split('T')[0] : '-'
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td><StatusBadge row={user} /></td>
-                      <td>
+                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
                             {expandedRows[user.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -366,23 +376,7 @@ export default function SyncUsuariosP() {
             </table>
           </div>
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(1)}>«</button>
-              <button className="page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-                .map((p, i, arr) => (
-                  <Fragment key={p}>
-                    {i > 0 && arr[i - 1] !== p - 1 && <span className="page-dots">...</span>}
-                    <button className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
-                  </Fragment>
-                ))}
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>›</button>
-              <button className="page-btn" disabled={page === totalPages} onClick={() => setPage(totalPages)}>»</button>
-              <span className="page-info">Página {page} de {totalPages} — {filtered.length} registros</span>
-            </div>
-          )}
+          <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
         </>
       )}
 

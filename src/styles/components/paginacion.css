@@ -1,0 +1,10 @@
+/* Selector "Filas por página" de components/Paginacion.jsx. El resto
+   (.pagination, .page-btn, .page-info) ya es global, ver SyncUsuariosP.css. */
+.page-size {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-left: auto; font-size: 13px; color: #64748b;
+}
+.page-size select {
+  padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px;
+  background: #fff; color: #334155; font-size: 13px; cursor: pointer;
+}
