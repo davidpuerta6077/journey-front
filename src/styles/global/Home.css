@@ -1,0 +1,152 @@
+.hub-home {
+  --hub-gap: 24px;
+  --hub-primary: #5b73c4;
+  --hub-text: #2c3a6b;
+  --hub-bg-card: #ffffff;
+
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--hub-gap);
+  padding: 24px;
+  align-items: start;
+}
+
+.hub-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hub-text);
+}
+
+.hub-card {
+  background: var(--hub-bg-card);
+  border-radius: 16px;
+  min-height: 120px;
+}
+
+/* ---- Fila 1-2: bienvenida + herramientas | alertas ---- */
+.hub-welcome {
+  grid-column: 1 / span 9;
+  grid-row: 1;
+  background: var(--hub-bg-card);
+  border-radius: 16px;
+  padding: 32px;
+  min-height: 176px;
+}
+.hub-welcome h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--hub-text);
+}
+
+.hub-alerts {
+  grid-column: 10 / span 3;
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  background: var(--hub-bg-card);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.hub-tools {
+  grid-column: 1 / span 9;
+  grid-row: 2;
+}
+.hub-tools-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--hub-gap);
+}
+.hub-tool-card {
+  min-height: 84px;
+  border-top: 6px solid var(--hub-primary);
+  border-radius: 8px;
+}
+
+/* ---- Fila 3: KPIs ---- */
+.hub-kpi { grid-column: span 4; }
+.hub-kpi-card { min-height: 164px; }
+
+/* ---- Fila 4: gráficos ---- */
+.hub-trend    { grid-column: span 6; }
+.hub-modality { grid-column: span 3; }
+.hub-faculty  { grid-column: span 3; }
+.hub-chart-card { min-height: 254px; }
+
+/* ---- Responsive ---- */
+@media (max-width: 1200px) {
+  .hub-welcome,
+  .hub-tools { grid-column: 1 / span 12; }
+  .hub-alerts { grid-column: 1 / span 12; grid-row: auto; }
+  .hub-tools-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hub-kpi { grid-column: span 6; }
+  .hub-trend { grid-column: span 12; }
+  .hub-modality,
+  .hub-faculty { grid-column: span 6; }
+}
+
+@media (max-width: 700px) {
+  .hub-kpi,
+  .hub-modality,
+  .hub-faculty { grid-column: span 12; }
+  .hub-tools-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ================= Contenido ================= */
+.hub-welcome p {
+  max-width: 520px;
+  margin: 12px 0 0;
+  color: #4a557a;
+  line-height: 1.4;
+}
+
+/* Alertas */
+.hub-alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.hub-alert-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: #f2f4fa;
+  border-right: 4px solid var(--hub-primary);
+  border-radius: 6px;
+  font-size: .75rem;
+  color: var(--hub-text);
+}
+.hub-alert-item div { display: flex; flex-direction: column; }
+.hub-alert-icon {
+  display: grid; place-items: center;
+  width: 28px; height: 28px; flex: none;
+  border-radius: 50%; background: #dfe4f4;
+}
+
+/* Herramientas */
+.hub-tool-card {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  border: 0; border-top: 6px solid var(--hub-primary);
+  font: inherit; font-size: 1.25rem; color: var(--hub-text);
+  cursor: pointer;
+}
+.hub-tool-icon { font-size: 1.5rem; }
+
+/* KPIs */
+.hub-kpi-card {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 24px 32px;
+}
+.hub-kpi-info { display: flex; flex-direction: column; gap: 8px; }
+.hub-kpi-value { font-size: 3rem; line-height: 1; color: var(--hub-text); }
+.hub-kpi-delta { font-size: .95rem; color: #4a557a; }
+.hub-kpi-delta b { color: var(--hub-primary); font-weight: 600; }
+.hub-kpi-chart { width: 40%; max-width: 180px; flex: none; }
+
+/* Gráficas */
+.hub-chart { width: 100%; height: auto; display: block; }
+.hub-chart-card { padding: 20px 24px; }
+.hub-chart-sub { margin: 0 0 8px; font-size: .9rem; color: #4a557a; }
+
+.hub-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; font-size: .95rem; color: var(--hub-text); }
+.hub-legend li { display: flex; align-items: center; gap: 8px; }
+.hub-legend-dot { width: 18px; height: 18px; border-radius: 50%; flex: none; }
+
+.hub-donut, .hub-stacked { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.hub-donut-svg { width: 160px; flex: none; }
+.hub-stacked .hub-chart { flex: 1 1 200px; max-width: 280px; }
