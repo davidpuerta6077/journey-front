@@ -1,26 +1,37 @@
+import ChartBase from './ChartBase'
+import { colors, exportingOptions } from './chartTheme'
+
+// Vista ampliada: ejes visibles y márgenes para etiquetas
+const fullOptions = {
+  chart: { margin: [60, 40, 50, 70] },
+  xAxis: { visible: true },
+  yAxis: { visible: true },
+}
+
 export default function MiniBars({
   data,
+  categories,
   max = Math.max(...data),
-  color = '#5b73c4',
-  track = '#dfe4f4',
+  color = colors.primary,
+  track = colors.track,
+  height = 100,
+  title = 'barras',
 }) {
-  const barW = 10
-  const gap = 5
-  const h = 100
-  const w = data.length * (barW + gap) - gap
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="hub-chart" role="img" aria-label="Barras">
-      {data.map((v, i) => {
-        const x = i * (barW + gap)
-        const bh = (v / max) * h
-        return (
-          <g key={i}>
-            <rect x={x} y={0} width={barW} height={h} rx="2" fill={track} />
-            <rect x={x} y={h - bh} width={barW} height={bh} rx="2" fill={color} />
-          </g>
-        )
-      })}
-    </svg>
-  )
+  const options = {
+    chart: { type: 'column', height, margin: 0, backgroundColor: '#ffffff' },
+    exporting: exportingOptions(title),
+    xAxis: { visible: false, categories },
+    yAxis: { visible: false, min: 0, max },
+    legend: { enabled: false },
+    tooltip: { headerFormat: '', pointFormat: '<b>{point.y}</b>' },
+    plotOptions: {
+      column: { grouping: false, pointPadding: 0.08, groupPadding: 0.05, borderRadius: 2, borderWidth: 0 },
+    },
+    series: [
+      // Fondo decorativo: no se incluye en CSV/XLS ni responde al mouse
+      { name: 'Fondo', data: data.map(() => max), color: track, enableMouseTracking: false, includeInDataExport: false },
+      { name: 'Valor', data, color },
+    ],
+  }
+  return <ChartBase options={options} fullOptions={fullOptions} />
 }
