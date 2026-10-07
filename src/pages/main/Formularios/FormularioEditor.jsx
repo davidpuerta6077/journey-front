@@ -5,6 +5,7 @@ import { fetchFormDetail } from '../../../services/attendance_forms/fetchFormDet
 import { createForm } from '../../../services/attendance_forms/createForm'
 import { updateForm } from '../../../services/attendance_forms/updateForm'
 import QuestionField from './QuestionField'
+import { confirmAccion, confirmGuardarCambios, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Formularios/Formularios.css'
 
@@ -97,8 +98,13 @@ export default function FormularioEditor() {
     setQuestions([...questions, { key: newKey(), label: '', type: 'texto_corto', required: false, options: null, help_text: '' }])
   }
 
-  const removeQuestion = (idx) => {
-    if (!confirm('¿Quitar esta pregunta del formulario?')) return
+  const removeQuestion = async (idx) => {
+    const ok = await confirmAccion({
+      title: '¿Estás seguro?',
+      text: 'Se quitará esta pregunta del formulario.',
+      confirmButtonText: 'Sí, quitar',
+    })
+    if (!ok) return
     setQuestions(questions.filter((_, i) => i !== idx))
   }
 
@@ -138,6 +144,11 @@ export default function FormularioEditor() {
       setError('Las preguntas de selección necesitan al menos 2 opciones.')
       return
     }
+    if (!isEdit) {
+      const decision = await confirmGuardarCambios({ title: '¿Guardar el formulario nuevo?' })
+      if (decision === 'cancel') return
+      if (decision === 'discard') { navigate('/formularios'); return }
+    }
     setSaving(true)
     setError('')
     try {
@@ -147,6 +158,7 @@ export default function FormularioEditor() {
         questions: toDbQuestions(questions),
       }
       await (isEdit ? updateForm(id, payload) : createForm(payload))
+      toastExito(isEdit ? 'Formulario actualizado' : 'Formulario creado')
       navigate('/formularios')
     } catch (e) {
       setError(e.message)

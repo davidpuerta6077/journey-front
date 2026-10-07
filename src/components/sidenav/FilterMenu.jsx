@@ -98,9 +98,10 @@ export const SidebarItem = ({ item, depth }) => {
   }
 
   if (item.href) {
+    const nuevaPestana = item.nueva_pestana !== false
     return (
       <li>
-        <a href={item.href} target="_blank" rel="noopener noreferrer" className="sidebar-external">
+        <a href={item.href} target={nuevaPestana ? '_blank' : '_self'} rel={nuevaPestana ? 'noopener noreferrer' : undefined} className="sidebar-external">
           <Icon size={16} className="sidebar-icon" />
           <span>{item.label}</span>
           <ExternalLink size={11} style={{ marginLeft: 'auto', opacity: 0.4 }} />

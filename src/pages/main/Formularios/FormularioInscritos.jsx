@@ -7,6 +7,7 @@ import { deleteFormResponse } from '../../../services/attendance_forms/deleteFor
 import { exportFormResponses } from '../../../services/attendance_forms/exportFormResponses'
 import { exportFormResponsesPdf } from '../../../services/attendance_forms/exportFormResponsesPdf'
 import Paginacion from '../../../components/Paginacion'
+import { confirmEliminar, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Formularios/Formularios.css'
 
@@ -51,10 +52,14 @@ export default function FormularioInscritos() {
   const paginated = filtered.slice((pageActual - 1) * perPage, pageActual * perPage)
 
   const handleDelete = async (response) => {
-    if (!confirm('¿Eliminar este registro de inscripción?')) return
+    const ok = await confirmEliminar({
+      text: 'Se eliminará este registro de inscripción.',
+    })
+    if (!ok) return
     try {
       await deleteFormResponse(id, response.id)
       await loadData()
+      toastExito('Registro eliminado')
     } catch (e) {
       setError(e.message)
     }

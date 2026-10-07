@@ -5,6 +5,7 @@ import { createPlatformUser } from '../../../services/admin/createPlatformUser'
 import { updatePlatformUser } from '../../../services/admin/updatePlatformUser'
 import { togglePlatformUserEstado } from '../../../services/admin/togglePlatformUserEstado'
 import { fetchRoles } from '../../../services/admin/fetchRoles'
+import { confirmAccion, confirmGuardarCambios, alertError, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 const EMPTY_FORM = { username: '', email: '', role_id: '', departamento: '' }
@@ -21,11 +22,17 @@ function UserModal({ title, initial, roles, disableEmail, onClose, onSave }) {
       setError('Username, email y rol son obligatorios.')
       return
     }
+    if (!disableEmail) {
+      const decision = await confirmGuardarCambios({ title: '¿Guardar el usuario nuevo?' })
+      if (decision === 'cancel') return
+      if (decision === 'discard') { onClose(); return }
+    }
     setSaving(true)
     setError('')
     try {
       await onSave({ ...form, role_id: Number(form.role_id) })
       onClose()
+      toastExito(disableEmail ? 'Usuario actualizado' : 'Usuario creado')
     } catch (e) {
       setError(e.message)
     }
@@ -114,12 +121,19 @@ export default function AdminUsuarios() {
 
   const handleToggleEstado = async (user) => {
     const next = !user.estado
-    if (!confirm(`¿${next ? 'Activar' : 'Desactivar'} a ${user.username}?`)) return
+    const ok = await confirmAccion({
+      title: '¿Estás seguro?',
+      text: `Se ${next ? 'activará' : 'desactivará'} a ${user.username}.`,
+      confirmButtonText: next ? 'Sí, activar' : 'Sí, desactivar',
+    })
+    if (!ok) return
     try {
       await togglePlatformUserEstado(user.id, next)
       await loadData()
+      toastExito(next ? 'Usuario activado' : 'Usuario desactivado')
     } catch (e) {
       console.error('Error cambiando estado:', e.message)
+      alertError(e.message)
     }
   }
 

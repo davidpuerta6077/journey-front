@@ -3,13 +3,13 @@
 .reportes-error { background: #fde8e8; color: #9b1c1c; padding: 10px 14px; border-radius: 6px; margin-bottom: 12px; }
 .reportes-tabla { width: 100%; border-collapse: collapse; }
 .reportes-tabla th,
-.reportes-tabla td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+.reportes-tabla td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border-soft); }
 .reportes-acciones { display: flex; gap: 8px; }
-.reportes-form { margin-top: 20px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; max-width: 480px; }
+.reportes-form { margin-top: 20px; padding: 16px; border: 1px solid var(--border-soft); border-radius: 8px; display: flex; flex-direction: column; gap: 12px; max-width: 480px; }
 .reportes-form label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .reportes-form-acciones { display: flex; gap: 8px; }
 .reportes-resultado { margin-top: 24px; }
-.reportes-resultado-meta { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+.reportes-resultado-meta { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
 .reportes-tabla-scroll { overflow-x: auto; }
 
 /* Botones compartidos por la lista de reportes y la pantalla de detalle. */
@@ -22,13 +22,13 @@
   border: 1px solid transparent;
 }
 .reportes-page .btn-primary,
-.reporte-detalle-page .btn-primary { background: #4a70e0; color: #fff; }
+.reporte-detalle-page .btn-primary { background: var(--primary, #4a70e0); color: #fff; }
 .reportes-page .btn-primary:hover:not(:disabled),
 .reporte-detalle-page .btn-primary:hover:not(:disabled) { background: #3a5fce; }
 .reportes-page .btn-secondary,
-.reporte-detalle-page .btn-secondary { background: #fff; color: #1f2937; border-color: #d1d5db; }
+.reporte-detalle-page .btn-secondary { background: var(--bg-surface); color: var(--text-primary); border-color: var(--border-soft); }
 .reportes-page .btn-secondary:hover:not(:disabled),
-.reporte-detalle-page .btn-secondary:hover:not(:disabled) { background: #f3f4f6; }
+.reporte-detalle-page .btn-secondary:hover:not(:disabled) { background: var(--bg-surface-hover); }
 .reportes-page .btn-primary:disabled,
 .reportes-page .btn-secondary:disabled,
 .reporte-detalle-page .btn-primary:disabled,

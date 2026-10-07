@@ -8,6 +8,7 @@ import { reopenForm } from '../../../services/attendance_forms/reopenForm'
 import { duplicateForm } from '../../../services/attendance_forms/duplicateForm'
 import { deleteForm } from '../../../services/attendance_forms/deleteForm'
 import ShareModal from './ShareModal'
+import { confirmEliminar, toastExito } from '../../../services/alerts'
 import Paginacion from '../../../components/Paginacion'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Formularios/Formularios.css'
@@ -56,18 +57,24 @@ export default function FormulariosList() {
 
   const runAction = async (form, action) => {
     setBusyId(form.id)
+    let ok = true
     try {
       await action()
       await loadData()
     } catch (e) {
       setError(e.message)
+      ok = false
     }
     setBusyId(null)
+    return ok
   }
 
-  const handleDelete = (form) => {
-    if (!confirm(`¿Eliminar el formulario "${form.title}"? Esta acción no se puede deshacer desde la interfaz.`)) return
-    runAction(form, () => deleteForm(form.id))
+  const handleDelete = async (form) => {
+    const ok = await confirmEliminar({
+      text: `Se eliminará el formulario "${form.title}". Esta acción no se puede deshacer desde la interfaz.`,
+    })
+    if (!ok) return
+    if (await runAction(form, () => deleteForm(form.id))) toastExito('Formulario eliminado')
   }
 
   return (

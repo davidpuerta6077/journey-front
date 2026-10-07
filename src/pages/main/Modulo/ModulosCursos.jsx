@@ -7,6 +7,7 @@ import { pushCourseUpdate } from '../../../services/cursos/pushCourseUpdate'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import { getCached, setCached } from '../../../services/swrCache'
+import { alertError, confirmGuardarCambios, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 const CACHE_KEY = 'courses-list'
@@ -54,12 +55,16 @@ function CreateCourseModal({ onClose, onSave }) {
       setError('Semilla, categoría, nombre completo y nombre corto son obligatorios.')
       return
     }
+    const decision = await confirmGuardarCambios({ title: '¿Guardar el curso nuevo?' })
+    if (decision === 'cancel') return
+    if (decision === 'discard') { onClose(); return }
     setSaving(true)
     setError('')
     try {
       await createCourseManual({ ...form, categoryid: Number(form.categoryid) })
       onSave()
       onClose()
+      toastExito('Curso creado')
     } catch (e) {
       setError(e.message)
     }
@@ -225,9 +230,10 @@ export default function ModulosCursos() {
     setCourses(prev => prev.map(c => c.id === course.id ? { ...c, estado_sync: 'sincronizando' } : c))
     try {
       await pushCourseUpdate(course)
+      toastExito('Curso actualizado en Moodle')
     } catch (e) {
       console.error('Error actualizando curso en Moodle:', e.message)
-      alert('Error al actualizar el curso en Moodle: ' + e.message)
+      alertError('Error al actualizar el curso en Moodle: ' + e.message)
     }
     refreshCourses()
   }

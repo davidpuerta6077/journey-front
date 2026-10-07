@@ -5,8 +5,13 @@ import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
 import { deleteUser } from '../../../services/usuarios/deleteUser'
 import { updateUser } from '../../../services/usuarios/updateUser'
+import { aplicarCorreoPendiente } from '../../../services/usuarios/aplicarCorreoPendiente'
+import { duplicarPorCorreoPendiente } from '../../../services/usuarios/duplicarPorCorreoPendiente'
+import { descartarCorreoPendiente } from '../../../services/usuarios/descartarCorreoPendiente'
 import { getCached, setCached } from '../../../services/swrCache'
 import { useLocation } from 'react-router-dom'
+import { humanize } from './novedadNombres'
+import { confirmAccion, confirmEliminar, alertError, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 // Misma key que Módulos Usuarios: consultan exactamente el mismo preview.
@@ -29,6 +34,16 @@ function StatusBadge({ row }) {
   return <span className="badge badge-pending">Pendiente</span>
 }
 
+function NovedadBadges({ user }) {
+  if (!user.correo_pendiente && !(user.novedad_datos?.length > 0)) return null
+  return (
+    <>
+      {user.correo_pendiente && <span className="badge badge-cambio-correo">Cambio de correo</span>}
+      {user.novedad_datos?.length > 0 && <span className="badge badge-novedad">Novedad</span>}
+    </>
+  )
+}
+
 function EditModal({ user, onClose, onSave }) {
   const [form, setForm] = useState({ ...user })
   const [error, setError] = useState('')
@@ -47,6 +62,7 @@ function EditModal({ user, onClose, onSave }) {
       await updateUser(user.id, cleaned)
       onSave()
       onClose()
+      toastExito('Usuario actualizado')
     } catch (e) {
       console.error('Error actualizando:', e.message)
       setError('Error al actualizar usuario.')
@@ -180,6 +196,8 @@ export default function SyncUsuariosP() {
     if (filterEstado === 'sincronizado')   data = data.filter(u => u._synced || (u._syncStatus?.inDB && u._syncStatus?.inMoodle))
     else if (filterEstado === 'solo_bd')   data = data.filter(u => !u._synced && u._syncStatus?.inDB && !u._syncStatus?.inMoodle)
     else if (filterEstado === 'pendiente') data = data.filter(u => !u._syncStatus?.inMoodle && !u._synced)
+    else if (filterEstado === 'novedad')       data = data.filter(u => u.novedad_datos?.length > 0)
+    else if (filterEstado === 'cambio_correo') data = data.filter(u => !!u.correo_pendiente)
     data.sort((a, b) => {
       const av = a[sortKey] || ''
       const bv = b[sortKey] || ''
@@ -232,12 +250,68 @@ export default function SyncUsuariosP() {
   }
 
   const handleDelete = async (user) => {
-    if (!confirm(`¿Eliminar a ${user.nombre} de Nexo?`)) return
+    const ok = await confirmEliminar({
+      text: `No podrás revertir la eliminación de ${user.nombre} de Nexo.`,
+    })
+    if (!ok) return
     try {
       await deleteUser(user.id)
       await loadUsers()
+      toastExito('Usuario eliminado')
     } catch (e) {
       console.error('Error eliminando:', e.message)
+      alertError(e.message)
+    }
+  }
+
+  const handleAplicarCorreo = async (user) => {
+    const ok = await confirmAccion({
+      title: '¿Actualizar el correo?',
+      text: `El correo de ${user.nombre} pasará a ser ${user.correo_pendiente}.`,
+      confirmButtonText: 'Sí, actualizar',
+    })
+    if (!ok) return
+    try {
+      await aplicarCorreoPendiente(user.id)
+      await loadUsers()
+      toastExito('Correo actualizado')
+    } catch (e) {
+      console.error('Error actualizando correo:', e.message)
+      alertError(e.message)
+    }
+  }
+
+  const handleDuplicarCorreo = async (user) => {
+    const ok = await confirmAccion({
+      title: '¿Crear un usuario nuevo?',
+      text: `Se creará un usuario nuevo para ${user.nombre} con el correo ${user.correo_pendiente}. El usuario actual quedará con su documento archivado como historial.`,
+      confirmButtonText: 'Sí, crear',
+    })
+    if (!ok) return
+    try {
+      await duplicarPorCorreoPendiente(user.id)
+      await loadUsers()
+      toastExito('Usuario nuevo creado')
+    } catch (e) {
+      console.error('Error creando usuario por correo pendiente:', e.message)
+      alertError(e.message)
+    }
+  }
+
+  const handleDescartarCorreo = async (user) => {
+    const ok = await confirmAccion({
+      title: '¿Descartar la propuesta?',
+      text: `Se descartará el correo nuevo propuesto para ${user.nombre}.`,
+      confirmButtonText: 'Sí, descartar',
+    })
+    if (!ok) return
+    try {
+      await descartarCorreoPendiente(user.id)
+      await loadUsers()
+      toastExito('Novedad descartada')
+    } catch (e) {
+      console.error('Error descartando correo pendiente:', e.message)
+      alertError(e.message)
     }
   }
 
@@ -272,6 +346,8 @@ export default function SyncUsuariosP() {
           <option value="sincronizado">Sincronizado</option>
           <option value="solo_bd">Solo en BD</option>
           <option value="pendiente">Pendiente</option>
+          <option value="novedad">Novedad</option>
+          <option value="cambio_correo">Cambio de correo</option>
         </select>
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
@@ -309,7 +385,7 @@ export default function SyncUsuariosP() {
                             : user[col.key] || '-'}
                         </td>
                       ))}
-                      <td data-label="Estado"><StatusBadge row={user} /></td>
+                      <td data-label="Estado"><StatusBadge row={user} /> <NovedadBadges user={user} /></td>
                       <td data-label="Acciones">
                         <div className="action-btns">
                           <button className="btn-icon" onClick={() => toggleExpand(user.id)} title="Ver más">
@@ -366,6 +442,31 @@ export default function SyncUsuariosP() {
                                 <span className="expand-value">{user.plan_estudios || '-'}</span>
                               </div>
                             </div>
+
+                            {user.correo_pendiente && (
+                              <div className="novedad-section">
+                                <div className="novedad-section-title">Cambio de correo reportado por SICAU</div>
+                                <div className="novedad-correo-row">
+                                  Actual: <strong>{user.email || '-'}</strong> → Propuesto: <strong>{user.correo_pendiente}</strong>
+                                </div>
+                                <div className="action-btns">
+                                  <button className="btn-primary" onClick={() => handleAplicarCorreo(user)}>Actualizar correo</button>
+                                  <button className="btn-secondary" onClick={() => handleDuplicarCorreo(user)}>Crear otro usuario</button>
+                                  <button className="btn-secondary" onClick={() => handleDescartarCorreo(user)}>Descartar</button>
+                                </div>
+                              </div>
+                            )}
+
+                            {user.novedad_datos?.length > 0 && (
+                              <div className="novedad-section">
+                                <div className="novedad-section-title">Última novedad aplicada automáticamente</div>
+                                <ul className="novedad-datos-list">
+                                  {user.novedad_datos.map((c, i) => (
+                                    <li key={i}>{humanize(c.campo)}: {c.anterior ?? '—'} → {c.actual ?? '—'}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -6,6 +6,7 @@ import { createReporte } from '../../../services/reportes/createReporte'
 import { deleteReporte } from '../../../services/reportes/deleteReporte'
 import { runReporteAdHoc } from '../../../services/reportes/runReporteAdHoc'
 import ReporteDashboard from './ReporteDashboard'
+import { confirmEliminar, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Reportes/ReporteDetalle.css'
 import '../../../styles/main/Reportes/Reportes.css'
 
@@ -98,12 +99,16 @@ export default function Reportes() {
   const ejecutar = (id) => navigate(`/admin/reportes/${id}`)
 
   const eliminar = async (id) => {
-    if (!window.confirm('¿Eliminar este reporte?')) return
+    const ok = await confirmEliminar({
+      text: 'Se eliminará este reporte.',
+    })
+    if (!ok) return
     setError('')
     setEliminandoId(id)
     try {
       await deleteReporte(id)
       await cargar()
+      toastExito('Reporte eliminado')
     } catch (e) {
       setError(e.message)
     } finally {

@@ -6,6 +6,7 @@ import {
 import { fetchPermisos } from '../../../services/admin/fetchPermisos'
 import { grantPermiso } from '../../../services/admin/grantPermiso'
 import { revokePermiso } from '../../../services/admin/revokePermiso'
+import { confirmAccion, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 import "../../../styles/main/Admin/AdminPermisos.css"
 
@@ -106,8 +107,15 @@ export default function AdminPermisos() {
     return false
   }, [draft, currentServerSet])
 
-  const handleRoleChange = (newRoleId) => {
-    if (isDirty && !confirm('Tienes cambios sin guardar en este rol. ¿Descartarlos y cambiar de rol?')) return
+  const handleRoleChange = async (newRoleId) => {
+    if (isDirty) {
+      const ok = await confirmAccion({
+        title: '¿Descartar los cambios?',
+        text: 'Tienes cambios sin guardar en este rol. Se descartarán al cambiar de rol.',
+        confirmButtonText: 'Sí, descartar',
+      })
+      if (!ok) return
+    }
     setRoleId(newRoleId)
     setDraft(serverSetForRole(newRoleId, data.grants))
     setSaveError('')
@@ -187,6 +195,7 @@ export default function AdminPermisos() {
         ...toRemove.map(id => revokePermiso(roleIdNum, id)),
       ])
       await loadData(roleId)
+      toastExito('Permisos guardados')
     } catch (e) {
       setSaveError(e.message)
     }

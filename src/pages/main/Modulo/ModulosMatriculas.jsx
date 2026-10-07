@@ -8,6 +8,7 @@ import { updateEnrollment } from '../../../services/matriculas/updateEnrollment'
 import { deleteEnrollment } from '../../../services/matriculas/deleteEnrollment'
 import { searchUsers } from '../../../services/usuarios/searchUsers'
 import { getCached, setCached } from '../../../services/swrCache'
+import { confirmAccion, confirmGuardarCambios, alertError, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 import "../../../styles/main/Modulo/ModulosMatriculas.css"
 
@@ -212,6 +213,9 @@ function CreateEnrollmentModal({ onClose, onSave }) {
       setError('Estudiante, rol, código y nombre de asignatura, grupo, periodo y programa son obligatorios.')
       return
     }
+    const decision = await confirmGuardarCambios({ title: '¿Guardar la matrícula nueva?' })
+    if (decision === 'cancel') return
+    if (decision === 'discard') { onClose(); return }
     setSaving(true)
     setError('')
     try {
@@ -228,6 +232,7 @@ function CreateEnrollmentModal({ onClose, onSave }) {
       })
       onSave()
       onClose()
+      toastExito('Matrícula creada')
     } catch (e) {
       setError(e.message)
     }
@@ -291,6 +296,7 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
       })
       onSave()
       onClose()
+      toastExito('Matrícula actualizada')
     } catch (e) {
       console.error('Error actualizando matrícula:', e.message)
       setError('Error al actualizar matrícula.')
@@ -430,12 +436,16 @@ export default function ModulosMatriculas() {
       await loadEnrollments()
       setSelected({})
       if (failed.length > 0) {
-        alert(`${failed.length} matrícula(s) no se pudieron sincronizar:\n` +
-          failed.map(f => `- ID ${f.id}: ${f.error}`).join('\n'))
+        alertError(
+          `${failed.length} matrícula(s) no se pudieron sincronizar.`,
+          failed.map(f => `ID ${f.id}: ${f.error}`).join('<br>')
+        )
+      } else {
+        toastExito('Matrículas sincronizadas')
       }
     } catch (e) {
       console.error('Error sincronizando:', e.message)
-      alert('Error al sincronizar matrículas: ' + e.message)
+      alertError('Error al sincronizar matrículas: ' + e.message)
       setEnrollments(prev => prev.map(e => syncingIds.has(e.id) ? { ...e, _syncing: false } : e))
     }
     setSyncing(false)
@@ -450,22 +460,30 @@ export default function ModulosMatriculas() {
       applySyncResults(results)
       await loadEnrollments()
       const failed = results.find(r => r.status === 'error')
-      if (failed) alert(`No se pudo sincronizar: ${failed.error}`)
+      if (failed) alertError(`No se pudo sincronizar: ${failed.error}`)
+      else toastExito('Matrícula sincronizada')
     } catch (e) {
       console.error('Error reintentando:', e.message)
-      alert('Error al reintentar: ' + e.message)
+      alertError('Error al reintentar: ' + e.message)
       setEnrollments(prev => prev.map(e => e.id === enrollment.id ? { ...e, _syncing: false } : e))
     }
     setRetryingId(null)
   }
 
   const handleDelete = async (enrollment) => {
-    if (!confirm(`¿Desmatricular a ${enrollment.nombre_estudiante} de ${enrollment.nombre_asignatura}?\n\nNo se borra de la base de datos (se conserva el historial): se desmatriculará de Moodle (vía BD externa) y quedará registrado en Sync > Novedades.`)) return
+    const ok = await confirmAccion({
+      title: '¿Estás seguro?',
+      text: `Se desmatriculará a ${enrollment.nombre_estudiante} de ${enrollment.nombre_asignatura}. No se borra de la base de datos (se conserva el historial): se desmatriculará de Moodle (vía BD externa) y quedará registrado en Sync > Novedades.`,
+      confirmButtonText: 'Sí, desmatricular',
+    })
+    if (!ok) return
     try {
       await deleteEnrollment(enrollment.id)
       await loadEnrollments()
+      toastExito('Estudiante desmatriculado')
     } catch (e) {
       console.error('Error desmatriculando:', e.message)
+      alertError(e.message)
     }
   }
 
@@ -473,7 +491,12 @@ export default function ModulosMatriculas() {
   // ícono de desmatricular individual en la fila.
   const handleBulkDelete = async () => {
     if (selectedEnrollments.length <= 1) return
-    if (!confirm(`¿Desmatricular ${selectedEnrollments.length} matrículas?\n\nNo se borran de la base de datos (se conserva el historial): se desmatricularán de Moodle (vía BD externa) y quedarán registradas en Sync > Novedades.`)) return
+    const ok = await confirmAccion({
+      title: '¿Estás seguro?',
+      text: `Se desmatricularán ${selectedEnrollments.length} matrículas. No se borran de la base de datos (se conserva el historial): se desmatricularán de Moodle (vía BD externa) y quedarán registradas en Sync > Novedades.`,
+      confirmButtonText: 'Sí, desmatricular',
+    })
+    if (!ok) return
     setDeleting(true)
     const results = await Promise.allSettled(selectedEnrollments.map(e => deleteEnrollment(e.id)))
     const failed = results.filter(r => r.status === 'rejected')
@@ -481,8 +504,12 @@ export default function ModulosMatriculas() {
     setSelected({})
     setDeleting(false)
     if (failed.length > 0) {
-      alert(`${failed.length} de ${selectedEnrollments.length} matrículas no se pudieron desmatricular:\n` +
-        failed.map(f => `- ${f.reason?.message || 'Error desconocido'}`).join('\n'))
+      alertError(
+        `${failed.length} de ${selectedEnrollments.length} matrículas no se pudieron desmatricular.`,
+        failed.map(f => f.reason?.message || 'Error desconocido').join('<br>')
+      )
+    } else {
+      toastExito(`${selectedEnrollments.length} matrículas desmatriculadas`)
     }
   }
 

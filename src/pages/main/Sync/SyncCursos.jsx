@@ -6,6 +6,7 @@ import config from '../../../config'
 import awsAuth from '../../../services/AwsAuthService'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
 import { getCached, setCached } from '../../../services/swrCache'
+import { alertError } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 
 const BASE = config.api_domain.url_base
@@ -151,7 +152,7 @@ export default function SyncCursos() {
       setBulkRuleId('')
     } catch (e) {
       console.error('Error sincronizando cursos:', e.message)
-      alert('Error al sincronizar: ' + e.message)
+      alertError('Error al sincronizar: ' + e.message)
     }
     setSyncing(false)
   }

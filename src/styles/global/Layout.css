@@ -1,7 +1,7 @@
 /* ─── NAVBAR ─── */
 .navbar {
   height: 56px;
-  background: #0f172a;
+  background: var(--nav-bg, #0f172a);
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: center;
@@ -19,6 +19,12 @@
   color: #fff;
   user-select: none;
 }
+.navbar-brand-logo {
+  height: 44px;
+  max-width: 220px;
+  object-fit: contain;
+  display: block;
+}
 .toggle-btn {
   background: transparent;
   border: none;
@@ -30,6 +36,7 @@
 .toggle-btn:hover { background: rgba(255,255,255,0.08); }
 
 /* ─── USER MENU ─── */
+.navbar-right { display: flex; align-items: center; gap: 4px; }
 .user-menu { position: relative; }
 .user-btn {
   background: transparent;
@@ -116,7 +123,7 @@
   left: 0;
   z-index: 90; /* debajo del navbar (100) para no tapar el menú de usuario */
   width: 260px;
-  background: #0f172a;
+  background: var(--menu-bg, #0f172a);
   border-right: 1px solid rgba(148,163,184,0.1);
   padding-top: 8px;
   overflow-y: auto;
@@ -174,13 +181,12 @@
 
 /* ─── NEXO SYNC ─── */
 .nexo-toggle {
-  color: #7dd3fc !important;
   font-weight: 600 !important;
   font-size: 0.92rem !important;
 }
 .nexo-toggle:hover {
   background: rgba(125,211,252,0.07) !important;
-  color: #bae6fd !important;
+ 
 }
 
 /* ─── NIVEL 1 top ─── */
@@ -318,8 +324,8 @@
 .main-content {
   flex: 1;
   padding: 28px;
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--bg-page);
+  color: var(--text-primary);
   overflow-y: auto;
   min-width: 0;
 }

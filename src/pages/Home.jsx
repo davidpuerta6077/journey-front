@@ -1,5 +1,9 @@
+import { useState, useEffect } from 'react'
+import { useAuth } from 'react-oidc-context'
 import '../styles/global/Global.css'
 import '../styles/global/Home.css'
+import { fetchSettings } from '../services/settings/fetchSettings'
+import { usePermissions } from '../services/PermissionsContext'
 
 import {
   Sparkline,
@@ -78,12 +82,34 @@ function KpiCard({ value, delta, children }) {
 }
 
 /* ---------- Página ---------- */
+const FRASE_DEFAULT = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod'
+
+function saludoPorHora() {
+  const hora = new Date().getHours()
+  if (hora < 12) return 'Buenos días'
+  if (hora < 19) return 'Buenas tardes'
+  return 'Buenas noches'
+}
+
 export default function Home() {
+  const auth = useAuth()
+  const { profile } = usePermissions()
+  const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
+  const [frase, setFrase] = useState(FRASE_DEFAULT)
+  useEffect(() => {
+    fetchSettings('home')
+      .then(settings => {
+        const frase_bienvenida = settings.find(s => s.clave === 'frase_bienvenida')?.valor
+        if (frase_bienvenida) setFrase(frase_bienvenida)
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <div className="hub-home">
       <section className="hub-welcome">
-        <h1>¡Hola David!</h1>
-        <p>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod</p>
+        <h1>{saludoPorHora()}, {userName}</h1>
+        <p>{frase}</p>
       </section>
 
       <aside className="hub-alerts">

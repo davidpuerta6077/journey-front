@@ -3,13 +3,13 @@
   width: 100%;
   box-sizing: border-box;
   padding: 8px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   font-size: 0.88rem;
-  color: #1e293b;
-  background: #f8fafc;
+  color: var(--text-primary);
+  background: var(--bg-surface-alt);
 }
-.searchable-select input:focus { outline: none; border-color: #5b84ff; background: #fff; }
+.searchable-select input:focus { outline: none; border-color: #5b84ff; background: var(--bg-surface); }
 .searchable-select-dropdown {
   position: absolute;
   top: calc(100% + 4px);
@@ -17,8 +17,8 @@
   right: 0;
   max-height: 220px;
   overflow-y: auto;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
   z-index: 20;
@@ -27,14 +27,15 @@
   padding: 8px 12px;
   font-size: 0.85rem;
   cursor: pointer;
+  color: var(--text-primary);
 }
-.searchable-select-option:hover { background: #f1f5f9; }
+.searchable-select-option:hover { background: var(--bg-surface-hover); }
 .searchable-select-empty {
   padding: 8px 12px;
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
-.asignatura-code { display: block; font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+.asignatura-code { display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
 .moodle-hint { display: inline-block; margin-top: 6px; }
 

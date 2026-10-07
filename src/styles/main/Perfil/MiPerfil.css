@@ -1,6 +1,6 @@
 .perfil-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
   border-radius: 12px;
   padding: 28px;
   max-width: 480px;
@@ -36,7 +36,7 @@
   right: 0;
   background: #5b84ff;
   color: #fff;
-  border: 2px solid #fff;
+  border: 2px solid var(--bg-surface);
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -54,7 +54,7 @@
   gap: 6px;
   font-size: 1.15rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-top: 6px;
 }
 .perfil-name .btn-icon { opacity: 0.5; }
@@ -69,8 +69,9 @@
 .perfil-name-input {
   font-size: 1rem;
   font-weight: 600;
-  color: #1e293b;
-  border: 1px solid #cbd5e1;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
   border-radius: 6px;
   padding: 5px 8px;
   outline: none;
@@ -86,5 +87,5 @@
 }
 
 .perfil-field { display: flex; flex-direction: column; gap: 4px; }
-.perfil-field label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-.perfil-field span { font-size: 0.95rem; color: #1e293b; }
+.perfil-field label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.perfil-field span:not(.badge) { font-size: 0.95rem; color: var(--text-primary); }

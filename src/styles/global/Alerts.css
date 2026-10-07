@@ -1,0 +1,47 @@
+/* Botones para los diálogos de SweetAlert2 (src/services/alerts.js).
+   buttonsStyling:false hace que Swal no agregue su margen propio entre
+   botones (.swal2-styled), por eso cada clase trae su propio margin. */
+.swal-btn-primary {
+  background: var(--primary, #5b84ff);
+  color: #fff;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 8px;
+}
+.swal-btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 8px;
+}
+.swal-btn-danger {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 8px;
+}
+.swal-btn-success {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 8px;
+}
