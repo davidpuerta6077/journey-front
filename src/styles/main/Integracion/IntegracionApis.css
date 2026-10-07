@@ -1,5 +1,5 @@
 /* Integración — Estado de APIs (IntegracionApis.jsx) */
-.api-status-subtitle { margin: 4px 0 0; font-size: 0.88rem; color: #64748b; }
+.api-status-subtitle { margin: 4px 0 0; font-size: 0.88rem; color: var(--text-muted); }
 
 /* Resumen general (arriba a la derecha) */
 .api-status-summary {
@@ -22,7 +22,7 @@
 }
 .api-status-card {
   position: relative; display: flex; flex-direction: column; gap: 12px;
-  background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+  background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 12px;
   padding: 18px 18px 14px; overflow: hidden;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   transition: box-shadow .15s, transform .15s;
@@ -43,9 +43,9 @@
 }
 .api-status-card.is-error .api-status-icon { background: #fef2f2; color: #dc2626; }
 .api-status-titles { flex: 1; min-width: 0; }
-.api-status-titles h3 { margin: 0 0 4px; font-size: 0.98rem; color: #1e293b; }
+.api-status-titles h3 { margin: 0 0 4px; font-size: 0.98rem; color: var(--text-primary); }
 .api-status-titles code {
-  display: block; font-size: 0.74rem; color: #64748b;
+  display: block; font-size: 0.74rem; color: var(--text-muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
@@ -60,19 +60,19 @@
 .api-status-badge.is-ok .api-status-dot { box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25); }
 
 .api-status-message {
-  margin: 0; font-size: 0.86rem; color: #475569; line-height: 1.45;
+  margin: 0; font-size: 0.86rem; color: var(--text-secondary); line-height: 1.45;
   overflow-wrap: anywhere;
 }
 .api-status-meta {
   display: flex; gap: 14px; margin-top: auto; padding-top: 10px;
-  border-top: 1px dashed #e2e8f0; font-size: 0.75rem; color: #94a3b8;
+  border-top: 1px dashed var(--border-soft); font-size: 0.75rem; color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 /* Carga */
 .api-status-skeleton { display: flex; flex-direction: column; gap: 8px; }
 .api-status-skeleton span {
-  height: 10px; border-radius: 6px; background: linear-gradient(90deg, #f1f5f9, #e2e8f0, #f1f5f9);
+  height: 10px; border-radius: 6px; background: linear-gradient(90deg, var(--bg-surface-hover), var(--border-soft), var(--bg-surface-hover));
   background-size: 200% 100%; animation: api-status-shimmer 1.2s infinite;
 }
 .api-status-skeleton span:last-child { width: 60%; }

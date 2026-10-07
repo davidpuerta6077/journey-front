@@ -7,6 +7,7 @@ import { deleteRegla } from '../../../services/admin/deleteRegla'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import { fetchAsignaturas } from '../../../services/admin/fetchAsignaturas'
+import { confirmEliminar, confirmGuardarCambios, alertError, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 import "../../../styles/main/Modulo/ModulosMatriculas.css"
 
@@ -117,7 +118,7 @@ function SemillaSearchSelect({ semillas, value, onSelect }) {
   )
 }
 
-function ReglaModal({ title, initial, categorias, semillas, asignaturas, onClose, onSave }) {
+function ReglaModal({ title, initial, categorias, semillas, asignaturas, onClose, onSave, isCreate }) {
   const [form, setForm] = useState(initial)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -132,6 +133,11 @@ function ReglaModal({ title, initial, categorias, semillas, asignaturas, onClose
       setError('Semilla y categoría destino son obligatorias.')
       return
     }
+    if (isCreate) {
+      const decision = await confirmGuardarCambios({ title: '¿Guardar la regla nueva?' })
+      if (decision === 'cancel') return
+      if (decision === 'discard') { onClose(); return }
+    }
     setSaving(true)
     setError('')
     try {
@@ -144,6 +150,7 @@ function ReglaModal({ title, initial, categorias, semillas, asignaturas, onClose
         activo: !!form.activo
       })
       onClose()
+      toastExito(isCreate ? 'Regla creada' : 'Regla actualizada')
     } catch (e) {
       setError(e.message)
     }
@@ -282,17 +289,22 @@ export default function ReglasActivas() {
       })
       await loadReglas()
     } catch (e) {
-      alert(e.message)
+      alertError(e.message)
     }
   }
 
   const handleDelete = async (regla) => {
-    if (!confirm(`¿Eliminar la regla "${regla.seed_shortname}" (id ${regla.id})?`)) return
+    const ok = await confirmEliminar({
+      text: `Se eliminará la regla "${regla.seed_shortname}" (id ${regla.id}).`,
+    })
+    if (!ok) return
     try {
       await deleteRegla(regla.id)
       await loadReglas()
+      toastExito('Regla eliminada')
     } catch (e) {
       console.error('Error eliminando regla:', e.message)
+      alertError(e.message)
     }
   }
 
@@ -369,6 +381,7 @@ export default function ReglasActivas() {
           asignaturas={asignaturas}
           onClose={() => setShowCreate(false)}
           onSave={(form) => createRegla(form).then(loadReglas)}
+          isCreate
         />
       )}
       {editRegla && (

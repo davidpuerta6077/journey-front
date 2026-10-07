@@ -5,10 +5,39 @@
   --text: #e2e8f0;
   --muted: #94a3b8;
   --primary: #5b84ff;
+  --secondary: #f1f5f9;
+  --font-base: "Segoe UI";
   --success: #43d675;
   --danger: #f87171;
   --border: rgba(148, 163, 184, 0.18);
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+
+  /* ─── TEMA (claro = default) ─────────────────────────────────────────── */
+  --bg-page: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-alt: #f8fafc;
+  --bg-surface-hover: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-soft: #e2e8f0;
+  --border-softer: #f1f5f9;
+}
+
+/* ─── TEMA OSCURO ────────────────────────────────────────────────────────
+   Se activa con data-theme="dark" en <html> (ver toggleTheme en SideNavMain).
+   Solo redefine las variables de arriba: cada página que ya las usa cambia
+   de color sola, sin tocar su propio CSS. */
+:root[data-theme="dark"] {
+  --bg-page: #0b1220;
+  --bg-surface: #16202e;
+  --bg-surface-alt: #1b2636;
+  --bg-surface-hover: #223047;
+  --text-primary: #e2e8f0;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-soft: rgba(148, 163, 184, 0.22);
+  --border-softer: rgba(148, 163, 184, 0.12);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,9 +46,9 @@
 
 html, body, #root {
   min-height: 100vh;
-  font-family: "Segoe UI", sans-serif;
-  background: #ffffff;
-  color: #1e293b;
+  font-family: var(--font-base, "Segoe UI"), sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
   overflow-x: hidden;
 }
 

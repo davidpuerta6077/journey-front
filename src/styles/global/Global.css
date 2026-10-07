@@ -8,8 +8,8 @@
   flex-wrap: wrap;
   gap: 16px;
 }
-.home-header h2 { font-size: 1.5rem; color: #1e293b; margin-bottom: 4px; font-weight: 600; }
-.home-subtitle { color: #64748b; font-size: 0.9rem; }
+.home-header h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 4px; font-weight: 600; }
+.home-subtitle { color: var(--text-muted); font-size: 0.9rem; }
 
 .home-sync-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 
@@ -32,10 +32,10 @@
 .btn-sync-secondary:hover { background: #334155; }
 .btn-sync-outline {
   background: transparent;
-  border: 1px solid #cbd5e1;
-  color: #475569;
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
 }
-.btn-sync-outline:hover { background: #f8fafc; }
+.btn-sync-outline:hover { background: var(--bg-surface-alt); }
 
 /* CARDS */
 .home-cards {
@@ -45,8 +45,8 @@
   flex-wrap: wrap;
 }
 .home-card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-soft);
   border-radius: 14px;
   width: 160px;
   min-height: 120px;
@@ -66,17 +66,17 @@
   border-color: #5b84ff;
 }
 .home-card-icon { color: #5b84ff; }
-.home-card-label { font-size: 0.82rem; color: #475569; font-weight: 500; text-align: center; }
+.home-card-label { font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; text-align: center; }
 
 /* PANEL */
 .home-panel {
-  background: #fff;
+  background: var(--bg-surface);
   border-radius: 16px;
   padding: 24px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-soft);
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
 }
-.home-panel h5 { color: #1e293b; font-size: 0.95rem; font-weight: 600; margin-bottom: 20px; }
+.home-panel h5 { color: var(--text-primary); font-size: 0.95rem; font-weight: 600; margin-bottom: 20px; }
 
 .home-indicators {
   display: grid;
@@ -84,19 +84,19 @@
   gap: 16px;
 }
 .indicator-card {
-  background: #f8fafc;
+  background: var(--bg-surface-alt);
   border-radius: 12px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-soft);
 }
 .indicator-icon { color: #5b84ff; }
-.indicator-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+.indicator-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
 .indicator-status { font-size: 1rem; }
-.indicator-label { font-size: 0.78rem; color: #64748b; text-align: center; }
+.indicator-label { font-size: 0.78rem; color: var(--text-muted); text-align: center; }
 
 /* ─── BRAVO HUB HOME ─── */
 .bravosuite-home {

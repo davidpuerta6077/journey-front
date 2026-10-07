@@ -10,6 +10,7 @@ import { resetPassword } from '../../../services/usuarios/resetPassword'
 import { getUserEnrollments } from '../../../services/usuarios/getUserEnrollments'
 import MoodleAccountPanel from './MoodleAccountPanel'
 import { getCached, setCached } from '../../../services/swrCache'
+import { confirmAccion, confirmEliminar, confirmGuardarCambios, alertError, alertExito, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 // Misma key que Sync Usuarios: consultan exactamente el mismo preview.
@@ -51,12 +52,16 @@ function CreateUserModal({ onClose, onSave }) {
       setError('Nombre, apellido, email y documento son obligatorios.')
       return
     }
+    const decision = await confirmGuardarCambios({ title: '¿Guardar el usuario nuevo?' })
+    if (decision === 'cancel') return
+    if (decision === 'discard') { onClose(); return }
     setSaving(true)
     setError('')
     try {
       await createUser({ ...form, username: form.email })
       onSave()
       onClose()
+      toastExito('Usuario creado')
     } catch (e) {
       setError(e.message)
     }
@@ -164,6 +169,7 @@ function EditModal({ user, onClose, onSave }) {
       await updateUser(user.id, cleaned)
       onSave()
       onClose()
+      toastExito('Usuario actualizado')
     } catch (e) {
       console.error('Error actualizando:', e.message)
       setError('Error al actualizar usuario.')
@@ -499,12 +505,17 @@ export default function ModulosUsuarios() {
   }
 
   const handleDelete = async (user) => {
-    if (!confirm(`¿Eliminar a ${user.nombre} de Nexo?`)) return
+    const ok = await confirmEliminar({
+      text: `No podrás revertir la eliminación de ${user.nombre} de Nexo.`,
+    })
+    if (!ok) return
     try {
       await deleteUser(user.id)
       await loadUsers()
+      toastExito('Usuario eliminado')
     } catch (e) {
       console.error('Error eliminando:', e.message)
+      alertError(e.message)
     }
   }
 
@@ -512,7 +523,10 @@ export default function ModulosUsuarios() {
   // ícono de eliminar individual en la fila.
   const handleBulkDelete = async () => {
     if (selectedUsers.length <= 1) return
-    if (!confirm(`¿Eliminar ${selectedUsers.length} usuarios de Nexo? Esta acción no se puede deshacer.`)) return
+    const ok = await confirmEliminar({
+      text: `Se eliminarán ${selectedUsers.length} usuarios de Nexo. Esta acción no se puede deshacer.`,
+    })
+    if (!ok) return
     setDeleting(true)
     const results = await Promise.allSettled(selectedUsers.map(u => deleteUser(u.id)))
     const failed = results.filter(r => r.status === 'rejected')
@@ -520,18 +534,28 @@ export default function ModulosUsuarios() {
     setSelected({})
     setDeleting(false)
     if (failed.length > 0) {
-      alert(`${failed.length} de ${selectedUsers.length} usuarios no se pudieron eliminar:\n` +
-        failed.map(f => `- ${f.reason?.message || 'Error desconocido'}`).join('\n'))
+      alertError(
+        `${failed.length} de ${selectedUsers.length} usuarios no se pudieron eliminar.`,
+        failed.map(f => f.reason?.message || 'Error desconocido').join('<br>')
+      )
+    } else {
+      toastExito(`${selectedUsers.length} usuarios eliminados`)
     }
   }
 
   const handleResetPassword = async (user) => {
-    if (!confirm(`¿Restablecer la contraseña de Moodle de ${user.nombre} a su documento?`)) return
+    const ok = await confirmAccion({
+      title: '¿Restablecer contraseña?',
+      text: `La contraseña de Moodle de ${user.nombre} pasará a ser su documento.`,
+      confirmButtonText: 'Sí, restablecer',
+    })
+    if (!ok) return
     try {
       await resetPassword(user.id)
-      alert('Contraseña de Moodle restablecida al documento')
+      alertExito('Contraseña restablecida', 'La contraseña de Moodle quedó igual al documento.')
     } catch (e) {
       console.error('Error reseteando contraseña:', e.message)
+      alertError(e.message)
     }
   }
 

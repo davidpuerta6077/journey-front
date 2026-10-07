@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import { ChevronDown, Menu, User, LogOut, X } from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
+import { fetchSettings } from '../../services/settings/fetchSettings'
+import { applyAppearance } from '../../services/settings/applyAppearance'
+import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
 import config from "../../config.js";
 
 // Debe coincidir con el breakpoint móvil del sidebar en Layout.css
@@ -35,6 +38,34 @@ const Layout = () => {
   )
 
   const filteredMenu = filterMenuByPermissions(menuItems, allowedModuleCodes, allowedPairs)
+
+  // Apariencia (colores/tipografía) y accesos externos editables desde
+  // Configuración: best-effort, si falla se queda con los defaults/estáticos.
+  const [brandLogo, setBrandLogo] = useState('Bravo Hub')
+  const [logoUrl, setLogoUrl] = useState(null)
+  const [logoFailed, setLogoFailed] = useState(false)
+  const [extraLinks, setExtraLinks] = useState([])
+  const [theme, setTheme] = useState(() => localStorage.getItem('bravohub_theme') || 'light')
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('bravohub_theme', theme)
+  }, [theme])
+  useEffect(() => {
+    fetchSettings('apariencia')
+      .then(settings => {
+        const porClave = applyAppearance(settings)
+        if (porClave.logo_texto) setBrandLogo(porClave.logo_texto)
+        if (porClave.logo_url) setLogoUrl(porClave.logo_url)
+      })
+      .catch(() => {})
+    fetchActiveMenuLinks().then(setExtraLinks).catch(() => {})
+  }, [])
+
+  const sidebarMenu = extraLinks.length > 0
+    ? [...filteredMenu, { type: 'divider' }, ...extraLinks.map(l => ({
+        label: l.nombre, icon: ExternalLink, href: l.url, nueva_pestana: l.nueva_pestana,
+      }))]
+    : filteredMenu
 
   const [sidebarMini, setSidebarMini] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -69,10 +100,21 @@ const Layout = () => {
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="navbar-brand">
-            Bravo Hub
+            {logoUrl && !logoFailed
+              ? <img className="navbar-brand-logo" src={`${config.api_domain.url_base}${logoUrl}`} alt={brandLogo} onError={() => setLogoFailed(true)} />
+              : brandLogo}
           </span>
         </div>
-        <div className="user-menu">
+        <div className="navbar-right">
+          <button
+            className="toggle-btn"
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            aria-label={theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+            title={theme === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <div className="user-menu">
           <button className="user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
             {userPhoto && failedPhoto !== userPhoto
               ? (
@@ -105,6 +147,7 @@ const Layout = () => {
               </li>
             </ul>
           )}
+          </div>
         </div>
       </nav>
       <div className="app-body">
@@ -116,7 +159,7 @@ const Layout = () => {
             onClick={closeMobileMenuOnLink}
           >
             <ul>
-              {filteredMenu.map((item, i) => (
+              {sidebarMenu.map((item, i) => (
                 <SidebarItem key={i} item={item} />
               ))}
             </ul>

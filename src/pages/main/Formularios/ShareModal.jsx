@@ -6,6 +6,7 @@ import { fetchFormShares } from '../../../services/attendance_forms/fetchFormSha
 import { addFormShare } from '../../../services/attendance_forms/addFormShare'
 import { removeFormShare } from '../../../services/attendance_forms/removeFormShare'
 import { searchPlatformUsers } from '../../../services/attendance_forms/searchPlatformUsers'
+import { confirmAccion, alertError, toastExito } from '../../../services/alerts'
 
 function publicUrl(token) {
   return `${window.location.origin}/f/${token}`
@@ -78,13 +79,19 @@ export default function ShareModal({ form, onClose }) {
   }
 
   const handleRegenerate = async () => {
-    if (!confirm('El link actual dejará de funcionar. ¿Regenerar el link?')) return
+    const ok = await confirmAccion({
+      title: '¿Regenerar el link?',
+      text: 'El link actual dejará de funcionar.',
+      confirmButtonText: 'Sí, regenerar',
+    })
+    if (!ok) return
     setRegenerating(true)
     try {
       const updated = await regenerateFormLink(form.id)
       setToken(updated.public_token)
+      toastExito('Link regenerado')
     } catch (e) {
-      alert(e.message)
+      alertError(e.message)
     }
     setRegenerating(false)
   }
