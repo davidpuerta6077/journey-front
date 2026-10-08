@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
-import { humanize, nombreNovedadSicau, claseNovedad } from './novedadNombres'
+import { humanize, nombreNovedadSicau, claseNovedad, NIVEL_LABEL } from './novedadNombres'
 
 // Novedades tal como las reporta SICAU (ya calculadas de su lado). Solo
 // lectura: la lógica de Nexo sigue por `estado`; esto muestra el "por qué"
@@ -24,7 +24,8 @@ export default function NovedadesSicau() {
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState(null)
   const [search, setSearch]         = useState('')
-  const [filterTipo, setFilterTipo] = useState('')
+  const [filterTipo, setFilterTipo]   = useState('')
+  const [filterNivel, setFilterNivel] = useState('')
   const [page, setPage]             = useState(1)
   const [perPage, setPerPage]       = useState(10)
 
@@ -35,16 +36,18 @@ export default function NovedadesSicau() {
       .finally(() => setLoading(false))
   }, [])
 
-  const tiposPresentes = useMemo(() => [...new Set(rows.map(nombreNovedadSicau))], [rows])
+  const tiposPresentes  = useMemo(() => [...new Set(rows.map(nombreNovedadSicau))], [rows])
+  const nivelesPresentes = useMemo(() => [...new Set(rows.map(r => r.nivel))], [rows])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return rows.filter(r =>
       (!filterTipo || nombreNovedadSicau(r) === filterTipo) &&
+      (!filterNivel || r.nivel === filterNivel) &&
       (!q || [r.codigo_journey, r.nombre_asignatura, r.cedula, r.nombre_estudiante, r.usuario_sicau]
         .some(v => String(v || '').toLowerCase().includes(q)))
     )
-  }, [rows, search, filterTipo])
+  }, [rows, search, filterTipo, filterNivel])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
@@ -66,6 +69,10 @@ export default function NovedadesSicau() {
             onChange={e => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
+        <select className="filter-select" value={filterNivel} onChange={e => { setFilterNivel(e.target.value); setPage(1) }} aria-label="Nivel de la novedad">
+          <option value="">Todos los niveles</option>
+          {nivelesPresentes.map(n => <option key={n} value={n}>{NIVEL_LABEL[n] || humanize(n)}</option>)}
+        </select>
         <select className="filter-select" value={filterTipo} onChange={e => { setFilterTipo(e.target.value); setPage(1) }} aria-label="Tipo de novedad">
           <option value="">Todos los tipos de novedad</option>
           {tiposPresentes.map(t => <option key={t} value={t}>{t}</option>)}
@@ -102,8 +109,9 @@ export default function NovedadesSicau() {
                       <td data-label="Fecha">{formatFecha(n.fecha)}</td>
                       <td data-label="Tipo"><span className={`badge ${claseNovedad(tipo)}`}>{tipo}</span></td>
                       <td data-label="Curso">
-                        {n.nombre_asignatura || n.codigo_asignatura || '—'}
-                        <div className="novedades-sicau-sub">{n.codigo_journey}</div>
+                        {n.nivel === 'usuario'
+                          ? <span className="novedades-sicau-sub">Cuenta de usuario</span>
+                          : <>{n.nombre_asignatura || n.codigo_asignatura || '—'}<div className="novedades-sicau-sub">{n.codigo_journey}</div></>}
                       </td>
                       <td data-label="Estudiante">
                         {n.nivel === 'curso' ? <span className="novedades-sicau-sub">Todo el curso</span> : (n.nombre_estudiante || n.cedula || '—')}

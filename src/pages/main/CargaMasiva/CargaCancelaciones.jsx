@@ -9,10 +9,10 @@ const API_BASE = import.meta.env.VITE_URL_BASE
 
 const CAMPOS = [
   { col: 'code',  desc: 'Código del curso (idnumber / código journey) ya existente en el sistema' },
-  { col: 'email', desc: 'Correo del estudiante a desmatricular — debe existir y estar sincronizado con Moodle' },
+  { col: 'email', desc: 'Correo del estudiante a cancelar — debe existir y estar sincronizado con Moodle' },
 ]
 
-export default function CargaDesmatriculas() {
+export default function CargaCancelaciones() {
   const [file, setFile]             = useState(null)
   const [filePath, setFilePath]     = useState(null)
   const [estado, setEstado]         = useState('idle')
@@ -32,7 +32,7 @@ export default function CargaDesmatriculas() {
     const ws = XLSX.utils.aoa_to_sheet([['code', 'email']])
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Plantilla')
-    XLSX.writeFile(wb, 'plantilla_desmatriculas.xlsx')
+    XLSX.writeFile(wb, 'plantilla_cancelaciones.xlsx')
   }
 
   const handleFileChange = (e) => {
@@ -81,7 +81,7 @@ export default function CargaDesmatriculas() {
 
       {/* ── Header ── */}
       <div className="carga-topbar">
-        <h2>Módulo de carga masiva de desmatrículas</h2>
+        <h2>Módulo de cancelación masiva de matrículas</h2>
         <div className="carga-topbar-actions">
           <button className="btn-plantilla" onClick={descargarPlantilla}>
             Plantilla <FileSpreadsheet size={15} />
@@ -106,7 +106,7 @@ export default function CargaDesmatriculas() {
               <button className="btn-plantilla-inline" onClick={descargarPlantilla}>
                 Plantilla <FileSpreadsheet size={13} />
               </button>
-              &nbsp;con el curso (code) y el email del estudiante a desmatricular.
+              &nbsp;con el curso (code) y el email del estudiante a cancelar.
             </li>
             <li>Cargar la plantilla en la opción <b>CARGAR ARCHIVO</b></li>
             <li>Procesar archivo con la opción <b>PROCESAR ARCHIVO CARGADO</b></li>
@@ -119,7 +119,7 @@ export default function CargaDesmatriculas() {
             </li>
           </ol>
           <p>
-            <b>Nota:</b> La matrícula se desmatricula igual que con <b>Desmatricular</b> en el Módulo de Matrículas: Moodle desmatriculará al estudiante en su próxima sincronización. Para cargar un nuevo archivo, usar la opción&nbsp;
+            <b>Nota:</b> La matrícula pasa a <b>Cancelado</b> (equivalente a Suspended en Moodle): Moodle desmatriculará al estudiante en su próxima sincronización. Para cargar un nuevo archivo, usar la opción&nbsp;
             <button className="btn-reiniciar-inline" onClick={resetForm}>
               Reiniciar <RefreshCw size={13} />
             </button>
@@ -134,7 +134,7 @@ export default function CargaDesmatriculas() {
           {/* Input oculto */}
           <input
             type="file"
-            id="fileInputDesmatriculas"
+            id="fileInputCancelaciones"
             accept=".xlsx"
             className="file-input-hidden"
             onChange={handleFileChange}
@@ -143,7 +143,7 @@ export default function CargaDesmatriculas() {
 
           {/* Botón cargar */}
           <label
-            htmlFor="fileInputDesmatriculas"
+            htmlFor="fileInputCancelaciones"
             className={`btn-accion btn-cargar ${isUploaded || isDone ? 'btn-accion-done' : ''}`}
           >
             <Upload size={22} />
@@ -173,7 +173,7 @@ export default function CargaDesmatriculas() {
             <div className={`carga-result ${resultado.errorCount > 0 ? 'result-warning' : 'result-success'}`}>
               <div className="result-row">
                 <CheckCircle size={15} />
-                <span><b>{resultado.successCount}</b> matrículas desmatriculadas correctamente</span>
+                <span><b>{resultado.successCount}</b> matrículas canceladas correctamente</span>
               </div>
               {resultado.errorCount > 0 && (
                 <div className="result-row">
@@ -201,7 +201,7 @@ export default function CargaDesmatriculas() {
         <div className="carga-info">
           <h5>Información</h5>
           <p className="info-desc">
-            La desmatrícula masiva <b>desmatricula</b> al estudiante, igual que "Desmatricular" en el Módulo de Matrículas. El estudiante y el curso deben existir y estar sincronizados previamente.
+            La cancelación masiva pasa el estado de la matrícula a <b>Cancelado</b> (equivalente a Suspended en Moodle), igual que elegir "Cancelado" en el Módulo de Matrículas. El estudiante y el curso deben existir y estar sincronizados previamente.
           </p>
           <button className="btn-ver-campos" onClick={() => setVerCampos(v => !v)}>
             VER DESCRIPCIÓN DE LOS CAMPOS <Info size={15} />

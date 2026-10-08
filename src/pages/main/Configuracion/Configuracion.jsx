@@ -3,6 +3,8 @@ import { Pencil, Trash2, Plus } from 'lucide-react'
 import { fetchSettings } from '../../../services/settings/fetchSettings'
 import { saveSetting } from '../../../services/settings/saveSetting'
 import { uploadLogo } from '../../../services/settings/uploadLogo'
+import { uploadFavicon } from '../../../services/settings/uploadFavicon'
+import { finalizePeriodo } from '../../../services/settings/finalizePeriodo'
 import config from '../../../config'
 import { fetchMenuLinks } from '../../../services/settings/fetchMenuLinks'
 import { createMenuLink } from '../../../services/settings/createMenuLink'
@@ -10,7 +12,7 @@ import { updateMenuLink } from '../../../services/settings/updateMenuLink'
 import { deleteMenuLink } from '../../../services/settings/deleteMenuLink'
 import { applyAppearance } from '../../../services/settings/applyAppearance'
 import { clearCache } from '../../../services/swrCache'
-import { confirmEliminar, alertError, toastExito } from '../../../services/alerts'
+import { confirmEliminar, confirmAccion, alertError, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 
@@ -19,10 +21,11 @@ const asMap = (settings) => Object.fromEntries((settings || []).map(s => [s.clav
 // ─── APARIENCIA ─────────────────────────────────────────────────────────────
 
 function TabApariencia() {
-  const [form, setForm] = useState({ logo_texto: '', logo_url: '', color_primario: '', color_secundario: '', color_nav: '', color_menu: '', tipografia: '' })
+  const [form, setForm] = useState({ logo_texto: '', logo_url: '', favicon_url: '', color_primario: '', color_secundario: '', color_nav: '', color_menu: '', tipografia: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingFavicon, setUploadingFavicon] = useState(false)
 
   useEffect(() => {
     fetchSettings('apariencia')
@@ -49,10 +52,27 @@ function TabApariencia() {
     e.target.value = ''
   }
 
+  const handleFaviconFile = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploadingFavicon(true)
+    try {
+      await uploadFavicon(file)
+      const settings = await fetchSettings('apariencia')
+      setForm(f => ({ ...f, ...asMap(settings) }))
+      applyAppearance(settings)
+      toastExito('Favicon actualizado')
+    } catch (err) {
+      alertError(err.message)
+    }
+    setUploadingFavicon(false)
+    e.target.value = ''
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      const entries = Object.entries(form).filter(([clave, v]) => clave !== 'logo_url' && v !== '')
+      const entries = Object.entries(form).filter(([clave, v]) => clave !== 'logo_url' && clave !== 'favicon_url' && v !== '')
       await Promise.all(entries.map(([clave, valor]) => saveSetting('apariencia', clave, valor)))
       applyAppearance(entries.map(([clave, valor]) => ({ clave, valor })))
       toastExito('Apariencia guardada')
@@ -71,6 +91,12 @@ function TabApariencia() {
         {form.logo_url && <img src={`${config.api_domain.url_base}${form.logo_url}`} alt="Logo actual" style={{ height: 40, objectFit: 'contain', marginBottom: 8 }} />}
         <input type="file" accept="image/*" onChange={handleLogoFile} disabled={uploadingLogo} />
         {uploadingLogo && <span className="modal-hint">Subiendo...</span>}
+      </div>
+      <div className="modal-field">
+        <label>Favicon (icono de la pestaña del navegador)</label>
+        {form.favicon_url && <img src={`${config.api_domain.url_base}${form.favicon_url}`} alt="Favicon actual" style={{ height: 24, width: 24, objectFit: 'contain', marginBottom: 8 }} />}
+        <input type="file" accept="image/*" onChange={handleFaviconFile} disabled={uploadingFavicon} />
+        {uploadingFavicon && <span className="modal-hint">Subiendo...</span>}
       </div>
       <div className="modal-field">
         <label>Nombre / logo (texto del nav, usado si no hay imagen)</label>
@@ -93,14 +119,14 @@ function TabApariencia() {
         </div>
         <div className="modal-field">
           <label>Color del menú (sidebar)</label>
-          <input type="color" name="color_menu" value={form.color_menu || '#0f172a'} onChange={handleChange} />
+          <input type="color" name="color_menu" value={form.color_menu || '#1e293b'} onChange={handleChange} />
         </div>
       </div>
       <div className="modal-field">
         <label>Tipografía (familia de fuente)</label>
         <input name="tipografia" value={form.tipografia || ''} onChange={handleChange} placeholder="Segoe UI" />
       </div>
-      <p className="modal-hint">El color primario se aplica a los botones principales; falta consolidar algunos estilos duplicados de otras páginas para que todos lo hereden.</p>
+      <p className="modal-hint">El color primario se aplica a los botones principales. Nav y menú ya traen un tono distinto por defecto (slate-900/slate-800) para que se diferencien.</p>
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
       </div>
@@ -143,6 +169,72 @@ function TabHome() {
       </div>
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── ACADÉMICO ──────────────────────────────────────────────────────────────
+
+function TabAcademico() {
+  const [periodo, setPeriodo] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [cerrando, setCerrando] = useState(false)
+
+  useEffect(() => {
+    fetchSettings('academico')
+      .then(settings => setPeriodo(asMap(settings).periodo_actual || ''))
+      .catch(e => console.error('Error cargando académico:', e.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await saveSetting('academico', 'periodo_actual', periodo)
+      toastExito('Periodo actual guardado')
+    } catch (e) {
+      alertError(e.message)
+    }
+    setSaving(false)
+  }
+
+  const handleCerrarPeriodo = async () => {
+    const ok = await confirmAccion({
+      title: '¿Cerrar el periodo completo?',
+      text: `Todas las matrículas activas (Matriculado) del periodo "${periodo}" pasarán a Finalizado, en cualquier curso. Moodle las desmatricula sola en el próximo cron (vía BD externa); no se puede deshacer desde aquí.`,
+      confirmButtonText: 'Sí, cerrar periodo',
+    })
+    if (!ok) return
+    setCerrando(true)
+    try {
+      const result = await finalizePeriodo()
+      toastExito(`${result.finalizadas} matrícula(s) finalizada(s) en el periodo ${result.periodo}`)
+    } catch (e) {
+      alertError(e.message)
+    }
+    setCerrando(false)
+  }
+
+  if (loading) return <div className="loading-box"><span className="loader"></span>Cargando...</div>
+
+  return (
+    <div className="modal-form" style={{ maxWidth: 480 }}>
+      <div className="modal-field">
+        <label>Periodo académico actual</label>
+        <input value={periodo} onChange={e => setPeriodo(e.target.value)} placeholder="2026-1" />
+      </div>
+      <p className="modal-hint">Referencia global del periodo vigente (ej. "2026-1"), para usarse como default en los filtros de Módulos/Sync de Cursos y Matrículas.</p>
+      <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
+        <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+      </div>
+      <div className="modal-field" style={{ marginTop: 16 }}>
+        <label>Cierre de semestre</label>
+        <p className="modal-hint" style={{ marginTop: 0 }}>Finaliza de una sola vez todas las matrículas activas del periodo "{periodo}", en todos los cursos. Para cerrar un solo curso, usa el botón de "Cerrar semestre" en Módulo Cursos.</p>
+      </div>
+      <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
+        <button className="btn-secondary" onClick={handleCerrarPeriodo} disabled={cerrando || !periodo}>{cerrando ? 'Cerrando...' : 'Cerrar periodo'}</button>
       </div>
     </div>
   )
@@ -343,7 +435,54 @@ function TabMoodle() {
 
 // ─── SISTEMA ────────────────────────────────────────────────────────────────
 
+const ZONAS_HORARIAS = [
+  { value: 'America/Bogota',    label: 'Bogotá (UTC-5)' },
+  { value: 'America/Lima',      label: 'Lima (UTC-5)' },
+  { value: 'America/Guayaquil', label: 'Quito (UTC-5)' },
+]
+
 function TabSistema() {
+  const [zonaHoraria, setZonaHoraria] = useState('')
+  const [dominioCorreo, setDominioCorreo] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [savingDominio, setSavingDominio] = useState(false)
+
+  useEffect(() => {
+    fetchSettings('sistema')
+      .then(settings => {
+        const porClave = asMap(settings)
+        setZonaHoraria(porClave.zona_horaria || 'America/Bogota')
+        setDominioCorreo(porClave.dominio_correo || '')
+      })
+      .catch(e => console.error('Error cargando sistema:', e.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleSaveZona = async () => {
+    setSaving(true)
+    try {
+      await saveSetting('sistema', 'zona_horaria', zonaHoraria)
+      toastExito('Zona horaria guardada')
+    } catch (e) {
+      alertError(e.message)
+    }
+    setSaving(false)
+  }
+
+  const handleSaveDominio = async () => {
+    setSavingDominio(true)
+    try {
+      const limpio = dominioCorreo.trim().toLowerCase().replace(/^@/, '')
+      await saveSetting('sistema', 'dominio_correo', limpio)
+      setDominioCorreo(limpio)
+      toastExito('Dominio de correo guardado')
+    } catch (e) {
+      alertError(e.message)
+    }
+    setSavingDominio(false)
+  }
+
   const handlePurgar = () => {
     clearCache()
     toastExito('Caché purgada. Los módulos pedirán datos frescos al volver a entrar.')
@@ -351,6 +490,30 @@ function TabSistema() {
 
   return (
     <div className="modal-form" style={{ maxWidth: 480 }}>
+      {loading ? <div className="loading-box"><span className="loader"></span>Cargando...</div> : (
+        <>
+          <div className="modal-field">
+            <label>Zona horaria</label>
+            <select className="filter-select" value={zonaHoraria} onChange={e => setZonaHoraria(e.target.value)}>
+              {ZONAS_HORARIAS.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
+            </select>
+          </div>
+          <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
+            <button className="btn-primary" onClick={handleSaveZona} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+          </div>
+          <div className="modal-field" style={{ marginTop: 16 }}>
+            <label>Dominio de correo institucional</label>
+            <input value={dominioCorreo} onChange={e => setDominioCorreo(e.target.value)} placeholder="pascualbravovirtual.edu.co" />
+            <p className="modal-hint" style={{ marginTop: 4 }}>
+              Si se llena, al crear usuarios a mano, por Carga Masiva o desde SICAU se exige que el correo termine en "@{dominioCorreo || 'dominio.edu.co'}" —
+              si no coincide, no se crea el usuario (en SICAU queda como error en Sync &gt; Novedades). Vacío = sin validar.
+            </p>
+          </div>
+          <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
+            <button className="btn-primary" onClick={handleSaveDominio} disabled={savingDominio}>{savingDominio ? 'Guardando...' : 'Guardar cambios'}</button>
+          </div>
+        </>
+      )}
       <div className="modal-field">
         <label>Caché de pantallas (Sync Usuarios, Módulos, etc.)</label>
         <p className="modal-hint" style={{ marginTop: 0 }}>Borra los datos que quedaron en memoria de esta sesión para forzar que se vuelvan a pedir al servidor.</p>
@@ -366,6 +529,7 @@ function TabSistema() {
 
 const TABS = [
   { key: 'apariencia', label: 'Apariencia' },
+  { key: 'academico',  label: 'Académico' },
   { key: 'home',       label: 'Home' },
   { key: 'menu',        label: 'Menú' },
   { key: 'moodle',      label: 'Moodle' },
@@ -390,6 +554,7 @@ export default function Configuracion() {
       </div>
 
       {tab === 'apariencia' && <TabApariencia />}
+      {tab === 'academico' && <TabAcademico />}
       {tab === 'home' && <TabHome />}
       {tab === 'menu' && <TabMenu />}
       {tab === 'moodle' && <TabMoodle />}

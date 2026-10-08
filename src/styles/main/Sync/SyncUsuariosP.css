@@ -6,6 +6,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .sync-page-header h2 { font-size: 1.5rem; color: var(--text-primary); }
 
@@ -104,7 +106,7 @@
 .data-table tr:hover td { background: var(--bg-surface-alt); }
 .row-selected td { background: #eff6ff !important; }
 
-.log-detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; }
+.log-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
 .log-detail-field { display: flex; flex-direction: column; gap: 4px; }
 .log-detail-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .log-detail-value { font-size: 0.88rem; color: var(--text-secondary); word-break: break-word; }
@@ -180,7 +182,7 @@
 }
 .expand-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 .expand-item { display: flex; flex-direction: column; gap: 4px; }
@@ -232,7 +234,8 @@
   background: var(--bg-surface);
   border-radius: 16px;
   padding: 28px;
-  width: 620px;
+  width: 760px;
+  max-width: 92vw;
   max-height: 88vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
@@ -357,6 +360,13 @@
 .user-detail-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 3px; }
 @media (max-width: 700px) {
   .expand-grid.user-detail-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .expand-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .log-detail-grid { grid-template-columns: 1fr; }
+  .modal-row { flex-direction: column; gap: 14px; }
+  .modal-box { padding: 20px; }
+}
+@media (max-width: 480px) {
+  .expand-grid { grid-template-columns: 1fr; }
 }
 
 /* Cuenta en Moodle (MoodleAccountPanel) */

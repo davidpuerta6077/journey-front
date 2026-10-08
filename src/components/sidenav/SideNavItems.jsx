@@ -7,8 +7,7 @@ import {
 
 export const menuItems = [
   { label: 'Home', icon: Home, path: '/' },
-  { label: 'Nexo', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', children: [
-      { label: 'Home', icon: Home, path: '/HomeNexo', submoduleCode: 'nexo_home' },
+  { label: 'Nexo', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', path: '/HomeNexo', children: [
       { label: 'Sincronización', icon: RefreshCw, children: [
           { label: 'Cursos', path: '/sync/cursos', submoduleCode: 'sync_courses' },
           { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },
@@ -23,8 +22,7 @@ export const menuItems = [
       { label: 'Carga Masiva', icon: Upload, children: [
           { label: 'Usuarios', path: '/carga/usuarios', submoduleCode: 'bulk_upload_users' },
           { label: 'Matrículas', path: '/carga/matriculas', submoduleCode: 'bulk_upload_enrollments' },
-          { label: 'Novedades', path: '/carga/novedades', submoduleCode: 'bulk_upload_updates' },
-          { label: 'Desmatrículas', path: '/carga/desmatriculas', submoduleCode: 'bulk_upload_unenrollments' },
+          { label: 'Cancelaciones', path: '/carga/cancelaciones', submoduleCode: 'bulk_upload_unenrollments' },
       ]},
       { label: 'Reglas', icon: Shield, children: [
           { label: 'Reglas activas', path: '/reglas/activas', submoduleCode: 'rules_active' },

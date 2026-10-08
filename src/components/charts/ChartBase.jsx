@@ -9,6 +9,15 @@ const hasMenu = (o) => o.exporting && o.exporting.enabled !== false
 
 export default function ChartBase({ options, fullOptions = {} }) {
   const [expanded, setExpanded] = useState(false)
+  // Highcharts.setOptions (ver chartTheme.js) solo afecta gráficos nuevos: uno
+  // ya montado no recoge el cambio de tema por sí solo. themeTick fuerza un
+  // remount (key) cuando SideNavMain avisa que cambió claro/oscuro.
+  const [themeTick, setThemeTick] = useState(0)
+  useEffect(() => {
+    const onThemeChange = () => setThemeTick(t => t + 1)
+    window.addEventListener('bravohub:chart-theme', onThemeChange)
+    return () => window.removeEventListener('bravohub:chart-theme', onThemeChange)
+  }, [])
 
   useEffect(() => {
     if (!expanded) return
@@ -58,6 +67,7 @@ export default function ChartBase({ options, fullOptions = {} }) {
   return (
     <>
       <HighchartsReact
+        key={themeTick}
         highcharts={Highcharts}
         options={normal}
         containerProps={{ style: { width: '100%' } }}
@@ -70,12 +80,13 @@ export default function ChartBase({ options, fullOptions = {} }) {
               position: 'fixed',
               inset: 0,
               zIndex: 9999,
-              background: '#fff',
+              background: 'var(--bg-page)',
               padding: 24,
               boxSizing: 'border-box',
             }}
           >
             <HighchartsReact
+              key={themeTick}
               highcharts={Highcharts}
               options={full}
               containerProps={{

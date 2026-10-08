@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookOpen, ChevronDown, ExternalLink } from 'lucide-react'
 
@@ -56,42 +56,14 @@ export const filterMenuByPermissions = (items, allowedModuleCodes, allowedPairs,
   }, [])
 }
 
-// Hover solo en escritorio con mouse; en móvil/táctil los grupos se abren con toque
-const HOVER_QUERY = '(hover: hover) and (min-width: 769px)'
-const HOVER_OPEN_DELAY = 150  // evita abrir todos los grupos al pasar el mouse de corrido
-const HOVER_CLOSE_DELAY = 250 // da margen al mover el mouse entre el grupo y sus hijos
-
 export const SidebarItem = ({ item, depth }) => {
 
-  // pinned: abierto con clic (queda fijo). hovered: abierto temporalmente por hover.
-  const [pinned, setPinned] = useState(false)
-  const [hovered, setHovered] = useState(false)
-  const hoverTimer = useRef(null)
-  const open = pinned || hovered
+  // El submenú solo abre/cierra con clic (antes también abría con hover,
+  // pero el salto de layout al pasar el mouse se veía mal).
+  const [open, setOpen] = useState(false)
   const Icon = item.icon || BookOpen
 
-  useEffect(() => () => clearTimeout(hoverTimer.current), [])
-
-  const handleMouseEnter = () => {
-    if (!window.matchMedia(HOVER_QUERY).matches) return
-    clearTimeout(hoverTimer.current)
-    hoverTimer.current = setTimeout(() => setHovered(true), HOVER_OPEN_DELAY)
-  }
-
-  const handleMouseLeave = () => {
-    clearTimeout(hoverTimer.current)
-    hoverTimer.current = setTimeout(() => setHovered(false), HOVER_CLOSE_DELAY)
-  }
-
-  // Si el grupo estaba abierto solo por hover, el clic lo fija abierto en vez de cerrarlo
-  const handleToggleClick = () => {
-    clearTimeout(hoverTimer.current)
-    if (hovered && !pinned) setPinned(true)
-    else {
-      setPinned(!open)
-      setHovered(false)
-    }
-  }
+  const handleToggleClick = () => setOpen(o => !o)
 
   if (item.type === 'divider') {
     return <li><div className="sidebar-section-divider" /></li>
@@ -123,8 +95,39 @@ export const SidebarItem = ({ item, depth }) => {
   }
 
   if (item.children) {
+    // Grupo con "home" propio (p.ej. Nexo): el texto/ícono navega directo a
+    // item.path y la flecha, aparte, solo abre/cierra el submenú (que ya no
+    // repite esa opción como hijo, ver SideNavItems.jsx).
+    if (item.path) {
+      return (
+        <li>
+          <div className={`sidebar-toggle sidebar-group-row ${item.nexoApp ? 'nexo-toggle' : ''}`}>
+            <NavLink to={item.path} end className={({ isActive }) => `sidebar-group-link${isActive ? ' active' : ''}`}>
+              <Icon size={16} className="sidebar-icon" />
+              <span>{item.label}</span>
+            </NavLink>
+            <button
+              className="sidebar-chevron-btn"
+              onClick={handleToggleClick}
+              aria-expanded={open}
+              aria-label={`Mostrar submenú de ${item.label}`}
+            >
+              <ChevronDown size={14} className={open ? 'chevron open' : 'chevron'} />
+            </button>
+          </div>
+          {open && (
+            <ul className="submenu">
+              {item.children.map((child, i) => (
+                <SidebarItem key={i} item={child} depth={depth + 1} />
+              ))}
+            </ul>
+          )}
+        </li>
+      )
+    }
+
     return (
-      <li onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <li>
         <button
           className={`sidebar-toggle ${item.nexoApp ? 'nexo-toggle' : ''}`}
           onClick={handleToggleClick}
