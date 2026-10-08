@@ -24,9 +24,14 @@ export function nombreCambioEstado(estado) {
 export const TIPOS_SICAU_CONOCIDOS = ['CAMBIO_DE_GRUPO', 'CAMBIO_DE_ESTADO', 'RETIRO']
 
 // Nombre de una novedad tal como la reporta SICAU (fila de sicau_novedades).
+// Nivel al que aplica la novedad: cada fila de sicau_novedades es de un
+// usuario, un curso o una matrícula (ver api/SICAU/controller.js).
+export const NIVEL_LABEL = { usuario: 'Usuario', curso: 'Curso', matricula: 'Matrícula' }
+
 export function nombreNovedadSicau(n) {
   if (n.tipo === 'CAMBIO_DE_GRUPO') return 'Cambio de grupo'
   if (n.tipo === 'RETIRO') return 'Retiro de curso'
+  if (n.tipo === 'NUEVO') return n.nivel === 'usuario' ? 'Usuario nuevo' : 'Nuevo'
   if (n.tipo === 'CAMBIO_DE_ESTADO') {
     const cambio = (Array.isArray(n.cambios) ? n.cambios : []).find(c => c.campo === 'estado')
     return cambio?.actual ? nombreCambioEstado(cambio.actual) : 'Cambio de estado'
@@ -36,6 +41,7 @@ export function nombreNovedadSicau(n) {
 
 export function claseNovedad(nombre) {
   if (nombre === 'Cambio de grupo') return 'badge-novedad'
+  if (nombre === 'Usuario nuevo') return 'badge-success'
   if (nombre === 'Desmatriculando') return 'badge-syncing'
   if (['Retiro de curso', 'Desmatriculado', 'Duplicado (2 grupos)', 'Cambio de estado · Retiro', 'Cambio de estado · Finalización'].includes(nombre)) return 'badge-error'
   return 'badge-pending'

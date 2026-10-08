@@ -8,6 +8,7 @@ import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import { fetchSettings } from '../../services/settings/fetchSettings'
 import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
+import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
 
 // Debe coincidir con el breakpoint móvil del sidebar en Layout.css
@@ -49,6 +50,7 @@ const Layout = () => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('bravohub_theme', theme)
+    applyChartTheme(theme === 'dark')
   }, [theme])
   useEffect(() => {
     fetchSettings('apariencia')

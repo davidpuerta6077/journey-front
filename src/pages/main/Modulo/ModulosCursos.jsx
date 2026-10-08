@@ -1,13 +1,15 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
+import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
-import { ChevronDown, ChevronUp, Search, RefreshCw, BookPlus, UploadCloud } from 'lucide-react'
+import { ChevronDown, ChevronUp, Search, RefreshCw, BookPlus, UploadCloud, FlagOff } from 'lucide-react'
 import { fetchCourses } from '../../../services/cursos/fetchCourses'
 import { createCourseManual } from '../../../services/cursos/createCourseManual'
 import { pushCourseUpdate } from '../../../services/cursos/pushCourseUpdate'
+import { finalizeCourseEnrollments } from '../../../services/cursos/finalizeCourseEnrollments'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import { getCached, setCached } from '../../../services/swrCache'
-import { alertError, confirmGuardarCambios, toastExito } from '../../../services/alerts'
+import { alertError, confirmAccion, confirmGuardarCambios, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 const CACHE_KEY = 'courses-list'
@@ -184,9 +186,11 @@ function CreateCourseModal({ onClose, onSave }) {
 }
 
 export default function ModulosCursos() {
+  const location = useLocation()
   const [courses, setCourses]     = useState(() => getCached(CACHE_KEY) || [])
   const [loading, setLoading]     = useState(() => !getCached(CACHE_KEY))
-  const [search, setSearch]       = useState('')
+  // Llega desde Búsqueda (navigate con state.q) para dejar el resultado elegido ya filtrado.
+  const [search, setSearch]       = useState(() => location.state?.q || '')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterDepto, setFilterDepto]     = useState('')
   const [sortKey, setSortKey]     = useState('fullname')
@@ -236,6 +240,26 @@ export default function ModulosCursos() {
       alertError('Error al actualizar el curso en Moodle: ' + e.message)
     }
     refreshCourses()
+  }
+
+  const [finalizingId, setFinalizingId] = useState(null)
+
+  const handleFinalizeEnrollments = async (course) => {
+    const ok = await confirmAccion({
+      title: '¿Cerrar el semestre de este curso?',
+      text: `Las matrículas activas de "${course.fullname || course.shortname}" pasarán a Finalizado. Moodle las desmatricula sola en el próximo cron (vía BD externa); no se puede deshacer desde aquí.`,
+      confirmButtonText: 'Sí, cerrar semestre',
+    })
+    if (!ok) return
+    setFinalizingId(course.id)
+    try {
+      const result = await finalizeCourseEnrollments(course.id)
+      toastExito(`${result.finalizadas} matrícula(s) finalizada(s)`)
+    } catch (e) {
+      console.error('Error cerrando el semestre del curso:', e.message)
+      alertError(e.message)
+    }
+    setFinalizingId(null)
   }
 
   const filtered = useMemo(() => {
@@ -326,7 +350,7 @@ export default function ModulosCursos() {
                     </th>
                   ))}
                   <th>Estado</th>
-                  <th style={{ width: 110 }}>Acciones</th>
+                  <th style={{ width: 140 }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -349,6 +373,14 @@ export default function ModulosCursos() {
                               <UploadCloud size={14} />
                             </button>
                           )}
+                          <button
+                            className="btn-icon"
+                            onClick={() => handleFinalizeEnrollments(course)}
+                            disabled={finalizingId === course.id}
+                            title="Cerrar semestre: finaliza las matrículas activas de este curso"
+                          >
+                            <FlagOff size={14} />
+                          </button>
                           <button className="btn-icon" onClick={() => toggleExpand(course.id)} title="Ver más">
                             {expandedRows[course.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                           </button>

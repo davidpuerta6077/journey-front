@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
+import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, KeyRound, Eye, ExternalLink } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
@@ -412,11 +413,13 @@ function UserDetailModal({ user, onClose }) {
 }
 
 export default function ModulosUsuarios() {
+  const location = useLocation()
   const [users, setUsers]               = useState(() => getCached(CACHE_KEY) || [])
   const [loading, setLoading]           = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]           = useState(false)
   const [deleting, setDeleting]         = useState(false)
-  const [search, setSearch]             = useState('')
+  // Llega desde Búsqueda (navigate con state.q) para dejar el resultado elegido ya filtrado.
+  const [search, setSearch]             = useState(() => location.state?.q || '')
   const [filterJornada, setFilterJornada]   = useState('')
   const [filterEstado, setFilterEstado]     = useState('')
   const [sortKey, setSortKey]           = useState('nombre')

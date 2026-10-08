@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
+import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, BookOpen } from 'lucide-react'
 import { fetchEnrollmentsList } from '../../../services/matriculas/fetchEnrollmentsList'
@@ -33,25 +34,37 @@ const ROLE_MOODLE_HINT = {
   revisor:        'Sin rol en Moodle (uso interno)',
 }
 
-// "Trasladado" queda fuera a propósito: no es un valor que SICAU mande, lo
-// calcula Nexo solo al detectar el traslado (ver saveEnrollmentConNovedades
-// en api/enrollments/controller.js) — no tiene sentido elegirlo a mano. Los
-// demás sí son valores reales que SICAU puede mandar en su campo `estado`, así
-// que se dejan disponibles aquí por si hay que crear o corregir una matrícula
-// a mano con ese mismo estado.
-const ESTADO_ACADEMICO_OPTIONS = ['Matriculado', 'Suspendido', 'Cancelado', 'Finalizado', 'Pendiente']
+// 4 estados operativos a mano: Matriculado (Active en Moodle), Cancelado
+// (equivale al Suspended de Moodle -- con BD externa no hay diferencia real,
+// ambos desmatriculan igual, así que "Suspendido" quedó redundante),
+// Finalizado (lo pone el cierre de semestre, por curso o global, ver Módulo
+// Cursos / Configuración > Académico; también se puede elegir a mano) y
+// Desmatriculado (mismo estado que pone el botón "Desmatricular" de la fila
+// -- elegirlo aquí a mano tiene el mismo efecto en Moodle, solo que sin el
+// updateEnrollmentSyncStatus(false) ni el estado_anterior/fecha_cambio_estado
+// que sí guarda ese botón; ver deleteElement en api/enrollments/controller.js).
+// "Pendiente" se quitó de las opciones: no es un estado académico real, se
+// confundía con el estado de sincronización ("Pendiente"/"Solo en BD" en el
+// badge). "Trasladado" sigue fuera a propósito: lo calcula Nexo solo al
+// detectar el traslado (ver saveEnrollmentConNovedades en
+// api/enrollments/controller.js), no tiene sentido elegirlo a mano.
+// Si una matrícula vieja o de SICAU ya tiene "Suspendido"/"Pendiente"/otro
+// valor, el modal lo sigue mostrando como opción extra (ver el fallback en
+// el <select> más abajo); solo se quitan de la lista para crear/corregir.
+const ESTADO_ACADEMICO_OPTIONS = ['Matriculado', 'Cancelado', 'Finalizado', 'Desmatriculado']
 
 // Con el sync por BD externa (ver database/seeds/fixMoodleExternalDbViews.js)
 // cualquier estado que no sea "Matriculado" simplemente desaparece de la vista
 // moodle_enrol, y Moodle aplica su unenrolaction configurada ("Desmatricular
-// al usuario del curso") por igual para los cuatro — ya no hay distinción
-// entre suspender y desmatricular como en el webservice viejo.
+// al usuario del curso") -- no hay un Suspended real intermedio, Cancelado y
+// Finalizado desmatriculan igual que el viejo "Suspendido".
 const ESTADO_MOODLE_HINT = {
-  Matriculado: 'Moodle: Active — se matricula por BD externa en el próximo cron.',
-  Suspendido:  'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Cancelado:   'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Finalizado:  'Moodle: se desmatricula por BD externa en el próximo cron.',
-  Pendiente:   'Aún no se sincroniza con Moodle.',
+  Matriculado:    'Moodle: Active — se matricula por BD externa en el próximo cron.',
+  Cancelado:      'Moodle: equivalente a Suspended — se desmatricula por BD externa en el próximo cron.',
+  Finalizado:     'Moodle: se desmatricula por BD externa en el próximo cron.',
+  Desmatriculado: 'Moodle: se desmatricula por BD externa en el próximo cron — mismo efecto que el botón "Desmatricular".',
+  Suspendido:     'Moodle: se desmatricula por BD externa en el próximo cron. (estado legado, usa Cancelado)',
+  Pendiente:   'Aún no se sincroniza con Moodle. (estado legado)',
 }
 
 const EMPTY_FORM = {
@@ -324,11 +337,13 @@ function EditEnrollmentModal({ enrollment, onClose, onSave }) {
 }
 
 export default function ModulosMatriculas() {
+  const location = useLocation()
   const [enrollments, setEnrollments] = useState(() => getCached(CACHE_KEY) || [])
   const [loading, setLoading]         = useState(() => !getCached(CACHE_KEY))
   const [syncing, setSyncing]         = useState(false)
   const [deleting, setDeleting]       = useState(false)
-  const [search, setSearch]           = useState('')
+  // Llega desde Búsqueda (navigate con state.q) para dejar el resultado elegido ya filtrado.
+  const [search, setSearch]           = useState(() => location.state?.q || '')
   const [filterPeriodo, setFilterPeriodo] = useState('')
   const [filterPrograma, setFilterPrograma] = useState('')
   const [filterRol, setFilterRol]     = useState('')

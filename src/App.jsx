@@ -20,8 +20,7 @@ import ModulosMatriculas from './pages/main/Modulo/ModulosMatriculas'
 
 import CargaUsuarios from './pages/main/CargaMasiva/CargaUsuarios'
 import CargaMatriculas from './pages/main/CargaMasiva/CargaMatriculas'
-import CargaNovedades from './pages/main/CargaMasiva/CargaNovedades'
-import CargaDesmatriculas from './pages/main/CargaMasiva/CargaDesmatriculas'
+import CargaCancelaciones from './pages/main/CargaMasiva/CargaCancelaciones'
 
 import ReglasActivas from './pages/main/Regla/ReglasActivas'
 import ReglasPlantillas from './pages/main/Regla/ReglasPlantillas'
@@ -114,14 +113,9 @@ function App() {
               <CargaMatriculas />
             </PrivateRoute>
           } />
-          <Route path="carga/novedades" element={
-            <PrivateRoute submoduleCode="bulk_upload_updates">
-              <CargaNovedades />
-            </PrivateRoute>
-          } />
-          <Route path="carga/desmatriculas" element={
+          <Route path="carga/cancelaciones" element={
             <PrivateRoute submoduleCode="bulk_upload_unenrollments">
-              <CargaDesmatriculas />
+              <CargaCancelaciones />
             </PrivateRoute>
           } />
 
