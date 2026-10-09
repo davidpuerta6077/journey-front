@@ -1,9 +1,21 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from 'react-oidc-context'
+import { Bell } from 'lucide-react'
 import '../styles/global/Global.css'
 import '../styles/global/Home.css'
 import { fetchSettings } from '../services/settings/fetchSettings'
 import { usePermissions } from '../services/PermissionsContext'
+import { menuItems } from '../components/sidenav/SideNavItems'
+import fondoBanner from '../assets/Recursos/Banner/fondo-banner.png'
+import portatil from '../assets/Recursos/Banner/portatil.png'
+// Tarjetas de "Herramientas frecuentes": fondo blanco, así que usan el set
+// "Para fondo claros" (mismo criterio que el logo positivo del nav).
+import iconNexoClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/nexo.svg'
+import iconCodexClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/codex_1.svg'
+import iconVisorClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/visor_1.svg'
+import iconHubClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/hub_1.svg'
+import iconBebrasClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/bebras_1.svg'
 
 import {
   Sparkline,
@@ -13,13 +25,17 @@ import {
   StackedBarChart,
 } from '../components/charts'
 
-/* ---------- Datos quemados (a futuro dinámicos por perfil) ---------- */
+/* ---------- Herramientas frecuentes ----------
+   Mismo destino (path/href) que ya tiene cada módulo en el sidebar
+   (SideNavItems.jsx) — no se duplica la URL a mano. */
+const findMenuItem = (label) => menuItems.find(m => m.label === label)
+
 const tools = [
-  { name: 'Nexo', icon: '🎓' },
-  { name: 'Codex', icon: '🗂️' },
-  { name: 'Visor', icon: '🧩' },
-  { name: 'Nexo', icon: '🎓' },
-  { name: 'Codex', icon: '🗂️' },
+  { name: 'Nexo',   icon: iconNexoClaro,   path: findMenuItem('Nexo')?.path },
+  { name: 'Codex',  icon: iconCodexClaro,  href: findMenuItem('CodeX')?.href },
+  { name: 'Visor',  icon: iconVisorClaro,  href: findMenuItem('Visor')?.href },
+  { name: 'Hub',    icon: iconHubClaro,    href: findMenuItem('Hub')?.href },
+  { name: 'Bebras', icon: iconBebrasClaro, href: findMenuItem('Bebras')?.href },
 ]
 
 const alerts = Array.from({ length: 4 }, () => ({
@@ -93,6 +109,7 @@ function saludoPorHora() {
 
 export default function Home() {
   const auth = useAuth()
+  const navigate = useNavigate()
   const { profile } = usePermissions()
   const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
   const [frase, setFrase] = useState(FRASE_DEFAULT)
@@ -107,9 +124,12 @@ export default function Home() {
 
   return (
     <div className="hub-home">
-      <section className="hub-welcome">
-        <h1>{saludoPorHora()}, {userName}</h1>
-        <p>{frase}</p>
+      <section className="hub-welcome" style={{ backgroundImage: `url(${fondoBanner})` }}>
+        <div className="hub-welcome-text">
+          <h1>{saludoPorHora()}, {userName}</h1>
+          <p>{frase}</p>
+        </div>
+        <img className="hub-welcome-illustration" src={portatil} alt="" />
       </section>
 
       <aside className="hub-alerts">
@@ -117,7 +137,7 @@ export default function Home() {
         <ul className="hub-alert-list">
           {alerts.map((a, i) => (
             <li key={i} className="hub-alert-item">
-              <span className="hub-alert-icon">🔔</span>
+              <span className="hub-alert-icon"><Bell size={14} /></span>
               <div>
                 <strong>{a.title}</strong>
                 <span>{a.text}</span>
@@ -130,12 +150,23 @@ export default function Home() {
       <section className="hub-tools">
         <h2 className="hub-title">Herramientas frecuentes</h2>
         <div className="hub-tools-row">
-          {tools.map((t, i) => (
-            <button key={i} type="button" className="hub-card hub-tool-card">
-              <span className="hub-tool-icon">{t.icon}</span>
-              {t.name}
-            </button>
-          ))}
+          {tools.map((t, i) => {
+            const content = (
+              <>
+                <span className="hub-tool-icon"><img src={t.icon} alt="" /></span>
+                {t.name}
+              </>
+            )
+            return t.href ? (
+              <a key={i} href={t.href} target="_blank" rel="noopener noreferrer" className="hub-card hub-tool-card">
+                {content}
+              </a>
+            ) : (
+              <button key={i} type="button" className="hub-card hub-tool-card" onClick={() => navigate(t.path)}>
+                {content}
+              </button>
+            )
+          })}
         </div>
       </section>
 

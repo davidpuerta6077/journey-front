@@ -703,6 +703,18 @@ export default function ModulosMatriculas() {
                                 <span className="expand-value">{enrollment.email || '-'}</span>
                               </div>
                             </div>
+
+                            {enrollment.estado_anterior && (
+                              <div className="novedad-section">
+                                <div className="novedad-section-title">Último cambio de estado aplicado</div>
+                                <ul className="novedad-datos-list">
+                                  <li>
+                                    Estado: {enrollment.estado_anterior} → {enrollment.estado || '—'}
+                                    {enrollment.fecha_cambio_estado && ` · ${String(enrollment.fecha_cambio_estado).split('T')[0]}`}
+                                  </li>
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

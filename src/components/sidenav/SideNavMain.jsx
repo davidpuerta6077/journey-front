@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from "react-oidc-context";
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon } from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import { fetchSettings } from '../../services/settings/fetchSettings'
@@ -10,6 +10,8 @@ import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
 import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
+import logoPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/bravo_hub_positivo.svg'
+import logoNegativo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/bravo_hub_negativo.svg'
 
 // Debe coincidir con el breakpoint móvil del sidebar en Layout.css
 const MOBILE_QUERY = '(max-width: 768px)'
@@ -84,11 +86,31 @@ const Layout = () => {
   }
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
+  useEffect(() => {
+    setUserMenuOpen(false)
+  }, [location.pathname])
+  const userMenuRef = useRef(null)
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setUserMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [userMenuOpen])
   const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
   const userPhoto = profile?.photo_url
   // Guarda la URL que falló (no un booleano) para que una foto nueva se vuelva a intentar
   const [failedPhoto, setFailedPhoto] = useState(null)
   const userRole = permissions?.role
+
+  const [searchQ, setSearchQ] = useState('')
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    if (!searchQ.trim()) return
+    navigate('/busqueda', { state: { q: searchQ.trim() } })
+  }
 
   return (
     <div className="app">
@@ -102,12 +124,39 @@ const Layout = () => {
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <span className="navbar-brand">
-            {logoUrl && !logoFailed
-              ? <img className="navbar-brand-logo" src={`${config.api_domain.url_base}${logoUrl}`} alt={brandLogo} onError={() => setLogoFailed(true)} />
-              : brandLogo}
+            <img
+              className="navbar-brand-logo"
+              // Logo de marca: viene empaquetado con el build (src/assets/Recursos),
+              // no de /uploads (esa carpeta está en .gitignore y no viaja con el
+              // deploy). Un admin puede seguir subiendo un logo propio desde
+              // Configuración > Apariencia (logoUrl); si no hay uno o si falla al
+              // cargar, se usa el oficial de Bravo Hub. El nav cambia de fondo claro
+              // a oscuro con el tema, así que en dark se usa el "negativo" (texto
+              // blanco) en vez del "positivo" (texto navy), que ahí sería ilegible.
+              src={(logoUrl && !logoFailed) ? `${config.api_domain.url_base}${logoUrl}` : (theme === 'dark' ? logoNegativo : logoPositivo)}
+              alt={brandLogo}
+              onError={() => setLogoFailed(true)}
+            />
           </span>
         </div>
+        <form className="navbar-search" onSubmit={handleSearchSubmit}>
+          <Search size={16} className="navbar-search-icon" />
+          <input
+            className="navbar-search-input"
+            placeholder="Buscar"
+            value={searchQ}
+            onChange={e => setSearchQ(e.target.value)}
+          />
+        </form>
         <div className="navbar-right">
+          <button
+            className="toggle-btn navbar-bell"
+            aria-label="Notificaciones"
+            title="Notificaciones (próximamente)"
+          >
+            <Bell size={18} />
+            <span className="navbar-bell-dot" />
+          </button>
           <button
             className="toggle-btn"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
@@ -116,7 +165,7 @@ const Layout = () => {
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
-          <div className="user-menu">
+          <div className="user-menu" ref={userMenuRef}>
           <button className="user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
             {userPhoto && failedPhoto !== userPhoto
               ? (

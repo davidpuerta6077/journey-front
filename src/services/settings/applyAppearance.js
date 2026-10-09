@@ -9,7 +9,6 @@ export function applyAppearance(settings) {
   const root = document.documentElement.style
   if (porClave.color_primario)   root.setProperty('--primary', porClave.color_primario)
   if (porClave.color_secundario) root.setProperty('--secondary', porClave.color_secundario)
-  if (porClave.color_nav)        root.setProperty('--nav-bg', porClave.color_nav)
   if (porClave.color_menu)       root.setProperty('--menu-bg', porClave.color_menu)
   if (porClave.tipografia)       root.setProperty('--font-base', porClave.tipografia)
   if (porClave.favicon_url) {

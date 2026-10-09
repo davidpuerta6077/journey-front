@@ -21,7 +21,7 @@ const asMap = (settings) => Object.fromEntries((settings || []).map(s => [s.clav
 // ─── APARIENCIA ─────────────────────────────────────────────────────────────
 
 function TabApariencia() {
-  const [form, setForm] = useState({ logo_texto: '', logo_url: '', favicon_url: '', color_primario: '', color_secundario: '', color_nav: '', color_menu: '', tipografia: '' })
+  const [form, setForm] = useState({ logo_texto: '', logo_url: '', favicon_url: '', color_primario: '', color_secundario: '', color_menu: '', tipografia: '' })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -87,7 +87,7 @@ function TabApariencia() {
   return (
     <div className="modal-form" style={{ maxWidth: 480 }}>
       <div className="modal-field">
-        <label>Logo (imagen)</label>
+        <label>Logo (imagen) — opcional, reemplaza el de Bravo Hub por defecto</label>
         {form.logo_url && <img src={`${config.api_domain.url_base}${form.logo_url}`} alt="Logo actual" style={{ height: 40, objectFit: 'contain', marginBottom: 8 }} />}
         <input type="file" accept="image/*" onChange={handleLogoFile} disabled={uploadingLogo} />
         {uploadingLogo && <span className="modal-hint">Subiendo...</span>}
@@ -99,7 +99,7 @@ function TabApariencia() {
         {uploadingFavicon && <span className="modal-hint">Subiendo...</span>}
       </div>
       <div className="modal-field">
-        <label>Nombre / logo (texto del nav, usado si no hay imagen)</label>
+        <label>Nombre / logo (texto alternativo del logo, accesibilidad)</label>
         <input name="logo_texto" value={form.logo_texto || ''} onChange={handleChange} placeholder="Bravo Hub" />
       </div>
       <div className="modal-row">
@@ -112,21 +112,15 @@ function TabApariencia() {
           <input type="color" name="color_secundario" value={form.color_secundario || '#f1f5f9'} onChange={handleChange} />
         </div>
       </div>
-      <div className="modal-row">
-        <div className="modal-field">
-          <label>Color del nav (barra superior)</label>
-          <input type="color" name="color_nav" value={form.color_nav || '#0f172a'} onChange={handleChange} />
-        </div>
-        <div className="modal-field">
-          <label>Color del menú (sidebar)</label>
-          <input type="color" name="color_menu" value={form.color_menu || '#1e293b'} onChange={handleChange} />
-        </div>
+      <div className="modal-field">
+        <label>Color del menú (sidebar)</label>
+        <input type="color" name="color_menu" value={form.color_menu || '#1e3a6e'} onChange={handleChange} />
       </div>
       <div className="modal-field">
         <label>Tipografía (familia de fuente)</label>
         <input name="tipografia" value={form.tipografia || ''} onChange={handleChange} placeholder="Segoe UI" />
       </div>
-      <p className="modal-hint">El color primario se aplica a los botones principales. Nav y menú ya traen un tono distinto por defecto (slate-900/slate-800) para que se diferencien.</p>
+      <p className="modal-hint">El color primario se aplica a los botones principales. La barra superior (nav) usa el color fijo de la marca Bravo Hub y no es configurable.</p>
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
       </div>

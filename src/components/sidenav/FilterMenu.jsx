@@ -2,6 +2,16 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { BookOpen, ChevronDown, ExternalLink } from 'lucide-react'
 
+// item.icon puede ser un componente de lucide-react (la mayoría) o la URL de
+// un SVG propio de marca importado como asset (ver SideNavItems.jsx) para los
+// módulos que ya tienen ícono oficial del mockup -ahí llega como string, no
+// como componente, porque Vite no trae configurado SVGR-.
+const MenuIcon = ({ item }) => {
+  if (typeof item.icon === 'string') return <img src={item.icon} className="sidebar-icon" alt="" />
+  const Icon = item.icon || BookOpen
+  return <Icon size={16} className="sidebar-icon" />
+}
+
 
 // allowedPairs: Set de claves "module_code::submodule_code" realmente concedidas al rol.
 // No se usa una lista plana de submodule_code porque distintos módulos pueden reutilizar
@@ -61,7 +71,6 @@ export const SidebarItem = ({ item, depth }) => {
   // El submenú solo abre/cierra con clic (antes también abría con hover,
   // pero el salto de layout al pasar el mouse se veía mal).
   const [open, setOpen] = useState(false)
-  const Icon = item.icon || BookOpen
 
   const handleToggleClick = () => setOpen(o => !o)
 
@@ -74,7 +83,7 @@ export const SidebarItem = ({ item, depth }) => {
     return (
       <li>
         <a href={item.href} target={nuevaPestana ? '_blank' : '_self'} rel={nuevaPestana ? 'noopener noreferrer' : undefined} className="sidebar-external">
-          <Icon size={16} className="sidebar-icon" />
+          <MenuIcon item={item} />
           <span>{item.label}</span>
           <ExternalLink size={11} style={{ marginLeft: 'auto', opacity: 0.4 }} />
         </a>
@@ -86,7 +95,7 @@ export const SidebarItem = ({ item, depth }) => {
     return (
       <li>
         <span className="sidebar-disabled">
-          <Icon size={16} className="sidebar-icon" />
+          <MenuIcon item={item} />
           <span>{item.label}</span>
           <span style={{ marginLeft: 'auto', fontSize: '10px' }}>Próx.</span>
         </span>
@@ -103,7 +112,7 @@ export const SidebarItem = ({ item, depth }) => {
         <li>
           <div className={`sidebar-toggle sidebar-group-row ${item.nexoApp ? 'nexo-toggle' : ''}`}>
             <NavLink to={item.path} end className={({ isActive }) => `sidebar-group-link${isActive ? ' active' : ''}`}>
-              <Icon size={16} className="sidebar-icon" />
+              <MenuIcon item={item} />
               <span>{item.label}</span>
             </NavLink>
             <button
@@ -133,7 +142,7 @@ export const SidebarItem = ({ item, depth }) => {
           onClick={handleToggleClick}
           aria-expanded={open}
         >
-          <Icon size={16} className="sidebar-icon" />
+          <MenuIcon item={item} />
           <span>{item.label}</span>
           <ChevronDown size={14} className={open ? 'chevron open' : 'chevron'} />
         </button>
@@ -151,7 +160,7 @@ export const SidebarItem = ({ item, depth }) => {
   return (
     <li>
       <NavLink to={item.path} end={item.path === '/'} className={({ isActive }) => isActive ? 'active' : ''}>
-        <Icon size={16} className="sidebar-icon" />
+        <MenuIcon item={item} />
         <span>{item.label}</span>
       </NavLink>
     </li>
