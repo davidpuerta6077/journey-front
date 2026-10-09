@@ -10,6 +10,7 @@ import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCatego
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import { getCached, setCached } from '../../../services/swrCache'
 import { alertError, confirmAccion, confirmGuardarCambios, toastExito } from '../../../services/alerts'
+import { humanize } from '../Sync/novedadNombres'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
 const CACHE_KEY = 'courses-list'
@@ -425,6 +426,17 @@ export default function ModulosCursos() {
                                 <span className="expand-value">{course.templatecourse || '-'}</span>
                               </div>
                             </div>
+
+                            {course.novedad_datos?.length > 0 && (
+                              <div className="novedad-section">
+                                <div className="novedad-section-title">Última novedad reportada por SICAU</div>
+                                <ul className="novedad-datos-list">
+                                  {course.novedad_datos.map((c, i) => (
+                                    <li key={i}>{humanize(c.campo)}: {c.anterior ?? '—'} → {c.actual ?? '—'}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

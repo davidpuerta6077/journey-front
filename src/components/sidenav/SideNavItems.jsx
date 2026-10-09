@@ -1,13 +1,38 @@
 import {
-  Home, RefreshCw, BookOpen, FileText,
-  ExternalLink, Activity, LayoutGrid, Upload, Shield, Globe, BarChart2, Settings,
-  Search, UserCog, Eye, ClipboardList
+  RefreshCw, BookOpen, FileText,
+  Activity, Upload, Shield, Globe, BarChart2, Settings,
+  Search, ClipboardList, FlaskConical, History
 } from 'lucide-react'
 
+// Iconos de marca "Bravo Hub" (mockup): el sidebar tiene fondo navy fijo
+// siempre (ver --menu-bg en Layout.css, no reacciona al tema claro/oscuro
+// de la app), así que acá se usa siempre el set "Para fondo oscuros" -mismo
+// criterio que el logo del nav, que sí cambia con el tema porque el nav sí
+// cambia de fondo-. Los items sin asset provisto (Monitoreo, Laboratorios
+// Virtuales, Formularios de Asistencia, Ver Logs, Integración, Reportes,
+// Estadísticas, Configuración) se quedan con su ícono de lucide-react.
+import iconInicio from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/inicio.svg'
+import iconNexo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/naxo.svg'
+import iconCentroSoporte from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/centro_de_soporte.svg'
+import iconHub from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/hub.svg'
+import iconVisor from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/visor.svg'
+import iconMatomo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/matomo.svg'
+import iconZabbix from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/zabbix.svg'
+import iconPm2 from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/pm2.svg'
+import iconBebras from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/bebras.svg'
+import iconRags from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/rags.svg'
+import iconInformesOnix from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/informe_onix.svg'
+import iconCodex from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/codex.svg'
+import iconEncuestas from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/encuestas.svg'
+import iconAdministrador from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/administrador.svg'
+import iconUsuarios from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/usuarios.svg'
+import iconRoles from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/roles.svg'
+import iconModulos from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/modulos.svg'
+import iconPermisos from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/permisos.svg'
 
 export const menuItems = [
-  { label: 'Home', icon: Home, path: '/' },
-  { label: 'Nexo', icon: RefreshCw, nexoApp: true, moduleCode: 'nexo_sync', path: '/HomeNexo', children: [
+  { label: 'Home', icon: iconInicio, path: '/' },
+  { label: 'Nexo', icon: iconNexo, nexoApp: true, moduleCode: 'nexo_sync', path: '/HomeNexo', children: [
       { label: 'Sincronización', icon: RefreshCw, children: [
           { label: 'Cursos', path: '/sync/cursos', submoduleCode: 'sync_courses' },
           { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },
@@ -33,31 +58,31 @@ export const menuItems = [
 
   { type: 'divider' },
 
-  { label: 'Centro de soporte', icon: ExternalLink, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
-  { label: 'Hub', icon: ExternalLink, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
-  { label: 'Visor', icon: Eye, moduleCode: 'visor', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
+  { label: 'Centro de soporte', icon: iconCentroSoporte, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
+  { label: 'Hub', icon: iconHub, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
+  { label: 'Visor', icon: iconVisor, moduleCode: 'visor', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
   { label: 'Monitoreo', icon: Activity, moduleCode: 'monitoring', submoduleCode: 'access', children: [
-      { label: 'Matomo', comingSoon: true },
-      { label: 'Zabbix', comingSoon: true },
-      { label: 'PM2', comingSoon: true },
+      { label: 'Matomo', icon: iconMatomo, comingSoon: true },
+      { label: 'Zabbix', icon: iconZabbix, comingSoon: true },
+      { label: 'PM2', icon: iconPm2, comingSoon: true },
       { label: 'Bases de Datos', comingSoon: true },
   ]},
-  { label: 'Bebras', icon: ExternalLink, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
-  { label: 'Rags', icon: LayoutGrid, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
-  { label: 'Informes (Onix-IA)', icon: FileText, moduleCode: 'onix_reports', submoduleCode: 'access', comingSoon: true },
-  { label: 'CodeX', icon: ExternalLink, moduleCode: 'codex', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
-  { label: 'Encuestas', icon: ExternalLink, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
-  { label: 'Laboratorios Virtuales', icon: LayoutGrid, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
+  { label: 'Bebras', icon: iconBebras, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
+  { label: 'Rags', icon: iconRags, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
+  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, moduleCode: 'onix_reports', submoduleCode: 'access', comingSoon: true },
+  { label: 'CodeX', icon: iconCodex, moduleCode: 'codex', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
+  { label: 'Encuestas', icon: iconEncuestas, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
+  { label: 'Laboratorios Virtuales', icon: FlaskConical, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
   { label: 'Formularios de Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
 
   { type: 'divider' },
 
-  { label: 'Administrador', icon: UserCog, moduleCode: 'admin', children: [
-      { label: 'Usuarios',      path: '/admin/usuarios',      submoduleCode: 'admin_users' },
-      { label: 'Roles',         path: '/admin/roles',         submoduleCode: 'admin_roles' },
-      { label: 'Módulos',       path: '/admin/modulos',       submoduleCode: 'admin_modules' },
-      { label: 'Permisos',      path: '/admin/permisos',      submoduleCode: 'admin_permissions' },
-      { label: 'Ver Logs',      path: '/admin/logs',          submoduleCode: 'admin_logs' },
+  { label: 'Administrador', icon: iconAdministrador, moduleCode: 'admin', children: [
+      { label: 'Usuarios',      icon: iconUsuarios, path: '/admin/usuarios',      submoduleCode: 'admin_users' },
+      { label: 'Roles',         icon: iconRoles,    path: '/admin/roles',         submoduleCode: 'admin_roles' },
+      { label: 'Módulos',       icon: iconModulos,  path: '/admin/modulos',       submoduleCode: 'admin_modules' },
+      { label: 'Permisos',      icon: iconPermisos, path: '/admin/permisos',      submoduleCode: 'admin_permissions' },
+      { label: 'Ver Logs',      icon: History, path: '/admin/logs',         submoduleCode: 'admin_logs' },
       { label: 'Integración',   icon: Globe, children: [
           { label: 'Estado de APIs', path: '/admin/integracion/apis', submoduleCode: 'integration_apis' },
       ]},

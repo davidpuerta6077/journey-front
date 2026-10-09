@@ -7,6 +7,7 @@ import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncMatriculas.css"
 import { useNavigate } from 'react-router-dom'
 import NovedadesSicau from './NovedadesSicau'
+import NovedadesUsuarios from './NovedadesUsuarios'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
 import { nombreCambioEstado, esEstadoDeNovedad, nombreNovedadSicau, claseNovedad, TIPOS_SICAU_CONOCIDOS } from './novedadNombres'
 
@@ -253,7 +254,7 @@ export default function SyncNovedades() {
   return (
     <div className="sync-page">
       <div className="sync-page-header">
-        <h2>Novedades de Matrícula</h2>
+        <h2>Novedades</h2>
         {tab === 'nexo' && (
           <button className="btn-primary" onClick={handleSync} disabled={selectedItems.length === 0 || syncing}>
             <RefreshCw size={15} />
@@ -264,14 +265,17 @@ export default function SyncNovedades() {
 
       <div className="novedades-tabs" role="tablist" aria-label="Origen de la novedad">
         <button type="button" role="tab" aria-selected={tab === 'nexo'} className={tab === 'nexo' ? 'active' : ''} onClick={() => setTab('nexo')}>
-          Detectadas por Nexo
+          Novedades de Matrículas
         </button>
         <button type="button" role="tab" aria-selected={tab === 'sicau'} className={tab === 'sicau' ? 'active' : ''} onClick={() => setTab('sicau')}>
-          Reportadas por SICAU
+          Novedades de cursos
+        </button>
+        <button type="button" role="tab" aria-selected={tab === 'usuarios'} className={tab === 'usuarios' ? 'active' : ''} onClick={() => setTab('usuarios')}>
+          Novedades de Usuarios
         </button>
       </div>
 
-      {tab === 'sicau' ? <NovedadesSicau /> : (<>
+      {tab === 'sicau' ? <NovedadesSicau /> : tab === 'usuarios' ? <NovedadesUsuarios /> : (<>
       <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: 16 }}>
         Matrículas cuyo estado cambió y ya no es "Matriculado": traslados de grupo/curso, cancelaciones,
         retiros, finalizaciones y suspensiones. Selecciona filas y sincroniza para aplicar el cambio en Moodle
