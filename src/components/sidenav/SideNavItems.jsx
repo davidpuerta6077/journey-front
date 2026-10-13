@@ -69,7 +69,7 @@ export const menuItems = [
   ]},
   { label: 'Bebras', icon: iconBebras, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
   { label: 'Rags', icon: iconRags, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
-  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, moduleCode: 'onix_reports', submoduleCode: 'access', comingSoon: true },
+  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
   { label: 'CodeX', icon: iconCodex, moduleCode: 'codex', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
   { label: 'Encuestas', icon: iconEncuestas, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
   { label: 'Laboratorios Virtuales', icon: FlaskConical, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
