@@ -1,1 +1,84 @@
-export default function Pendiente() { return null }
+import { useCallback, useEffect, useState } from 'react'
+import { ArrowLeft, Eye } from 'lucide-react'
+import { getUsuariosArea } from '../../../services/onix/onixApi'
+import { alertError } from '../../../services/alerts'
+import InformeTab from './InformeTab'
+import { MESES, periodoActual, aniosDisponibles } from './periodo'
+
+export default function AreaTab({ esAdmin }) {
+  const [periodo, setPeriodo] = useState(periodoActual())
+  const [usuarios, setUsuarios] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [viendo, setViendo] = useState(null)
+
+  const cargar = useCallback(async () => {
+    setLoading(true)
+    try {
+      setUsuarios(await getUsuariosArea(periodo))
+    } catch (e) {
+      alertError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [periodo])
+
+  useEffect(() => { cargar() }, [cargar])
+
+  if (viendo) {
+    return (
+      <div>
+        <div className="onix-toolbar">
+          <button className="btn-secondary" onClick={() => setViendo(null)}><ArrowLeft size={16} /> Volver</button>
+          <h3>{viendo.nombre}{viendo.area_nombre ? ` · ${viendo.area_nombre}` : ''}</h3>
+        </div>
+        <InformeTab userId={viendo.user_id} soloLectura />
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <div className="onix-toolbar">
+        <h3>{esAdmin ? 'Informes de todos los usuarios' : 'Informes de mi área'}</h3>
+        <div className="onix-filtros">
+          <select className="filter-select" aria-label="Mes" value={periodo.mes} onChange={(e) => setPeriodo({ ...periodo, mes: Number(e.target.value) })}>
+            {MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+          </select>
+          <select className="filter-select" aria-label="Año" value={periodo.anio} onChange={(e) => setPeriodo({ ...periodo, anio: Number(e.target.value) })}>
+            {aniosDisponibles().map((a) => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="loading-box"><span className="loader"></span>Cargando...</div>
+      ) : usuarios.length === 0 ? (
+        <p className="onix-vacio">
+          {esAdmin ? 'Nadie ha completado su perfil de informes todavía.' : 'No hay usuarios en tu área. Si no ves a nadie, revisa que tu perfil tenga un área asignada.'}
+        </p>
+      ) : (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr><th>Nombre</th><th>Identificación</th><th>Área</th><th>Registros del mes</th><th>Informes del mes</th><th></th></tr>
+            </thead>
+            <tbody>
+              {usuarios.map((u) => (
+                <tr key={u.user_id}>
+                  <td>{u.nombre}<br /><small>{u.email}</small></td>
+                  <td>{u.identificacion}</td>
+                  <td>{u.area_nombre || '—'}</td>
+                  <td>{u.registros}</td>
+                  <td><span className={u.informes > 0 ? 'badge badge-synced' : 'badge badge-pending'}>{u.informes}</span></td>
+                  <td>
+                    <button className="btn-icon" title="Ver informes" aria-label={`Ver informes de ${u.nombre}`} onClick={() => setViendo(u)}><Eye size={15} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
