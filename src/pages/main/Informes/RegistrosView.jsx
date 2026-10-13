@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Plus, Pencil, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Plus, Pencil, Trash2, X, History } from 'lucide-react'
 import { getRegistros } from '../../../services/onix/getRegistros'
 import { createRegistro } from '../../../services/onix/createRegistro'
 import { updateRegistro } from '../../../services/onix/updateRegistro'
@@ -8,6 +8,7 @@ import { addEvidencia } from '../../../services/onix/addEvidencia'
 import { deleteEvidencia } from '../../../services/onix/deleteEvidencia'
 import { alertError, confirmEliminar, toastExito } from '../../../services/alerts'
 import EvidenciaImagen from './EvidenciaImagen'
+import TraerLogsModal from './TraerLogsModal'
 import { MESES, periodoActual, aniosDisponibles } from './periodo'
 
 const EV_VACIA = { tipo: 'texto', contenido: '', descripcion: '', archivo: null }
@@ -21,6 +22,7 @@ export default function RegistrosView({ actividad, onVolver }) {
   const [evidenciaDe, setEvidenciaDe] = useState(null) // registro al que se agrega evidencia
   const [ev, setEv] = useState(EV_VACIA)
   const [enviando, setEnviando] = useState(false)
+  const [traerLogs, setTraerLogs] = useState(false)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -105,6 +107,7 @@ export default function RegistrosView({ actividad, onVolver }) {
           <select className="filter-select" aria-label="Año" value={periodo.anio} onChange={(e) => setPeriodo({ ...periodo, anio: Number(e.target.value) })}>
             {aniosDisponibles().map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
+          <button className="btn-secondary" onClick={() => setTraerLogs(true)}><History size={16} /> Traer de mis acciones</button>
           <button className="btn-primary" onClick={() => { setEditando('nuevo'); setDesarrollo('') }}><Plus size={16} /> Nuevo registro</button>
         </div>
       </div>
@@ -116,7 +119,10 @@ export default function RegistrosView({ actividad, onVolver }) {
       ) : registros.map((r) => (
         <div key={r.id} className="onix-card onix-registro">
           <div className="onix-registro-head">
-            <p className="onix-registro-texto">{r.desarrollo}</p>
+            <div>
+              {r.logs > 0 && <span className="badge badge-synced onix-badge-hub">Desde Bravo Hub · {r.logs} acción(es)</span>}
+              <p className="onix-registro-texto">{r.desarrollo}</p>
+            </div>
             <div className="action-btns">
               <button className="btn-icon" title="Agregar evidencia" aria-label="Agregar evidencia" onClick={() => { setEvidenciaDe(r); setEv(EV_VACIA) }}><Plus size={15} /></button>
               <button className="btn-icon btn-icon-edit" title="Editar" aria-label="Editar registro" onClick={() => { setEditando(r); setDesarrollo(r.desarrollo) }}><Pencil size={15} /></button>
@@ -138,6 +144,11 @@ export default function RegistrosView({ actividad, onVolver }) {
           )}
         </div>
       ))}
+
+      {traerLogs && (
+        <TraerLogsModal actividad={actividad} periodo={periodo} onClose={() => setTraerLogs(false)}
+          onAgregado={() => { setTraerLogs(false); cargar() }} />
+      )}
 
       {editando && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditando(null)}>

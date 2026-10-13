@@ -62,6 +62,10 @@
 
 .onix-area-color { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
 
+.onix-modal-ancho { max-width: 860px; width: 100%; }
+.onix-logs-lista { max-height: 50vh; overflow-y: auto; }
+.onix-badge-hub { display: inline-block; margin-bottom: 6px; }
+
 @media (max-width: 600px) {
   .onix-registro-head { flex-direction: column; }
 }
