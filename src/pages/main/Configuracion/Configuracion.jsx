@@ -11,6 +11,9 @@ import { createMenuLink } from '../../../services/settings/createMenuLink'
 import { updateMenuLink } from '../../../services/settings/updateMenuLink'
 import { deleteMenuLink } from '../../../services/settings/deleteMenuLink'
 import { applyAppearance } from '../../../services/settings/applyAppearance'
+import { fetchIAConfig } from '../../../services/settings/fetchIAConfig'
+import { saveIAConfig } from '../../../services/settings/saveIAConfig'
+import { probarIA } from '../../../services/settings/probarIA'
 import { clearCache } from '../../../services/swrCache'
 import { confirmEliminar, confirmAccion, alertError, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
@@ -383,12 +386,17 @@ function TabMenu() {
 
 function TabMoodle() {
   const [form, setForm] = useState({ moodle_url: '', moodle_token: '' })
+  const [token, setToken] = useState({ configurado: false }) // la API nunca devuelve el token
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchSettings('moodle')
-      .then(settings => setForm(f => ({ ...f, ...asMap(settings) })))
+      .then(settings => {
+        setForm(f => ({ ...f, ...asMap(settings) }))
+        const t = (settings || []).find(s => s.clave === 'moodle_token')
+        if (t?.secreto) setToken(t.secreto)
+      })
       .catch(e => console.error('Error cargando moodle:', e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -401,6 +409,10 @@ function TabMoodle() {
       const entries = Object.entries(form).filter(([, v]) => v !== '')
       await Promise.all(entries.map(([clave, valor]) => saveSetting('moodle', clave, valor)))
       toastExito('Conexión a Moodle guardada')
+      if (form.moodle_token) {
+        setToken({ configurado: true, ultimos: form.moodle_token.slice(-4) })
+        setForm(f => ({ ...f, moodle_token: '' }))
+      }
     } catch (e) {
       alertError(e.message)
     }
@@ -417,11 +429,118 @@ function TabMoodle() {
       </div>
       <div className="modal-field">
         <label>Token</label>
-        <input name="moodle_token" value={form.moodle_token || ''} onChange={handleChange} placeholder="Token del webservice" />
+        <input name="moodle_token" type="password" autoComplete="off" value={form.moodle_token || ''} onChange={handleChange}
+          placeholder={token.configurado ? `Configurado (termina en ${token.ultimos}) — dejar vacío para no cambiarlo` : 'Token del webservice'} />
       </div>
       <p className="modal-hint">Si se deja vacío, se usa el valor por defecto configurado en el servidor. El cambio tarda hasta 1 minuto en aplicar (caché interna).</p>
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── INTELIGENCIA ARTIFICIAL ────────────────────────────────────────────────
+
+function TabIA() {
+  const [form, setForm] = useState({ proveedor: 'ollama', modelo: '', ollama_url: '', anthropic_key: '' })
+  const [key, setKey] = useState({ configurada: false })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [probando, setProbando] = useState(false)
+  const [prueba, setPrueba] = useState(null) // { ok, texto }
+
+  const cargar = useCallback(async () => {
+    try {
+      const c = await fetchIAConfig()
+      setForm({ proveedor: c.proveedor, modelo: c.modelo, ollama_url: c.ollama_url, anthropic_key: '' })
+      setKey(c.key)
+    } catch (e) {
+      alertError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { cargar() }, [cargar])
+
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+  const guardar = async (extra = {}) => {
+    setSaving(true)
+    setPrueba(null)
+    try {
+      await saveIAConfig({ ...form, ...extra })
+      toastExito('Configuración de IA guardada')
+      await cargar()
+    } catch (e) {
+      alertError(e.message)
+    }
+    setSaving(false)
+  }
+
+  const quitarKey = async () => {
+    const ok = await confirmAccion({ title: '¿Quitar la API key?', text: 'Claude dejará de funcionar hasta que se ingrese otra (salvo que el servidor tenga una en su .env).', confirmButtonText: 'Sí, quitar' })
+    if (ok) guardar({ anthropic_key: '', quitar_key: true })
+  }
+
+  const probar = async () => {
+    setProbando(true)
+    setPrueba(null)
+    try {
+      const r = await probarIA()
+      setPrueba({ ok: true, texto: `Conexión correcta con ${r.proveedor} (${r.modelo}). Respuesta: "${r.respuesta}"` })
+    } catch (e) {
+      setPrueba({ ok: false, texto: e.message })
+    }
+    setProbando(false)
+  }
+
+  if (loading) return <div className="loading-box"><span className="loader"></span>Cargando...</div>
+
+  const esClaude = form.proveedor === 'claude'
+
+  return (
+    <div className="modal-form" style={{ maxWidth: 520 }}>
+      <div className="modal-field">
+        <label htmlFor="ia-proveedor">Proveedor</label>
+        <select id="ia-proveedor" name="proveedor" value={form.proveedor} onChange={handleChange}>
+          <option value="ollama">Ollama (IA local de la institución)</option>
+          <option value="claude">Claude (API de Anthropic)</option>
+        </select>
+      </div>
+      <div className="modal-field">
+        <label htmlFor="ia-modelo">Modelo</label>
+        <input id="ia-modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder={esClaude ? 'claude-opus-5-5 (por defecto)' : 'qwen2.5:7b (por defecto)'} />
+      </div>
+      {!esClaude && (
+        <div className="modal-field">
+          <label htmlFor="ia-url">URL de Ollama</label>
+          <input id="ia-url" name="ollama_url" value={form.ollama_url} onChange={handleChange} placeholder="http://10.0.17.77:11434" />
+        </div>
+      )}
+      {esClaude && (
+        <div className="modal-field">
+          <label htmlFor="ia-key">API key de Claude</label>
+          <input id="ia-key" name="anthropic_key" type="password" autoComplete="off" value={form.anthropic_key} onChange={handleChange}
+            placeholder={key.configurada ? 'Dejar vacío para no cambiarla' : 'sk-ant-...'} />
+          <p className="modal-hint">
+            {key.configurada
+              ? `Configurada (termina en ${key.ultimos})${key.origen === 'servidor' ? ' — tomada del .env del servidor' : ''}. Se guarda cifrada y nunca se vuelve a mostrar.`
+              : 'Sin API key. Se guarda cifrada y nunca se vuelve a mostrar.'}
+          </p>
+        </div>
+      )}
+      <p className="modal-hint">Los cambios aplican de inmediato en la siguiente generación (no hace falta reiniciar).</p>
+      {prueba && (
+        <p className="modal-hint" role="status" style={{ color: prueba.ok ? 'var(--success)' : 'var(--danger)' }}>{prueba.texto}</p>
+      )}
+      <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0, flexWrap: 'wrap' }}>
+        <button className="btn-primary" onClick={() => guardar()} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+        <button className="btn-secondary" onClick={probar} disabled={probando || saving}>{probando ? 'Probando...' : 'Probar conexión'}</button>
+        {esClaude && key.configurada && key.origen === 'hub' && (
+          <button className="btn-secondary" onClick={quitarKey} disabled={saving}>Quitar API key</button>
+        )}
       </div>
     </div>
   )
@@ -527,6 +646,7 @@ const TABS = [
   { key: 'home',       label: 'Home' },
   { key: 'menu',        label: 'Menú' },
   { key: 'moodle',      label: 'Moodle' },
+  { key: 'ia',          label: 'Inteligencia artificial' },
   { key: 'sistema',     label: 'Sistema' },
 ]
 
@@ -552,6 +672,7 @@ export default function Configuracion() {
       {tab === 'home' && <TabHome />}
       {tab === 'menu' && <TabMenu />}
       {tab === 'moodle' && <TabMoodle />}
+      {tab === 'ia' && <TabIA />}
       {tab === 'sistema' && <TabSistema />}
     </div>
   )

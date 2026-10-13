@@ -38,6 +38,7 @@ import Reportes from './pages/main/Reportes/Reportes'
 import FormulariosList from './pages/main/Formularios/FormulariosList'
 import FormularioEditor from './pages/main/Formularios/FormularioEditor'
 import FormularioInscritos from './pages/main/Formularios/FormularioInscritos'
+import InformesPage from './pages/main/Informes/InformesPage'
 import ReporteDetalle from './pages/main/Reportes/ReporteDetalle'
 import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Configuracion from './pages/main/Configuracion/Configuracion'
@@ -155,6 +156,13 @@ function App() {
           <Route path="formularios/:id/inscritos" element={
             <PrivateRoute submoduleCode="attendance_forms_manage">
               <FormularioInscritos />
+            </PrivateRoute>
+          } />
+
+          {/* ─── INFORMES (ONIX-IA) ─── */}
+          <Route path="informes" element={
+            <PrivateRoute submoduleCode="onix_reports_use">
+              <InformesPage />
             </PrivateRoute>
           } />
 

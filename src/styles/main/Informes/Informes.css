@@ -1,0 +1,71 @@
+/* Módulo Informes (Onix-IA). Las clases genéricas (.sync-page, .data-table,
+   .modal-*, .btn-*, .badge) vienen de SyncUsuariosP.css. */
+
+.onix-sub { color: var(--text-muted); font-size: 0.85rem; margin: 2px 0 0; }
+
+.onix-tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--border-soft); margin-bottom: 16px; }
+.onix-tab {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 10px 14px; cursor: pointer; color: var(--text-secondary); font-size: 0.9rem;
+}
+.onix-tab:hover { color: var(--text-primary); }
+.onix-tab.active { color: var(--text-primary); border-bottom-color: var(--hub-primary, var(--primary)); font-weight: 600; }
+.onix-tab:focus-visible { outline: 2px solid var(--hub-primary, var(--primary)); outline-offset: 2px; }
+
+.onix-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.onix-toolbar h3 { margin: 0; }
+.onix-toolbar .onix-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.onix-card {
+  background: var(--bg-surface); border: 1px solid var(--border-soft);
+  border-radius: 10px; padding: 16px;
+}
+.onix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+.onix-actividad { display: flex; flex-direction: column; gap: 8px; }
+.onix-actividad-abrir {
+  text-align: left; background: none; border: none; padding: 0; cursor: pointer; color: inherit;
+  display: flex; flex-direction: column; gap: 6px; flex: 1;
+}
+.onix-actividad-abrir h4 { margin: 0; color: var(--text-primary); }
+.onix-actividad-abrir p { margin: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; }
+.onix-actividad-abrir:focus-visible { outline: 2px solid var(--hub-primary, var(--primary)); outline-offset: 4px; border-radius: 6px; }
+.onix-num { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.onix-link { display: inline-flex; align-items: center; gap: 2px; font-size: 0.82rem; color: var(--hub-primary, var(--primary)); }
+
+.onix-aviso {
+  background: var(--bg-surface-alt); border: 1px solid var(--border-soft); border-left: 3px solid var(--hub-primary, var(--primary));
+  border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; color: var(--text-secondary);
+}
+.onix-vacio { color: var(--text-muted); padding: 24px 0; text-align: center; }
+
+.onix-registro { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.onix-registro-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.onix-registro-texto { margin: 0; white-space: pre-wrap; color: var(--text-primary); }
+
+.onix-evidencias { display: flex; flex-wrap: wrap; gap: 8px; }
+.onix-evidencia {
+  display: flex; align-items: center; gap: 8px; max-width: 100%;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-softer, var(--border-soft));
+  border-radius: 8px; padding: 6px 8px; font-size: 0.82rem; color: var(--text-secondary);
+}
+.onix-evidencia a { color: var(--hub-primary, var(--primary)); word-break: break-all; }
+.onix-evidencia img { width: 64px; height: 48px; object-fit: cover; border-radius: 4px; }
+
+.onix-tipo-btns { display: flex; gap: 6px; }
+.onix-tipo-btns button { padding: 6px 10px; }
+.onix-tipo-btns button[aria-pressed="true"] { outline: 2px solid var(--hub-primary, var(--primary)); }
+
+.onix-informe textarea { width: 100%; min-height: 160px; resize: vertical; font: inherit; }
+.onix-informe-meta { font-size: 0.78rem; color: var(--text-muted); }
+.onix-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.onix-area-color { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
+
+.onix-modal-ancho { max-width: 860px; width: 100%; }
+.onix-logs-lista { max-height: 50vh; overflow-y: auto; }
+.onix-badge-hub { display: inline-block; margin-bottom: 6px; }
+
+@media (max-width: 600px) {
+  .onix-registro-head { flex-direction: column; }
+}
