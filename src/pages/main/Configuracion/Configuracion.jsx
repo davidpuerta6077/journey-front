@@ -386,12 +386,17 @@ function TabMenu() {
 
 function TabMoodle() {
   const [form, setForm] = useState({ moodle_url: '', moodle_token: '' })
+  const [token, setToken] = useState({ configurado: false }) // la API nunca devuelve el token
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchSettings('moodle')
-      .then(settings => setForm(f => ({ ...f, ...asMap(settings) })))
+      .then(settings => {
+        setForm(f => ({ ...f, ...asMap(settings) }))
+        const t = (settings || []).find(s => s.clave === 'moodle_token')
+        if (t?.secreto) setToken(t.secreto)
+      })
       .catch(e => console.error('Error cargando moodle:', e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -404,6 +409,10 @@ function TabMoodle() {
       const entries = Object.entries(form).filter(([, v]) => v !== '')
       await Promise.all(entries.map(([clave, valor]) => saveSetting('moodle', clave, valor)))
       toastExito('Conexión a Moodle guardada')
+      if (form.moodle_token) {
+        setToken({ configurado: true, ultimos: form.moodle_token.slice(-4) })
+        setForm(f => ({ ...f, moodle_token: '' }))
+      }
     } catch (e) {
       alertError(e.message)
     }
@@ -420,7 +429,8 @@ function TabMoodle() {
       </div>
       <div className="modal-field">
         <label>Token</label>
-        <input name="moodle_token" value={form.moodle_token || ''} onChange={handleChange} placeholder="Token del webservice" />
+        <input name="moodle_token" type="password" autoComplete="off" value={form.moodle_token || ''} onChange={handleChange}
+          placeholder={token.configurado ? `Configurado (termina en ${token.ultimos}) — dejar vacío para no cambiarlo` : 'Token del webservice'} />
       </div>
       <p className="modal-hint">Si se deja vacío, se usa el valor por defecto configurado en el servidor. El cambio tarda hasta 1 minuto en aplicar (caché interna).</p>
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
