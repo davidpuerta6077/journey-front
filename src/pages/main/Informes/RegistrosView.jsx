@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Plus, Pencil, Trash2, X } from 'lucide-react'
-import { getRegistros, createRegistro, updateRegistro, deleteRegistro, addEvidencia, deleteEvidencia } from '../../../services/onix/onixApi'
+import { getRegistros } from '../../../services/onix/getRegistros'
+import { createRegistro } from '../../../services/onix/createRegistro'
+import { updateRegistro } from '../../../services/onix/updateRegistro'
+import { deleteRegistro } from '../../../services/onix/deleteRegistro'
+import { addEvidencia } from '../../../services/onix/addEvidencia'
+import { deleteEvidencia } from '../../../services/onix/deleteEvidencia'
 import { alertError, confirmEliminar, toastExito } from '../../../services/alerts'
 import EvidenciaImagen from './EvidenciaImagen'
 import { MESES, periodoActual, aniosDisponibles } from './periodo'
@@ -136,56 +141,60 @@ export default function RegistrosView({ actividad, onVolver }) {
 
       {editando && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditando(null)}>
-          <form className="modal-box modal-form" onSubmit={guardarRegistro}>
+          <div className="modal-box">
             <div className="modal-header">
               <h3>{editando === 'nuevo' ? 'Nuevo registro' : 'Editar registro'} — {MESES[periodo.mes - 1]} {periodo.anio}</h3>
               <button type="button" className="modal-close" onClick={() => setEditando(null)} aria-label="Cerrar">×</button>
             </div>
-            <label className="modal-field">
-              <span>¿Qué hiciste? *</span>
-              <textarea rows={5} value={desarrollo} onChange={(e) => setDesarrollo(e.target.value)} required autoFocus />
-            </label>
+            <form id="registro-form-1" className="modal-form" onSubmit={guardarRegistro}>
+              <div className="modal-field">
+                <label htmlFor="registro-1">¿Qué hiciste? *</label>
+                <textarea id="registro-1" rows={5} value={desarrollo} onChange={(e) => setDesarrollo(e.target.value)} required autoFocus />
+              </div>
+            </form>
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={() => setEditando(null)}>Cancelar</button>
-              <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Guardando...' : 'Guardar'}</button>
+              <button type="submit" form="registro-form-1" className="btn-primary" disabled={enviando}>{enviando ? 'Guardando...' : 'Guardar'}</button>
             </div>
-          </form>
+          </div>
         </div>
       )}
 
       {evidenciaDe && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEvidenciaDe(null)}>
-          <form className="modal-box modal-form" onSubmit={guardarEvidencia}>
+          <div className="modal-box">
             <div className="modal-header">
               <h3>Agregar evidencia</h3>
               <button type="button" className="modal-close" onClick={() => setEvidenciaDe(null)} aria-label="Cerrar">×</button>
             </div>
-            <div className="onix-tipo-btns" role="group" aria-label="Tipo de evidencia">
-              {[['texto', 'Texto'], ['link', 'Enlace'], ['imagen', 'Imagen']].map(([t, l]) => (
-                <button key={t} type="button" className="btn-secondary" aria-pressed={ev.tipo === t}
-                  onClick={() => setEv({ ...EV_VACIA, tipo: t, descripcion: ev.descripcion })}>{l}</button>
-              ))}
-            </div>
-            {ev.tipo === 'imagen' ? (
-              <label className="modal-field">
-                <span>Imagen (JPG o PNG, máx. 5 MB) *</span>
-                <input type="file" accept="image/jpeg,image/png" required onChange={(e) => setEv({ ...ev, archivo: e.target.files[0] || null })} />
-              </label>
-            ) : (
-              <label className="modal-field">
-                <span>{ev.tipo === 'link' ? 'Enlace (https://...) *' : 'Texto *'}</span>
-                <input type={ev.tipo === 'link' ? 'url' : 'text'} value={ev.contenido} onChange={(e) => setEv({ ...ev, contenido: e.target.value })} required />
-              </label>
-            )}
-            <label className="modal-field">
-              <span>Descripción</span>
-              <input value={ev.descripcion} onChange={(e) => setEv({ ...ev, descripcion: e.target.value })} maxLength={500} />
-            </label>
+            <form id="registro-form-2" className="modal-form" onSubmit={guardarEvidencia}>
+              <div className="onix-tipo-btns" role="group" aria-label="Tipo de evidencia">
+                {[['texto', 'Texto'], ['link', 'Enlace'], ['imagen', 'Imagen']].map(([t, l]) => (
+                  <button key={t} type="button" className="btn-secondary" aria-pressed={ev.tipo === t}
+                    onClick={() => setEv({ ...EV_VACIA, tipo: t, descripcion: ev.descripcion })}>{l}</button>
+                ))}
+              </div>
+              {ev.tipo === 'imagen' ? (
+                <div className="modal-field">
+                  <label htmlFor="registro-2">Imagen (JPG o PNG, máx. 5 MB) *</label>
+                  <input id="registro-2" type="file" accept="image/jpeg,image/png" required onChange={(e) => setEv({ ...ev, archivo: e.target.files[0] || null })} />
+                </div>
+              ) : (
+                <div className="modal-field">
+                  <label htmlFor="registro-3">{ev.tipo === 'link' ? 'Enlace (https://...) *' : 'Texto *'}</label>
+                  <input id="registro-3" type={ev.tipo === 'link' ? 'url' : 'text'} value={ev.contenido} onChange={(e) => setEv({ ...ev, contenido: e.target.value })} required />
+                </div>
+              )}
+              <div className="modal-field">
+                <label htmlFor="registro-4">Descripción</label>
+                <input id="registro-4" value={ev.descripcion} onChange={(e) => setEv({ ...ev, descripcion: e.target.value })} maxLength={500} />
+              </div>
+            </form>
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={() => setEvidenciaDe(null)}>Cancelar</button>
-              <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Subiendo...' : 'Agregar'}</button>
+              <button type="submit" form="registro-form-2" className="btn-primary" disabled={enviando}>{enviando ? 'Subiendo...' : 'Agregar'}</button>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>

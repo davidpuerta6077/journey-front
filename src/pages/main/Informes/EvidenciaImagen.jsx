@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getEvidenciaImagenUrl } from '../../../services/onix/onixApi'
+import { getEvidenciaImagenUrl } from '../../../services/onix/getEvidenciaImagenUrl'
 
 export default function EvidenciaImagen({ id, alt }) {
   const [url, setUrl] = useState(null)

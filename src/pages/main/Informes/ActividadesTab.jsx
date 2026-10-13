@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2, ChevronRight } from 'lucide-react'
-import { getActividades, createActividad, updateActividad, deleteActividad } from '../../../services/onix/onixApi'
+import { getActividades } from '../../../services/onix/getActividades'
+import { createActividad } from '../../../services/onix/createActividad'
+import { updateActividad } from '../../../services/onix/updateActividad'
+import { deleteActividad } from '../../../services/onix/deleteActividad'
 import { alertError, confirmEliminar, toastExito } from '../../../services/alerts'
 import RegistrosView from './RegistrosView'
 
@@ -90,28 +93,30 @@ export default function ActividadesTab() {
 
       {editando && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditando(null)}>
-          <form className="modal-box modal-form" onSubmit={guardar}>
+          <div className="modal-box">
             <div className="modal-header">
               <h3>{editando === 'nueva' ? 'Nueva actividad' : 'Editar actividad'}</h3>
               <button type="button" className="modal-close" onClick={() => setEditando(null)} aria-label="Cerrar">×</button>
             </div>
-            <label className="modal-field">
-              <span>Nombre *</span>
-              <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} maxLength={200} required autoFocus />
-            </label>
-            <label className="modal-field">
-              <span>Descripción contractual *</span>
-              <textarea rows={4} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} required />
-            </label>
-            <label className="modal-field">
-              <span>Orden en el informe</span>
-              <input type="number" value={form.orden} onChange={(e) => setForm({ ...form, orden: e.target.value })} />
-            </label>
+            <form id="actividad-form-1" className="modal-form" onSubmit={guardar}>
+              <div className="modal-field">
+                <label htmlFor="actividad-1">Nombre *</label>
+                <input id="actividad-1" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} maxLength={200} required autoFocus />
+              </div>
+              <div className="modal-field">
+                <label htmlFor="actividad-2">Descripción contractual *</label>
+                <textarea id="actividad-2" rows={4} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} required />
+              </div>
+              <div className="modal-field">
+                <label htmlFor="actividad-3">Orden en el informe</label>
+                <input id="actividad-3" type="number" value={form.orden} onChange={(e) => setForm({ ...form, orden: e.target.value })} />
+              </div>
+            </form>
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={() => setEditando(null)}>Cancelar</button>
-              <button type="submit" className="btn-primary">Guardar</button>
+              <button type="submit" form="actividad-form-1" className="btn-primary">Guardar</button>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { usePermissions } from '../../../services/PermissionsContext'
-import { getPerfil } from '../../../services/onix/onixApi'
+import { getPerfil } from '../../../services/onix/getPerfil'
 import { alertError } from '../../../services/alerts'
 import PerfilTab from './PerfilTab'
 import ActividadesTab from './ActividadesTab'

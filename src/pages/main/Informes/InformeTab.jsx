@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Sparkles, Save, FileDown, Images } from 'lucide-react'
-import { getActividades, getInformes, generarInforme, updateInforme, descargarInformeWord, descargarEvidenciasWord } from '../../../services/onix/onixApi'
+import { getActividades } from '../../../services/onix/getActividades'
+import { getInformes } from '../../../services/onix/getInformes'
+import { generarInforme } from '../../../services/onix/generarInforme'
+import { updateInforme } from '../../../services/onix/updateInforme'
+import { descargarInformeWord } from '../../../services/onix/descargarInformeWord'
+import { descargarEvidenciasWord } from '../../../services/onix/descargarEvidenciasWord'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { MESES, periodoActual, aniosDisponibles } from './periodo'
 

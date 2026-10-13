@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
-import { getAreas, createArea, updateArea, deleteArea } from '../../../services/onix/onixApi'
+import { getAreas } from '../../../services/onix/getAreas'
+import { createArea } from '../../../services/onix/createArea'
+import { updateArea } from '../../../services/onix/updateArea'
+import { deleteArea } from '../../../services/onix/deleteArea'
 import { alertError, confirmEliminar, toastExito } from '../../../services/alerts'
 
 const VACIA = { nombre: '', color: '#19445e' }
@@ -62,12 +65,12 @@ export default function AdminTab() {
       ) : (
         <div className="table-wrapper">
           <table className="data-table">
-            <thead><tr><th>Área</th><th></th></tr></thead>
+            <thead><tr><th>Área</th><th>Acciones</th></tr></thead>
             <tbody>
               {areas.map((a) => (
                 <tr key={a.id}>
-                  <td><span className="onix-area-color" style={{ background: a.color }} aria-hidden="true"></span>{a.nombre}</td>
-                  <td>
+                  <td data-label="Área"><span className="onix-area-color" style={{ background: a.color }} aria-hidden="true"></span>{a.nombre}</td>
+                  <td data-label="Acciones">
                     <div className="action-btns">
                       <button className="btn-icon btn-icon-edit" title="Editar" aria-label={`Editar ${a.nombre}`} onClick={() => { setEditando(a); setForm({ nombre: a.nombre, color: a.color }) }}><Pencil size={15} /></button>
                       <button className="btn-icon btn-icon-delete" title="Eliminar" aria-label={`Eliminar ${a.nombre}`} onClick={() => eliminar(a)}><Trash2 size={15} /></button>
@@ -82,24 +85,26 @@ export default function AdminTab() {
 
       {editando && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditando(null)}>
-          <form className="modal-box modal-form" onSubmit={guardar}>
+          <div className="modal-box">
             <div className="modal-header">
               <h3>{editando === 'nueva' ? 'Nueva área' : 'Editar área'}</h3>
               <button type="button" className="modal-close" onClick={() => setEditando(null)} aria-label="Cerrar">×</button>
             </div>
-            <label className="modal-field">
-              <span>Nombre *</span>
-              <input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} maxLength={100} required autoFocus />
-            </label>
-            <label className="modal-field">
-              <span>Color</span>
-              <input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
-            </label>
+            <form id="area-form-1" className="modal-form" onSubmit={guardar}>
+              <div className="modal-field">
+                <label htmlFor="area-1">Nombre *</label>
+                <input id="area-1" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} maxLength={100} required autoFocus />
+              </div>
+              <div className="modal-field">
+                <label htmlFor="area-2">Color</label>
+                <input id="area-2" type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} />
+              </div>
+            </form>
             <div className="modal-actions">
               <button type="button" className="btn-secondary" onClick={() => setEditando(null)}>Cancelar</button>
-              <button type="submit" className="btn-primary">Guardar</button>
+              <button type="submit" form="area-form-1" className="btn-primary">Guardar</button>
             </div>
-          </form>
+          </div>
         </div>
       )}
     </div>

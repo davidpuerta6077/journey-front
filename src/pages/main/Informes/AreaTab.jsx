@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Eye } from 'lucide-react'
-import { getUsuariosArea } from '../../../services/onix/onixApi'
+import { getUsuariosArea } from '../../../services/onix/getUsuariosArea'
 import { alertError } from '../../../services/alerts'
 import InformeTab from './InformeTab'
 import { MESES, periodoActual, aniosDisponibles } from './periodo'
@@ -60,17 +60,17 @@ export default function AreaTab({ esAdmin }) {
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>Nombre</th><th>Identificación</th><th>Área</th><th>Registros del mes</th><th>Informes del mes</th><th></th></tr>
+              <tr><th>Nombre</th><th>Identificación</th><th>Área</th><th>Registros del mes</th><th>Informes del mes</th><th>Acciones</th></tr>
             </thead>
             <tbody>
               {usuarios.map((u) => (
                 <tr key={u.user_id}>
-                  <td>{u.nombre}<br /><small>{u.email}</small></td>
-                  <td>{u.identificacion}</td>
-                  <td>{u.area_nombre || '—'}</td>
-                  <td>{u.registros}</td>
-                  <td><span className={u.informes > 0 ? 'badge badge-synced' : 'badge badge-pending'}>{u.informes}</span></td>
-                  <td>
+                  <td data-label="Nombre">{u.nombre}<br /><small>{u.email}</small></td>
+                  <td data-label="Identificación">{u.identificacion}</td>
+                  <td data-label="Área">{u.area_nombre || '—'}</td>
+                  <td data-label="Registros del mes">{u.registros}</td>
+                  <td data-label="Informes del mes"><span className={u.informes > 0 ? 'badge badge-synced' : 'badge badge-pending'}>{u.informes}</span></td>
+                  <td data-label="Acciones">
                     <button className="btn-icon" title="Ver informes" aria-label={`Ver informes de ${u.nombre}`} onClick={() => setViendo(u)}><Eye size={15} /></button>
                   </td>
                 </tr>
