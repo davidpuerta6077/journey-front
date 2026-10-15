@@ -139,7 +139,7 @@ export default function SubactividadCard({ registro: r, soloLectura = false, per
         <div>
           {r.logs > 0 && <span className="badge badge-synced onix-badge-hub">Desde Bravo Hub · {r.logs} acción(es)</span>}
           <h5 className="onix-sub-titulo">{tituloDe(r)}</h5>
-          <p className="onix-registro-texto">{r.desarrollo}</p>
+          {r.desarrollo !== tituloDe(r) && <p className="onix-registro-texto">{r.desarrollo}</p>}
         </div>
         {!soloLectura && (
           <div className="action-btns">
