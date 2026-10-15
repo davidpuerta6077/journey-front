@@ -1,22 +1,27 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Sparkles, FolderDown } from 'lucide-react'
+import { Sparkles, FolderDown, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { getActividades } from '../../../services/onix/getActividades'
 import { getRegistros } from '../../../services/onix/getRegistros'
 import { generarSubactividad } from '../../../services/onix/generarSubactividad'
 import { descargarArchivo } from '../../../services/onix/descargarArchivo'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import ActividadMes from './ActividadMes'
-import { generada, tituloDe } from './evidencias'
-import { MESES, periodoActual, aniosDisponibles } from './periodo'
+import { generada, tituloDe, plural } from './evidencias'
+import { MESES, periodoActual } from './periodo'
 
-// Todo el informe del mes en una pantalla. Con userId muestra el de otro
-// usuario (área/admin) en solo lectura.
+const mover = ({ mes, anio }, d) => {
+  const m = mes - 1 + d
+  return { mes: ((m % 12) + 12) % 12 + 1, anio: anio + Math.floor(m / 12) }
+}
+
+// Todo el informe del mes: actividades a la izquierda y la elegida a la
+// derecha. Con userId muestra el de otro usuario (área/admin) en solo lectura.
 export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, soloLectura = false }) {
   const [periodo, setPeriodo] = useState(periodoActual())
   const [actividades, setActividades] = useState([])
   const [registros, setRegistros] = useState([])
   const [loading, setLoading] = useState(true)
-  const [abierta, setAbierta] = useState(null)
+  const [elegida, setElegida] = useState(null)
   const [progreso, setProgreso] = useState(null) // { actual, total } mientras genera
   const [descargando, setDescargando] = useState(false)
 
@@ -35,12 +40,15 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
     }
   }, [periodo, userId])
 
-  // Al cambiar de mes se abre la primera actividad con algo pendiente.
+  // Al cambiar de mes se elige la primera actividad con algo pendiente.
   useEffect(() => {
     cargar().then((r) => {
       if (!r) return
-      const pendiente = (a) => r.regs.filter((x) => x.actividad_id === a.id).some((x) => !generada(x))
-      setAbierta((r.acts.find(pendiente) || r.acts[0])?.id ?? null)
+      const pendiente = (a) => {
+        const regs = r.regs.filter((x) => x.actividad_id === a.id)
+        return !regs.length || regs.some((x) => !generada(x))
+      }
+      setElegida((r.acts.find(pendiente) || r.acts[0])?.id ?? null)
     })
   }, [cargar])
 
@@ -54,15 +62,17 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
 
   const generadas = registros.filter(generada).length
   const pendientes = registros.filter((r) => !generada(r))
+  const todoListo = registros.length > 0 && !pendientes.length
+  const esActual = periodo.mes === periodoActual().mes && periodo.anio === periodoActual().anio
 
   // Genera en orden las pendientes; si todas están generadas pregunta antes de regenerar.
   const generarMes = async () => {
     let objetivo = pendientes
     if (!objetivo.length) {
       if (!(await confirmAccion({
-        title: '¿Regenerar todo el mes?',
-        text: 'Todas las subactividades ya están generadas. Se reemplazarán sus párrafos y documentos de evidencia.',
-        confirmButtonText: 'Sí, regenerar',
+        title: '¿Redactar todo de nuevo?',
+        text: 'Todas las subactividades ya están redactadas. Se reemplazarán sus párrafos y documentos de evidencia.',
+        confirmButtonText: 'Sí, redactar',
       }))) return
       objetivo = registros
     }
@@ -76,8 +86,8 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
       }
     }
     setProgreso(null)
-    if (fallos.length) alertError(`${objetivo.length - fallos.length} generada(s), ${fallos.length} con error. ${fallos.join('. ')}`)
-    else toastExito(`${objetivo.length} subactividad(es) generada(s)`)
+    if (fallos.length) alertError(`${objetivo.length - fallos.length} redactada(s), ${fallos.length} con error. ${fallos.join('. ')}`)
+    else toastExito(`${plural(objetivo.length, 'subactividad redactada', 'subactividades redactadas')}`)
   }
 
   const descargarZip = async () => {
@@ -92,39 +102,54 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
   }
 
   const ocupado = progreso !== null || descargando
+  const actividad = actividades.find((a) => a.id === elegida)
+
+  // Qué sigue, en una línea.
+  const siguiente = !registros.length
+    ? 'Elige una actividad y agrega lo que hiciste este mes (subactividades con sus evidencias).'
+    : !todoListo
+      ? `Falta redactar ${plural(pendientes.length, 'subactividad', 'subactividades')}: la IA escribe el párrafo del informe y el documento Word de evidencia. Hazlo una por una o todas con "Redactar pendientes".`
+      : 'Todo listo. Descarga el .zip (una carpeta por actividad) y súbelo a Drive.'
 
   return (
     <div>
-      <div className="onix-toolbar">
-        <div>
-          <h3>{soloLectura ? 'Informe' : 'Mi informe'} de {MESES[periodo.mes - 1]} {periodo.anio}</h3>
-          {!loading && actividades.length > 0 && (
-            <p className="onix-sub">{registros.length} subactividad(es) · {generadas} generada(s) con IA</p>
-          )}
+      <div className="onix-mes-barra">
+        <div className="onix-mes-nav">
+          <button className="btn-icon" aria-label="Mes anterior" title="Mes anterior" onClick={() => setPeriodo(mover(periodo, -1))}><ChevronLeft size={18} /></button>
+          <h3 aria-live="polite">{MESES[periodo.mes - 1]} {periodo.anio}</h3>
+          <button className="btn-icon" aria-label="Mes siguiente" title="Mes siguiente" onClick={() => setPeriodo(mover(periodo, 1))}><ChevronRight size={18} /></button>
+          {!esActual && <button className="onix-agregar-enlace" onClick={() => setPeriodo(periodoActual())}>Ir al mes actual</button>}
         </div>
         <div className="onix-filtros">
-          <select className="filter-select" aria-label="Mes" value={periodo.mes} onChange={(e) => setPeriodo({ ...periodo, mes: Number(e.target.value) })}>
-            {MESES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-          </select>
-          <select className="filter-select" aria-label="Año" value={periodo.anio} onChange={(e) => setPeriodo({ ...periodo, anio: Number(e.target.value) })}>
-            {aniosDisponibles().map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
           {!soloLectura && (
-            <button className="btn-primary" disabled={!perfilCompleto || !registros.length || ocupado} onClick={generarMes}
+            <button className={todoListo ? 'btn-secondary' : 'btn-primary'} disabled={!perfilCompleto || !registros.length || ocupado} onClick={generarMes}
               title={!registros.length ? 'Agrega subactividades primero' : undefined}>
-              <Sparkles size={16} /> {progreso ? `Generando ${progreso.actual} de ${progreso.total}...` : registros.length && !pendientes.length ? 'Regenerar todo' : `Generar pendientes${pendientes.length ? ` (${pendientes.length})` : ''}`}
+              <Sparkles size={16} /> {progreso ? `Redactando ${progreso.actual} de ${progreso.total}...` : todoListo ? 'Redactar todo de nuevo' : `Redactar pendientes con IA${pendientes.length ? ` (${pendientes.length})` : ''}`}
             </button>
           )}
-          <button className="btn-secondary" disabled={!registros.length || pendientes.length > 0 || ocupado} onClick={descargarZip}
-            title={pendientes.length ? 'Todas las subactividades deben estar generadas con IA' : 'Carpetas por actividad, como en Drive'}>
+          <button className={todoListo ? 'btn-primary' : 'btn-secondary'} disabled={!todoListo || ocupado} onClick={descargarZip}
+            title={!todoListo ? 'Se habilita cuando todas las subactividades estén redactadas con IA' : 'Carpetas por actividad, como en Drive'}>
             <FolderDown size={16} /> {descargando ? 'Descargando...' : 'Descargar todo (.zip)'}
           </button>
         </div>
       </div>
 
+      {!loading && actividades.length > 0 && (
+        <div className="onix-progreso">
+          <div className="onix-progreso-texto">
+            <strong>{generadas} de {plural(registros.length, 'subactividad redactada', 'subactividades redactadas')}</strong>
+            {!soloLectura && <span>{siguiente}</span>}
+          </div>
+          <div className="onix-progreso-barra" role="progressbar" aria-valuemin={0} aria-valuemax={registros.length || 1} aria-valuenow={generadas}
+            aria-label="Subactividades redactadas">
+            <span style={{ width: `${registros.length ? (generadas / registros.length) * 100 : 0}%` }} />
+          </div>
+        </div>
+      )}
+
       {!soloLectura && !perfilCompleto && (
         <p className="onix-aviso">
-          Para generar con IA primero completa tu perfil.{' '}
+          Para redactar con IA primero completa tu perfil (sus datos van en el Word).{' '}
           <button className="btn-secondary" onClick={onIrAConfig}>Ir a Configuración</button>
         </p>
       )}
@@ -138,13 +163,36 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
             <button className="btn-secondary" onClick={onIrAConfig}>Ir a Configuración</button>
           </p>
         )
-      ) : actividades.map((act, i) => (
-        <ActividadMes key={act.id} actividad={act} numero={i + 1} periodo={periodo}
-          registros={porActividad[act.id] || []}
-          abierta={abierta === act.id} onToggle={() => setAbierta(abierta === act.id ? null : act.id)}
-          onCambio={() => cargar({ silencioso: true })} onActualizado={actualizar}
-          perfilCompleto={perfilCompleto} soloLectura={soloLectura} bloqueado={progreso !== null} />
-      ))}
+      ) : (
+        <div className="onix-mes-layout">
+          <nav className="onix-act-lista" aria-label="Actividades del contrato">
+            {actividades.map((a, i) => {
+              const regs = porActividad[a.id] || []
+              const listas = regs.filter(generada).length
+              const ok = regs.length > 0 && listas === regs.length
+              return (
+                <button key={a.id} type="button" className={`onix-act-item${a.id === elegida ? ' activa' : ''}`}
+                  aria-current={a.id === elegida ? 'true' : undefined} onClick={() => setElegida(a.id)}>
+                  <span className={`onix-fila-estado${ok ? ' ok' : ''}`} aria-hidden="true">{ok ? <CheckCircle2 size={18} /> : i + 1}</span>
+                  <span className="onix-fila-info">
+                    <span className="onix-fila-titulo">{a.nombre}</span>
+                    <span className="onix-fila-meta">
+                      {regs.length ? `${listas} de ${plural(regs.length, 'redactada', 'redactadas')}` : 'Sin subactividades'}
+                    </span>
+                  </span>
+                </button>
+              )
+            })}
+          </nav>
+          {actividad && (
+            <ActividadMes key={`${actividad.id}-${periodo.mes}-${periodo.anio}`} actividad={actividad}
+              numero={actividades.indexOf(actividad) + 1} periodo={periodo}
+              registros={porActividad[actividad.id] || []}
+              onCambio={() => cargar({ silencioso: true })} onActualizado={actualizar}
+              perfilCompleto={perfilCompleto} soloLectura={soloLectura} bloqueado={progreso !== null} />
+          )}
+        </div>
+      )}
     </div>
   )
 }

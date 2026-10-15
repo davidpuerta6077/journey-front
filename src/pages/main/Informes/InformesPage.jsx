@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { usePermissions } from '../../../services/PermissionsContext'
 import { getPerfil } from '../../../services/onix/getPerfil'
-import { alertError } from '../../../services/alerts'
+import { alertError, toastExito } from '../../../services/alerts'
 import MiMesTab from './MiMesTab'
 import ConfiguracionTab from './ConfiguracionTab'
 import AreaTab from './AreaTab'
-import AdminTab from './AdminTab'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Informes/Informes.css'
 
@@ -16,7 +15,18 @@ export default function InformesPage() {
   const puedeAdmin = tiene('onix_reports_admin')
 
   const [perfil, setPerfil] = useState(undefined) // undefined = cargando, null = sin perfil
-  const [tab, setTab] = useState('mes')
+  // Al volver de Google se abre Configuración, donde está la conexión.
+  const [tab, setTab] = useState(() => (new URLSearchParams(window.location.search).get('google') ? 'config' : 'mes'))
+
+  // Al volver de Google (?google=ok|error) se avisa y se limpia la URL.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search)
+    const google = q.get('google')
+    if (!google) return
+    window.history.replaceState(null, '', window.location.pathname)
+    if (google === 'ok') toastExito('Google Calendar conectado')
+    else alertError(q.get('mensaje') || 'No se pudo conectar con Google')
+  }, [])
 
   useEffect(() => {
     getPerfil()
@@ -34,7 +44,6 @@ export default function InformesPage() {
     { id: 'mes', label: 'Mi mes' },
     { id: 'config', label: 'Configuración' },
     ...(puedeArea || puedeAdmin ? [{ id: 'area', label: puedeAdmin ? 'Todos los informes' : 'Mi área' }] : []),
-    ...(puedeAdmin ? [{ id: 'admin', label: 'Áreas' }] : []),
   ], [puedeArea, puedeAdmin])
 
   return (
@@ -62,7 +71,6 @@ export default function InformesPage() {
           {tab === 'mes' && <MiMesTab perfilCompleto={!!perfil} onIrAConfig={() => setTab('config')} />}
           {tab === 'config' && <ConfiguracionTab perfil={perfil} onPerfilGuardado={setPerfil} />}
           {tab === 'area' && <AreaTab esAdmin={puedeAdmin} />}
-          {tab === 'admin' && <AdminTab />}
         </>
       )}
     </div>

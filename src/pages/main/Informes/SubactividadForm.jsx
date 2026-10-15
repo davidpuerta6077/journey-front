@@ -58,8 +58,7 @@ export default function SubactividadForm({ actividadId, periodo, registro = null
   }
 
   return (
-    <form className="onix-card onix-sub-form" onSubmit={guardar}>
-      <h5 className="onix-sub-titulo">{registro ? 'Editar subactividad' : 'Nueva subactividad'}</h5>
+    <form className="modal-form onix-sub-form" onSubmit={guardar}>
       <div className="modal-field">
         <label htmlFor={`${idBase}-titulo`}>Título *</label>
         <input id={`${idBase}-titulo`} value={titulo} onChange={(e) => setTitulo(e.target.value)}
@@ -74,6 +73,7 @@ export default function SubactividadForm({ actividadId, periodo, registro = null
       {!registro && (
         <>
           <span className="onix-num">Evidencias (opcional, también puedes agregarlas después)</span>
+          <span className="onix-informe-meta">Capturas o fotos de lo que hiciste. Luego podrás describir cada una.</span>
           {(imagenes.length > 0 || enlaces.length > 0) && (
             <div className="onix-evidencias">
               {imagenes.map((f, i) => <Miniatura key={`${f.name}-${i}`} file={f} onQuitar={() => setImagenes((l) => l.filter((_, j) => j !== i))} />)}
@@ -97,7 +97,7 @@ export default function SubactividadForm({ actividadId, periodo, registro = null
 
       <div className="onix-acciones onix-acciones-fin">
         <button type="button" className="btn-secondary" onClick={onCancelar}>Cancelar</button>
-        <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Guardando...' : 'Guardar'}</button>
+        <button type="submit" className="btn-primary" disabled={enviando}>{enviando ? 'Guardando...' : registro ? 'Guardar' : 'Agregar subactividad'}</button>
       </div>
     </form>
   )

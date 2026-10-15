@@ -19,3 +19,6 @@ export const tituloDe = (r) => r.titulo || (r.desarrollo || '').split('\n')[0].s
 
 // Lista para el documento de la actividad y el zip: párrafo y documento generados.
 export const generada = (r) => !!(r.parrafo && r.documento)
+
+// "1 imagen" / "3 imágenes".
+export const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`
