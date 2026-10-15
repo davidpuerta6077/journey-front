@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, Eye } from 'lucide-react'
 import { getUsuariosArea } from '../../../services/onix/getUsuariosArea'
 import { alertError } from '../../../services/alerts'
-import InformeTab from './InformeTab'
+import MiMesTab from './MiMesTab'
 import { MESES, periodoActual, aniosDisponibles } from './periodo'
 
 export default function AreaTab({ esAdmin }) {
@@ -31,7 +31,7 @@ export default function AreaTab({ esAdmin }) {
           <button className="btn-secondary" onClick={() => setViendo(null)}><ArrowLeft size={16} /> Volver</button>
           <h3>{viendo.nombre}{viendo.area_nombre ? ` · ${viendo.area_nombre}` : ''}</h3>
         </div>
-        <InformeTab userId={viendo.user_id} soloLectura />
+        <MiMesTab userId={viendo.user_id} soloLectura />
       </div>
     )
   }
@@ -60,7 +60,7 @@ export default function AreaTab({ esAdmin }) {
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
-              <tr><th>Nombre</th><th>Identificación</th><th>Área</th><th>Registros del mes</th><th>Informes del mes</th><th>Acciones</th></tr>
+              <tr><th>Nombre</th><th>Identificación</th><th>Área</th><th>Subactividades del mes</th><th>Generadas con IA</th><th>Acciones</th></tr>
             </thead>
             <tbody>
               {usuarios.map((u) => (
@@ -68,8 +68,8 @@ export default function AreaTab({ esAdmin }) {
                   <td data-label="Nombre">{u.nombre}<br /><small>{u.email}</small></td>
                   <td data-label="Identificación">{u.identificacion}</td>
                   <td data-label="Área">{u.area_nombre || '—'}</td>
-                  <td data-label="Registros del mes">{u.registros}</td>
-                  <td data-label="Informes del mes"><span className={u.informes > 0 ? 'badge badge-synced' : 'badge badge-pending'}>{u.informes}</span></td>
+                  <td data-label="Subactividades del mes">{u.registros}</td>
+                  <td data-label="Generadas con IA"><span className={u.registros > 0 && u.generados === u.registros ? 'badge badge-synced' : 'badge badge-pending'}>{u.generados}</span></td>
                   <td data-label="Acciones">
                     <button className="btn-icon" title="Ver informes" aria-label={`Ver informes de ${u.nombre}`} onClick={() => setViendo(u)}><Eye size={15} /></button>
                   </td>

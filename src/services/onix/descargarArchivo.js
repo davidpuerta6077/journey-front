@@ -4,21 +4,27 @@ import awsAuth from '../AwsAuthService'
 
 const BASE = config.api_domain.url_base
 
-// Descarga el Word de evidencias de una actividad en un mes ({ mes, anio }).
-export const descargarEvidenciasWord = async (actividadId, params) => {
+// Nombre real del archivo: filename* (UTF-8, con tildes) o filename.
+function nombreDe(disposition, porDefecto) {
+  const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+  if (utf8) return decodeURIComponent(utf8[1])
+  const simple = disposition.match(/filename="?([^";]+)"?/i)
+  return simple ? simple[1] : porDefecto
+}
+
+// Descarga un Word o zip del módulo Informes. `ruta` es relativa a /onix.
+export const descargarArchivo = async (ruta, params, porDefecto) => {
   try {
     const token = awsAuth.getToken()
-    const res = await axios.get(`${BASE}/onix/actividades/${actividadId}/evidencias-word`, {
+    const res = await axios.get(`${BASE}/onix${ruta}`, {
       headers: { Authorization: `Bearer ${token}` },
       params,
       responseType: 'blob'
     })
-    const disposition = res.headers['content-disposition'] || ''
-    const match = disposition.match(/filename="?([^"]+)"?/)
     const url = URL.createObjectURL(res.data)
     const link = document.createElement('a')
     link.href = url
-    link.download = match ? match[1] : `evidencias_${actividadId}.docx`
+    link.download = nombreDe(res.headers['content-disposition'] || '', porDefecto)
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -34,6 +40,6 @@ export const descargarEvidenciasWord = async (actividadId, params) => {
         // la respuesta de error no era JSON
       }
     }
-    throw new Error(msg || 'Error al descargar las evidencias', { cause: error })
+    throw new Error(msg || 'Error al descargar el archivo', { cause: error })
   }
 }

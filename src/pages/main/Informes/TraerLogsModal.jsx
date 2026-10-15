@@ -12,6 +12,7 @@ export default function TraerLogsModal({ actividad, periodo, onClose, onAgregado
   const [logs, setLogs] = useState(null)
   const [elegidos, setElegidos] = useState(new Set())
   const [enviando, setEnviando] = useState(false)
+  const [titulo, setTitulo] = useState('Acciones en Bravo Hub')
 
   useEffect(() => {
     getLogsDisponibles(periodo)
@@ -32,8 +33,8 @@ export default function TraerLogsModal({ actividad, periodo, onClose, onAgregado
   const agregar = async () => {
     setEnviando(true)
     try {
-      await createRegistroDesdeLogs({ actividad_id: actividad.id, ...periodo, log_ids: [...elegidos] })
-      toastExito(`${elegidos.size} acción(es) agregada(s) como registro`)
+      await createRegistroDesdeLogs({ actividad_id: actividad.id, ...periodo, titulo, log_ids: [...elegidos] })
+      toastExito(`${elegidos.size} acción(es) agregada(s) como subactividad`)
       onAgregado()
     } catch (e) {
       alertError(e.message)
@@ -50,9 +51,13 @@ export default function TraerLogsModal({ actividad, periodo, onClose, onAgregado
         </div>
         <div className="modal-form">
           <p className="modal-hint">
-            Marca lo que hiciste para "{actividad.nombre}". Se agregará como un solo registro (una línea por acción) que luego puedes editar.
-            Las acciones ya asignadas a una actividad no aparecen.
+            Marca lo que hiciste para "{actividad.nombre}". Se agregará como una subactividad (una línea por acción) que luego puedes editar
+            y a la que puedes agregar evidencias. Las acciones ya asignadas no aparecen.
           </p>
+          <div className="modal-field">
+            <label htmlFor="logs-titulo">Título de la subactividad</label>
+            <input id="logs-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={200} />
+          </div>
           {logs === null ? (
             <div className="loading-box"><span className="loader"></span>Cargando acciones...</div>
           ) : logs.length === 0 ? (

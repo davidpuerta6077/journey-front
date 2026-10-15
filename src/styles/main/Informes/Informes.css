@@ -66,6 +66,61 @@
 .onix-logs-lista { max-height: 50vh; overflow-y: auto; }
 .onix-badge-hub { display: inline-block; margin-bottom: 6px; }
 
+/* Mi mes: acordeón de actividades con sus subactividades */
+.onix-act-mes { margin-bottom: 12px; padding: 0; }
+.onix-act-head {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 14px 16px;
+  background: none; border: none; cursor: pointer; text-align: left; color: var(--text-primary);
+}
+.onix-act-head:focus-visible { outline: 2px solid var(--hub-primary, var(--primary)); outline-offset: -2px; border-radius: 10px; }
+.onix-act-nombre { flex: 1; display: flex; flex-direction: column; font-weight: 600; }
+.onix-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.onix-chip {
+  font-size: 0.75rem; padding: 2px 8px; border-radius: 999px;
+  background: var(--bg-surface-alt); color: var(--text-muted); border: 1px solid var(--border-soft);
+}
+.onix-chip.ok { color: var(--text-primary); border-color: var(--hub-primary, var(--primary)); }
+.onix-act-body { display: flex; flex-direction: column; gap: 12px; padding: 0 16px 16px; }
+.onix-act-desc { margin: 0; color: var(--text-secondary); font-size: 0.85rem; }
+.onix-acciones-der { margin-left: auto; }
+
+.onix-sub-card, .onix-sub-form { display: flex; flex-direction: column; gap: 10px; background: var(--bg-surface-alt); }
+.onix-sub-titulo { margin: 0 0 4px; font-size: 0.95rem; color: var(--text-primary); }
+.onix-evidencia-img { flex-direction: column; align-items: flex-start; }
+.onix-evidencia-img img { width: 140px; height: 100px; }
+.onix-pie {
+  width: 140px; font-size: 0.75rem; padding: 3px 6px; border-radius: 4px;
+  border: 1px solid var(--border-soft); background: var(--bg-surface); color: var(--text-primary);
+}
+.onix-enlace-form { display: flex; gap: 8px; flex-wrap: wrap; }
+.onix-enlace-form input { flex: 1; min-width: 200px; }
+.onix-agregar-enlace {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: none; padding: 0; cursor: pointer; color: var(--hub-primary, var(--primary)); font-size: 0.85rem;
+}
+.onix-evidencia a { display: inline-flex; align-items: center; gap: 4px; }
+.onix-acciones-fin { justify-content: flex-end; }
+
+.onix-ia { border-top: 1px solid var(--border-soft); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.onix-ia textarea { width: 100%; min-height: 90px; resize: vertical; font: inherit; }
+.onix-sub-form textarea { font: inherit; }
+
+.onix-drop {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1.5px dashed var(--border-soft); border-radius: 8px; padding: 12px;
+  color: var(--text-muted); font-size: 0.85rem; cursor: pointer; text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+.onix-drop:hover, .onix-drop.encima { border-color: var(--hub-primary, var(--primary)); background: var(--bg-surface); color: var(--text-secondary); }
+.onix-drop:focus-visible { outline: 2px solid var(--hub-primary, var(--primary)); outline-offset: 2px; }
+.onix-drop.disabled { cursor: progress; opacity: 0.6; }
+
+.onix-config { display: flex; flex-direction: column; gap: 24px; }
+.onix-config-titulo { margin: 0 0 12px; }
+
 @media (max-width: 600px) {
   .onix-registro-head { flex-direction: column; }
+  .onix-act-head { flex-wrap: wrap; }
+  .onix-chips { margin-left: 28px; }
+  .onix-acciones-der { margin-left: 0; }
 }

@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { getActividades } from '../../../services/onix/getActividades'
 import { createActividad } from '../../../services/onix/createActividad'
 import { updateActividad } from '../../../services/onix/updateActividad'
 import { deleteActividad } from '../../../services/onix/deleteActividad'
 import { alertError, confirmEliminar, toastExito } from '../../../services/alerts'
-import RegistrosView from './RegistrosView'
 
 const VACIA = { nombre: '', descripcion: '', orden: 0 }
 
@@ -14,7 +13,6 @@ export default function ActividadesTab() {
   const [loading, setLoading] = useState(true)
   const [editando, setEditando] = useState(null) // null | 'nueva' | actividad
   const [form, setForm] = useState(VACIA)
-  const [abierta, setAbierta] = useState(null)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -59,8 +57,6 @@ export default function ActividadesTab() {
     }
   }
 
-  if (abierta) return <RegistrosView actividad={abierta} onVolver={() => setAbierta(null)} />
-
   return (
     <div>
       <div className="onix-toolbar">
@@ -71,17 +67,16 @@ export default function ActividadesTab() {
       {loading ? (
         <div className="loading-box"><span className="loader"></span>Cargando actividades...</div>
       ) : actividades.length === 0 ? (
-        <p className="onix-vacio">Aún no tienes actividades. Crea las actividades de tu contrato para empezar a registrar tu trabajo.</p>
+        <p className="onix-vacio">Aún no tienes actividades. Crea las actividades de tu contrato (una vez); luego registra cada mes sus subactividades en "Mi mes".</p>
       ) : (
         <div className="onix-grid">
           {actividades.map((act, i) => (
             <div key={act.id} className="onix-card onix-actividad">
-              <button className="onix-actividad-abrir" onClick={() => setAbierta(act)} aria-label={`Abrir registros de ${act.nombre}`}>
+              <div className="onix-actividad-abrir">
                 <span className="onix-num">Actividad {i + 1}</span>
                 <h4>{act.nombre}</h4>
                 <p>{act.descripcion}</p>
-                <span className="onix-link">Ver registros <ChevronRight size={14} /></span>
-              </button>
+              </div>
               <div className="action-btns">
                 <button className="btn-icon btn-icon-edit" title="Editar" aria-label="Editar actividad" onClick={() => abrirForm(act)}><Pencil size={15} /></button>
                 <button className="btn-icon btn-icon-delete" title="Eliminar" aria-label="Eliminar actividad" onClick={() => eliminar(act)}><Trash2 size={15} /></button>
