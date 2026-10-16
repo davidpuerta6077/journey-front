@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell } from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import { fetchSettings } from '../../services/settings/fetchSettings'
 import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
+import { useNotificationsPolling } from '../../services/notifications/useNotificationsPolling'
 import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
 import logoPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/bravo_hub_positivo.svg'
@@ -99,6 +100,32 @@ const Layout = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [userMenuOpen])
+
+  // Campanita de notificaciones (ver services/notifications)
+  const { unreadCount, notifications, loadingList, refreshList, markRead, markAllRead } = useNotificationsPolling()
+  const [notifOpen, setNotifOpen] = useState(false)
+  useEffect(() => {
+    setNotifOpen(false)
+  }, [location.pathname])
+  const notifRef = useRef(null)
+  useEffect(() => {
+    if (!notifOpen) return
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [notifOpen])
+  const toggleNotif = () => {
+    const next = !notifOpen
+    setNotifOpen(next)
+    if (next) refreshList()
+  }
+  const handleNotifClick = (n) => {
+    if (!n.read_at) markRead(n.id)
+    setNotifOpen(false)
+    if (n.link) navigate(n.link)
+  }
   const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
   const userPhoto = profile?.photo_url
   // Guarda la URL que falló (no un booleano) para que una foto nueva se vuelva a intentar
@@ -149,14 +176,47 @@ const Layout = () => {
           />
         </form>
         <div className="navbar-right">
-          <button
-            className="toggle-btn navbar-bell"
-            aria-label="Notificaciones"
-            title="Notificaciones (próximamente)"
-          >
-            <Bell size={18} />
-            <span className="navbar-bell-dot" />
-          </button>
+          <div className="notif-menu" ref={notifRef}>
+            <button
+              className="toggle-btn navbar-bell"
+              aria-label="Notificaciones"
+              title="Notificaciones"
+              onClick={toggleNotif}
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && <span className="navbar-bell-dot" />}
+            </button>
+            {notifOpen && (
+              <div className="notif-dropdown">
+                <div className="notif-dropdown-header">
+                  <span>Notificaciones</span>
+                  {unreadCount > 0 && (
+                    <button className="notif-mark-all" onClick={markAllRead} title="Marcar todas como leídas">
+                      <CheckCheck size={14} /> Marcar todas
+                    </button>
+                  )}
+                </div>
+                <ul className="notif-list">
+                  {loadingList && <li className="notif-empty">Cargando...</li>}
+                  {!loadingList && notifications.length === 0 && (
+                    <li className="notif-empty">No tienes notificaciones</li>
+                  )}
+                  {!loadingList && notifications.map(n => (
+                    <li key={n.id}>
+                      <button
+                        className={`notif-item ${!n.read_at ? 'notif-item-unread' : ''}`}
+                        onClick={() => handleNotifClick(n)}
+                      >
+                        <span className="notif-item-title">{n.title}</span>
+                        {n.body && <span className="notif-item-body">{n.body}</span>}
+                        <span className="notif-item-date">{new Date(n.created_at).toLocaleString()}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
           <button
             className="toggle-btn"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}

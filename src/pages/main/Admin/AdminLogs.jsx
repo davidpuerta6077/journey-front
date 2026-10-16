@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Filter, Eye } from 'lucide-react'
 import { fetchLogs } from '../../../services/admin/fetchLogs'
+import { humanize } from '../Sync/novedadNombres'
 import { menuItems } from '../../../components/sidenav/SideNavItems'
 import Paginacion from '../../../components/Paginacion'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
@@ -106,14 +107,55 @@ function fieldLabel(key) {
 // y el patrón del resto del sistema (ver ModulosUsuarios > "Ver matrículas",
 // SyncNovedades > fila expandida) es un grid de campo/valor etiquetado, no
 // un volcado crudo de "clave: valor" pegado con puntos.
+// Formatea un array {campo, anterior, actual} (mismo shape que sicau_novedades.cambios
+// y users.novedad_datos) igual que NovedadesSicau.jsx/NovedadesUsuarios.jsx, para que
+// un detalle de log con una novedad adentro (ver api/SICAU/network.js:logIngestaSicau)
+// se lea igual de legible que en Sync > Novedades, en vez de "[object Object]".
+function esListaDeCambios(v) {
+  return Array.isArray(v) && v.length > 0 && v.every(c => c && typeof c === 'object' && 'campo' in c)
+}
+function formatCambios(cambios) {
+  return cambios.map(c => `${fieldLabel(c.campo)}: ${c.anterior ?? '—'} → ${c.actual ?? '—'}`).join(' · ')
+}
+
+// Un valor del detalle puede ser un primitivo, un array de cambios, un objeto
+// tipo novedad ({tipo, motivo, cambios}) o un array de objetos genérico (ej.
+// "novedades": [{cedula, novedad}] de la ingesta por lote de SICAU). Cada caso
+// se aplana a algo legible; el array-de-objetos genérico se anida como su
+// propio sub-grid en vez de volcarse crudo.
+function renderDetailValue(v) {
+  if (esListaDeCambios(v)) {
+    return <span className="log-detail-value">{formatCambios(v)}</span>
+  }
+  if (Array.isArray(v)) {
+    if (v.every(x => x === null || typeof x !== 'object')) {
+      return <span className="log-detail-value">{v.join(', ')}</span>
+    }
+    return (
+      <div className="log-detail-sublist">
+        {v.map((obj, i) => <DetailItem key={i} item={obj} />)}
+      </div>
+    )
+  }
+  if (v && typeof v === 'object') {
+    if (Array.isArray(v.cambios)) {
+      const resumen = v.tipo ? humanize(v.tipo) : null
+      const cambios = formatCambios(v.cambios)
+      return <span className="log-detail-value">{[resumen, v.motivo, cambios].filter(Boolean).join(' · ')}</span>
+    }
+    return <DetailItem item={v} />
+  }
+  return <span className="log-detail-value">{String(v)}</span>
+}
+
 function DetailItem({ item }) {
   const entries = Object.entries(item || {}).filter(([, v]) => v !== null && v !== undefined && v !== '')
   return (
     <div className="log-detail-grid">
       {entries.map(([k, v]) => (
-        <div className="log-detail-field" key={k}>
+        <div className={`log-detail-field ${typeof v === 'object' ? 'log-detail-field-full' : ''}`} key={k}>
           <span className="log-detail-label">{fieldLabel(k)}</span>
-          <span className="log-detail-value">{String(v)}</span>
+          {renderDetailValue(v)}
         </div>
       ))}
     </div>

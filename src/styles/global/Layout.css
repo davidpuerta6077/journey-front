@@ -68,6 +68,7 @@
 }
 
 /* ─── CAMPANA ─── */
+.notif-menu { position: relative; }
 .navbar-bell {
   position: relative;
 }
@@ -81,6 +82,69 @@
   background: var(--danger);
   border: 1.5px solid var(--bg-surface);
 }
+.notif-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  background: var(--bg-surface);
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow);
+  width: 340px;
+  max-width: 90vw;
+  z-index: 200;
+}
+.notif-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+.notif-mark-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0;
+}
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+.notif-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.notif-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  padding: 10px 16px;
+}
+.notif-item:hover { background: var(--bg-surface-hover); }
+.notif-item-unread { background: var(--bg-surface-alt); }
+.notif-item-title { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+.notif-item-body { font-size: 0.8rem; color: var(--text-secondary); }
+.notif-item-date { font-size: 0.72rem; color: var(--text-muted); }
 
 /* ─── USER MENU ─── */
 .navbar-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
