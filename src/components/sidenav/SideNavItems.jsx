@@ -1,7 +1,8 @@
 import {
   RefreshCw, BookOpen, FileText,
   Activity, Upload, Shield, Globe, BarChart2, Settings,
-  Search, ClipboardList, FlaskConical, History
+  Search, ClipboardList, FlaskConical, History,
+  Users, GraduationCap, UserX, Bell, LayoutGrid, ListChecks, LayoutTemplate, Database, Server
 } from 'lucide-react'
 
 // Iconos de marca "Bravo Hub" (mockup): el sidebar tiene fondo navy fijo
@@ -34,26 +35,26 @@ export const menuItems = [
   { label: 'Home', icon: iconInicio, path: '/' },
   { label: 'Nexo', icon: iconNexo, nexoApp: true, moduleCode: 'nexo_sync', path: '/HomeNexo', children: [
       { label: 'Sincronización', icon: RefreshCw, children: [
-          { label: 'Cursos', path: '/sync/cursos', submoduleCode: 'sync_courses' },
-          { label: 'Usuarios', path: '/sync/usuarios', submoduleCode: 'sync_users' },
-          { label: 'Matrículas', path: '/sync/matriculas', submoduleCode: 'sync_enrollments' },
-          { label: 'Novedades', path: '/sync/novedades', submoduleCode: 'sync_enrollments_novedades' },
+          { label: 'Cursos', icon: BookOpen, path: '/sync/cursos', submoduleCode: 'sync_courses' },
+          { label: 'Usuarios', icon: Users, path: '/sync/usuarios', submoduleCode: 'sync_users' },
+          { label: 'Matrículas', icon: GraduationCap, path: '/sync/matriculas', submoduleCode: 'sync_enrollments' },
+          { label: 'Novedades', icon: Bell, path: '/sync/novedades', submoduleCode: 'sync_enrollments_novedades' },
       ]},
-      { label: 'Módulos', icon: BookOpen, children: [
-          { label: 'Usuarios', path: '/modulos/usuarios', submoduleCode: 'module_users' },
-          { label: 'Cursos', path: '/modulos/cursos', submoduleCode: 'module_courses' },
-          { label: 'Matrículas', path: '/modulos/matriculas', submoduleCode: 'module_enrollments' },
+      { label: 'Módulos', icon: LayoutGrid, children: [
+          { label: 'Usuarios', icon: Users, path: '/modulos/usuarios', submoduleCode: 'module_users' },
+          { label: 'Cursos', icon: BookOpen, path: '/modulos/cursos', submoduleCode: 'module_courses' },
+          { label: 'Matrículas', icon: GraduationCap, path: '/modulos/matriculas', submoduleCode: 'module_enrollments' },
       ]},
       { label: 'Carga Masiva', icon: Upload, children: [
-          { label: 'Usuarios', path: '/carga/usuarios', submoduleCode: 'bulk_upload_users' },
-          { label: 'Matrículas', path: '/carga/matriculas', submoduleCode: 'bulk_upload_enrollments' },
-          { label: 'Cancelaciones', path: '/carga/cancelaciones', submoduleCode: 'bulk_upload_unenrollments' },
+          { label: 'Usuarios', icon: Users, path: '/carga/usuarios', submoduleCode: 'bulk_upload_users' },
+          { label: 'Matrículas', icon: GraduationCap, path: '/carga/matriculas', submoduleCode: 'bulk_upload_enrollments' },
+          { label: 'Cancelaciones', icon: UserX, path: '/carga/cancelaciones', submoduleCode: 'bulk_upload_unenrollments' },
       ]},
       { label: 'Reglas', icon: Shield, children: [
-          { label: 'Reglas activas', path: '/reglas/activas', submoduleCode: 'rules_active' },
-          { label: 'Plantillas', path: '/reglas/plantillas', submoduleCode: 'rules_templates' },
+          { label: 'Reglas activas', icon: ListChecks, path: '/reglas/activas', submoduleCode: 'rules_active' },
+          { label: 'Plantillas', icon: LayoutTemplate, path: '/reglas/plantillas', submoduleCode: 'rules_templates' },
       ]},
-      { label: 'busqueda', icon: Search, path: '/busqueda', submoduleCode: 'search' },
+      { label: 'Búsqueda', icon: Search, path: '/busqueda', submoduleCode: 'search' },
   ]},
 
   { type: 'divider' },
@@ -65,11 +66,11 @@ export const menuItems = [
       { label: 'Matomo', icon: iconMatomo, comingSoon: true },
       { label: 'Zabbix', icon: iconZabbix, comingSoon: true },
       { label: 'PM2', icon: iconPm2, comingSoon: true },
-      { label: 'Bases de Datos', comingSoon: true },
+      { label: 'Bases de Datos', icon: Database, comingSoon: true },
   ]},
   { label: 'Bebras', icon: iconBebras, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
   { label: 'Rags', icon: iconRags, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
-  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, moduleCode: 'onix_reports', submoduleCode: 'access', comingSoon: true },
+  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
   { label: 'CodeX', icon: iconCodex, moduleCode: 'codex', submoduleCode: 'access', href: 'https://moodlebuilder.pascualbravovirtual.edu.co/index.html' },
   { label: 'Encuestas', icon: iconEncuestas, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
   { label: 'Laboratorios Virtuales', icon: FlaskConical, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
@@ -84,7 +85,7 @@ export const menuItems = [
       { label: 'Permisos',      icon: iconPermisos, path: '/admin/permisos',      submoduleCode: 'admin_permissions' },
       { label: 'Ver Logs',      icon: History, path: '/admin/logs',         submoduleCode: 'admin_logs' },
       { label: 'Integración',   icon: Globe, children: [
-          { label: 'Estado de APIs', path: '/admin/integracion/apis', submoduleCode: 'integration_apis' },
+          { label: 'Estado de APIs', icon: Server, path: '/admin/integracion/apis', submoduleCode: 'integration_apis' },
       ]},
       { label: 'Reportes',      icon: FileText,    path: '/admin/reportes',      submoduleCode: 'reports' },
       { label: 'Estadísticas',  icon: BarChart2,   path: '/admin/estadisticas',  submoduleCode: 'statistics' },

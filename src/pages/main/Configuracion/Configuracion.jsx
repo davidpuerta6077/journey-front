@@ -11,6 +11,10 @@ import { createMenuLink } from '../../../services/settings/createMenuLink'
 import { updateMenuLink } from '../../../services/settings/updateMenuLink'
 import { deleteMenuLink } from '../../../services/settings/deleteMenuLink'
 import { applyAppearance } from '../../../services/settings/applyAppearance'
+import { fetchIAConfig } from '../../../services/settings/fetchIAConfig'
+import { saveIAConfig } from '../../../services/settings/saveIAConfig'
+import { probarIA } from '../../../services/settings/probarIA'
+import TabGoogle from './TabGoogle'
 import { clearCache } from '../../../services/swrCache'
 import { confirmEliminar, confirmAccion, alertError, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
@@ -383,12 +387,17 @@ function TabMenu() {
 
 function TabMoodle() {
   const [form, setForm] = useState({ moodle_url: '', moodle_token: '' })
+  const [token, setToken] = useState({ configurado: false }) // la API nunca devuelve el token
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchSettings('moodle')
-      .then(settings => setForm(f => ({ ...f, ...asMap(settings) })))
+      .then(settings => {
+        setForm(f => ({ ...f, ...asMap(settings) }))
+        const t = (settings || []).find(s => s.clave === 'moodle_token')
+        if (t?.secreto) setToken(t.secreto)
+      })
       .catch(e => console.error('Error cargando moodle:', e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -401,6 +410,10 @@ function TabMoodle() {
       const entries = Object.entries(form).filter(([, v]) => v !== '')
       await Promise.all(entries.map(([clave, valor]) => saveSetting('moodle', clave, valor)))
       toastExito('Conexión a Moodle guardada')
+      if (form.moodle_token) {
+        setToken({ configurado: true, ultimos: form.moodle_token.slice(-4) })
+        setForm(f => ({ ...f, moodle_token: '' }))
+      }
     } catch (e) {
       alertError(e.message)
     }
@@ -417,11 +430,136 @@ function TabMoodle() {
       </div>
       <div className="modal-field">
         <label>Token</label>
-        <input name="moodle_token" value={form.moodle_token || ''} onChange={handleChange} placeholder="Token del webservice" />
+        <input name="moodle_token" type="password" autoComplete="off" value={form.moodle_token || ''} onChange={handleChange}
+          placeholder={token.configurado ? `Configurado (termina en ${token.ultimos}) — dejar vacío para no cambiarlo` : 'Token del webservice'} />
       </div>
       <p className="modal-hint">Si se deja vacío, se usa el valor por defecto configurado en el servidor. El cambio tarda hasta 1 minuto en aplicar (caché interna).</p>
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
         <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── INTELIGENCIA ARTIFICIAL ────────────────────────────────────────────────
+
+// Proveedores de IA: openai sirve para cualquier API compatible con OpenAI.
+const PROVEEDORES_IA = {
+  ollama: { nombre: 'Ollama (IA local de la institución)', modelo: 'qwen2.5:7b (por defecto)' },
+  claude: { nombre: 'Claude (API de Anthropic)', modelo: 'claude-opus-5-5 (por defecto)', key: 'sk-ant-...', ayuda: 'Se obtiene en console.anthropic.com.' },
+  gemini: { nombre: 'Gemini (API de Google)', modelo: 'Ej. gemini-2.5-flash', key: 'AIza...', ayuda: 'Se obtiene gratis en aistudio.google.com (Get API key).' },
+  openai: { nombre: 'OpenAI o compatible (Groq, DeepSeek, Mistral, OpenRouter...)', modelo: 'Ej. gpt-4o-mini, llama-3.3-70b-versatile', key: 'sk-...', ayuda: 'La key del servicio que pongas en la URL.' },
+}
+
+function TabIA() {
+  const [form, setForm] = useState({ proveedor: 'ollama', modelo: '', ollama_url: '', openai_url: '', api_key: '' })
+  const [keys, setKeys] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [probando, setProbando] = useState(false)
+  const [prueba, setPrueba] = useState(null) // { ok, texto }
+
+  const cargar = useCallback(async () => {
+    try {
+      const c = await fetchIAConfig()
+      setForm({ proveedor: c.proveedor, modelo: c.modelo, ollama_url: c.ollama_url, openai_url: c.openai_url, api_key: '' })
+      setKeys(c.keys || {})
+    } catch (e) {
+      alertError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { cargar() }, [cargar])
+
+  // Al cambiar de proveedor se limpian modelo y key escritos: son de otro servicio.
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value, ...(e.target.name === 'proveedor' && { modelo: '', api_key: '' }) })
+
+  const guardar = async (extra = {}) => {
+    setSaving(true)
+    setPrueba(null)
+    try {
+      await saveIAConfig({ ...form, ...extra })
+      toastExito('Configuración de IA guardada')
+      await cargar()
+    } catch (e) {
+      alertError(e.message)
+    }
+    setSaving(false)
+  }
+
+  const quitarKey = async () => {
+    const ok = await confirmAccion({ title: '¿Quitar la API key?', text: `${PROVEEDORES_IA[form.proveedor].nombre} dejará de funcionar hasta que se ingrese otra (salvo que el servidor tenga una en su .env).`, confirmButtonText: 'Sí, quitar' })
+    if (ok) guardar({ api_key: '', quitar_key: true })
+  }
+
+  const probar = async () => {
+    setProbando(true)
+    setPrueba(null)
+    try {
+      const r = await probarIA()
+      setPrueba({ ok: true, texto: `Conexión correcta con ${r.proveedor} (${r.modelo}). Respuesta: "${r.respuesta}"` })
+    } catch (e) {
+      setPrueba({ ok: false, texto: e.message })
+    }
+    setProbando(false)
+  }
+
+  if (loading) return <div className="loading-box"><span className="loader"></span>Cargando...</div>
+
+  const prov = PROVEEDORES_IA[form.proveedor] || PROVEEDORES_IA.ollama
+  const key = keys[form.proveedor] || { configurada: false }
+  const conKey = !!prov.key
+
+  return (
+    <div className="modal-form" style={{ maxWidth: 520 }}>
+      <div className="modal-field">
+        <label htmlFor="ia-proveedor">Proveedor</label>
+        <select id="ia-proveedor" name="proveedor" value={form.proveedor} onChange={handleChange}>
+          {Object.entries(PROVEEDORES_IA).map(([v, p]) => <option key={v} value={v}>{p.nombre}</option>)}
+        </select>
+      </div>
+      <div className="modal-field">
+        <label htmlFor="ia-modelo">Modelo</label>
+        <input id="ia-modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder={prov.modelo} required={['gemini', 'openai'].includes(form.proveedor)} />
+      </div>
+      {form.proveedor === 'ollama' && (
+        <div className="modal-field">
+          <label htmlFor="ia-url">URL de Ollama</label>
+          <input id="ia-url" name="ollama_url" value={form.ollama_url} onChange={handleChange} placeholder="http://10.0.17.77:11434" />
+        </div>
+      )}
+      {form.proveedor === 'openai' && (
+        <div className="modal-field">
+          <label htmlFor="ia-openai-url">URL de la API</label>
+          <input id="ia-openai-url" name="openai_url" value={form.openai_url} onChange={handleChange} placeholder="https://api.openai.com/v1" />
+          <p className="modal-hint">Ej. Groq: https://api.groq.com/openai/v1 · DeepSeek: https://api.deepseek.com/v1 · OpenRouter: https://openrouter.ai/api/v1</p>
+        </div>
+      )}
+      {conKey && (
+        <div className="modal-field">
+          <label htmlFor="ia-key">API key</label>
+          <input id="ia-key" name="api_key" type="password" autoComplete="off" value={form.api_key} onChange={handleChange}
+            placeholder={key.configurada ? 'Dejar vacío para no cambiarla' : prov.key} />
+          <p className="modal-hint">
+            {prov.ayuda}{' '}
+            {key.configurada
+              ? `Configurada (termina en ${key.ultimos})${key.origen === 'servidor' ? ' — tomada del .env del servidor' : ''}. Se guarda cifrada y nunca se vuelve a mostrar.`
+              : 'Sin API key. Se guarda cifrada y nunca se vuelve a mostrar.'}
+          </p>
+        </div>
+      )}
+      <p className="modal-hint">Los cambios aplican de inmediato en la siguiente generación (no hace falta reiniciar).</p>
+      {prueba && (
+        <p className="modal-hint" role="status" style={{ color: prueba.ok ? 'var(--success)' : 'var(--danger)' }}>{prueba.texto}</p>
+      )}
+      <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0, flexWrap: 'wrap' }}>
+        <button className="btn-primary" onClick={() => guardar()} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+        <button className="btn-secondary" onClick={probar} disabled={probando || saving}>{probando ? 'Probando...' : 'Probar conexión'}</button>
+        {conKey && key.configurada && key.origen === 'hub' && (
+          <button className="btn-secondary" onClick={quitarKey} disabled={saving}>Quitar API key</button>
+        )}
       </div>
     </div>
   )
@@ -527,6 +665,8 @@ const TABS = [
   { key: 'home',       label: 'Home' },
   { key: 'menu',        label: 'Menú' },
   { key: 'moodle',      label: 'Moodle' },
+  { key: 'ia',          label: 'Inteligencia artificial' },
+  { key: 'google',      label: 'Google' },
   { key: 'sistema',     label: 'Sistema' },
 ]
 
@@ -552,6 +692,8 @@ export default function Configuracion() {
       {tab === 'home' && <TabHome />}
       {tab === 'menu' && <TabMenu />}
       {tab === 'moodle' && <TabMoodle />}
+      {tab === 'ia' && <TabIA />}
+      {tab === 'google' && <TabGoogle />}
       {tab === 'sistema' && <TabSistema />}
     </div>
   )
