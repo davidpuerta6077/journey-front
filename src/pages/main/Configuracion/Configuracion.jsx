@@ -14,6 +14,7 @@ import { applyAppearance } from '../../../services/settings/applyAppearance'
 import { fetchIAConfig } from '../../../services/settings/fetchIAConfig'
 import { saveIAConfig } from '../../../services/settings/saveIAConfig'
 import { probarIA } from '../../../services/settings/probarIA'
+import TabGoogle from './TabGoogle'
 import { clearCache } from '../../../services/swrCache'
 import { confirmEliminar, confirmAccion, alertError, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
@@ -442,9 +443,17 @@ function TabMoodle() {
 
 // ─── INTELIGENCIA ARTIFICIAL ────────────────────────────────────────────────
 
+// Proveedores de IA: openai sirve para cualquier API compatible con OpenAI.
+const PROVEEDORES_IA = {
+  ollama: { nombre: 'Ollama (IA local de la institución)', modelo: 'qwen2.5:7b (por defecto)' },
+  claude: { nombre: 'Claude (API de Anthropic)', modelo: 'claude-opus-5-5 (por defecto)', key: 'sk-ant-...', ayuda: 'Se obtiene en console.anthropic.com.' },
+  gemini: { nombre: 'Gemini (API de Google)', modelo: 'Ej. gemini-2.5-flash', key: 'AIza...', ayuda: 'Se obtiene gratis en aistudio.google.com (Get API key).' },
+  openai: { nombre: 'OpenAI o compatible (Groq, DeepSeek, Mistral, OpenRouter...)', modelo: 'Ej. gpt-4o-mini, llama-3.3-70b-versatile', key: 'sk-...', ayuda: 'La key del servicio que pongas en la URL.' },
+}
+
 function TabIA() {
-  const [form, setForm] = useState({ proveedor: 'ollama', modelo: '', ollama_url: '', anthropic_key: '' })
-  const [key, setKey] = useState({ configurada: false })
+  const [form, setForm] = useState({ proveedor: 'ollama', modelo: '', ollama_url: '', openai_url: '', api_key: '' })
+  const [keys, setKeys] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [probando, setProbando] = useState(false)
@@ -453,8 +462,8 @@ function TabIA() {
   const cargar = useCallback(async () => {
     try {
       const c = await fetchIAConfig()
-      setForm({ proveedor: c.proveedor, modelo: c.modelo, ollama_url: c.ollama_url, anthropic_key: '' })
-      setKey(c.key)
+      setForm({ proveedor: c.proveedor, modelo: c.modelo, ollama_url: c.ollama_url, openai_url: c.openai_url, api_key: '' })
+      setKeys(c.keys || {})
     } catch (e) {
       alertError(e.message)
     } finally {
@@ -464,7 +473,8 @@ function TabIA() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  // Al cambiar de proveedor se limpian modelo y key escritos: son de otro servicio.
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value, ...(e.target.name === 'proveedor' && { modelo: '', api_key: '' }) })
 
   const guardar = async (extra = {}) => {
     setSaving(true)
@@ -480,8 +490,8 @@ function TabIA() {
   }
 
   const quitarKey = async () => {
-    const ok = await confirmAccion({ title: '¿Quitar la API key?', text: 'Claude dejará de funcionar hasta que se ingrese otra (salvo que el servidor tenga una en su .env).', confirmButtonText: 'Sí, quitar' })
-    if (ok) guardar({ anthropic_key: '', quitar_key: true })
+    const ok = await confirmAccion({ title: '¿Quitar la API key?', text: `${PROVEEDORES_IA[form.proveedor].nombre} dejará de funcionar hasta que se ingrese otra (salvo que el servidor tenga una en su .env).`, confirmButtonText: 'Sí, quitar' })
+    if (ok) guardar({ api_key: '', quitar_key: true })
   }
 
   const probar = async () => {
@@ -498,33 +508,42 @@ function TabIA() {
 
   if (loading) return <div className="loading-box"><span className="loader"></span>Cargando...</div>
 
-  const esClaude = form.proveedor === 'claude'
+  const prov = PROVEEDORES_IA[form.proveedor] || PROVEEDORES_IA.ollama
+  const key = keys[form.proveedor] || { configurada: false }
+  const conKey = !!prov.key
 
   return (
     <div className="modal-form" style={{ maxWidth: 520 }}>
       <div className="modal-field">
         <label htmlFor="ia-proveedor">Proveedor</label>
         <select id="ia-proveedor" name="proveedor" value={form.proveedor} onChange={handleChange}>
-          <option value="ollama">Ollama (IA local de la institución)</option>
-          <option value="claude">Claude (API de Anthropic)</option>
+          {Object.entries(PROVEEDORES_IA).map(([v, p]) => <option key={v} value={v}>{p.nombre}</option>)}
         </select>
       </div>
       <div className="modal-field">
         <label htmlFor="ia-modelo">Modelo</label>
-        <input id="ia-modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder={esClaude ? 'claude-opus-5-5 (por defecto)' : 'qwen2.5:7b (por defecto)'} />
+        <input id="ia-modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder={prov.modelo} required={['gemini', 'openai'].includes(form.proveedor)} />
       </div>
-      {!esClaude && (
+      {form.proveedor === 'ollama' && (
         <div className="modal-field">
           <label htmlFor="ia-url">URL de Ollama</label>
           <input id="ia-url" name="ollama_url" value={form.ollama_url} onChange={handleChange} placeholder="http://10.0.17.77:11434" />
         </div>
       )}
-      {esClaude && (
+      {form.proveedor === 'openai' && (
         <div className="modal-field">
-          <label htmlFor="ia-key">API key de Claude</label>
-          <input id="ia-key" name="anthropic_key" type="password" autoComplete="off" value={form.anthropic_key} onChange={handleChange}
-            placeholder={key.configurada ? 'Dejar vacío para no cambiarla' : 'sk-ant-...'} />
+          <label htmlFor="ia-openai-url">URL de la API</label>
+          <input id="ia-openai-url" name="openai_url" value={form.openai_url} onChange={handleChange} placeholder="https://api.openai.com/v1" />
+          <p className="modal-hint">Ej. Groq: https://api.groq.com/openai/v1 · DeepSeek: https://api.deepseek.com/v1 · OpenRouter: https://openrouter.ai/api/v1</p>
+        </div>
+      )}
+      {conKey && (
+        <div className="modal-field">
+          <label htmlFor="ia-key">API key</label>
+          <input id="ia-key" name="api_key" type="password" autoComplete="off" value={form.api_key} onChange={handleChange}
+            placeholder={key.configurada ? 'Dejar vacío para no cambiarla' : prov.key} />
           <p className="modal-hint">
+            {prov.ayuda}{' '}
             {key.configurada
               ? `Configurada (termina en ${key.ultimos})${key.origen === 'servidor' ? ' — tomada del .env del servidor' : ''}. Se guarda cifrada y nunca se vuelve a mostrar.`
               : 'Sin API key. Se guarda cifrada y nunca se vuelve a mostrar.'}
@@ -538,7 +557,7 @@ function TabIA() {
       <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0, flexWrap: 'wrap' }}>
         <button className="btn-primary" onClick={() => guardar()} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
         <button className="btn-secondary" onClick={probar} disabled={probando || saving}>{probando ? 'Probando...' : 'Probar conexión'}</button>
-        {esClaude && key.configurada && key.origen === 'hub' && (
+        {conKey && key.configurada && key.origen === 'hub' && (
           <button className="btn-secondary" onClick={quitarKey} disabled={saving}>Quitar API key</button>
         )}
       </div>
@@ -556,18 +575,12 @@ const ZONAS_HORARIAS = [
 
 function TabSistema() {
   const [zonaHoraria, setZonaHoraria] = useState('')
-  const [dominioCorreo, setDominioCorreo] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [savingDominio, setSavingDominio] = useState(false)
 
   useEffect(() => {
     fetchSettings('sistema')
-      .then(settings => {
-        const porClave = asMap(settings)
-        setZonaHoraria(porClave.zona_horaria || 'America/Bogota')
-        setDominioCorreo(porClave.dominio_correo || '')
-      })
+      .then(settings => setZonaHoraria(asMap(settings).zona_horaria || 'America/Bogota'))
       .catch(e => console.error('Error cargando sistema:', e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -581,19 +594,6 @@ function TabSistema() {
       alertError(e.message)
     }
     setSaving(false)
-  }
-
-  const handleSaveDominio = async () => {
-    setSavingDominio(true)
-    try {
-      const limpio = dominioCorreo.trim().toLowerCase().replace(/^@/, '')
-      await saveSetting('sistema', 'dominio_correo', limpio)
-      setDominioCorreo(limpio)
-      toastExito('Dominio de correo guardado')
-    } catch (e) {
-      alertError(e.message)
-    }
-    setSavingDominio(false)
   }
 
   const handlePurgar = () => {
@@ -614,17 +614,6 @@ function TabSistema() {
           <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
             <button className="btn-primary" onClick={handleSaveZona} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
           </div>
-          <div className="modal-field" style={{ marginTop: 16 }}>
-            <label>Dominio de correo institucional</label>
-            <input value={dominioCorreo} onChange={e => setDominioCorreo(e.target.value)} placeholder="pascualbravovirtual.edu.co" />
-            <p className="modal-hint" style={{ marginTop: 4 }}>
-              Si se llena, al crear usuarios a mano, por Carga Masiva o desde SICAU se exige que el correo termine en "@{dominioCorreo || 'dominio.edu.co'}" —
-              si no coincide, no se crea el usuario (en SICAU queda como error en Sync &gt; Novedades). Vacío = sin validar.
-            </p>
-          </div>
-          <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
-            <button className="btn-primary" onClick={handleSaveDominio} disabled={savingDominio}>{savingDominio ? 'Guardando...' : 'Guardar cambios'}</button>
-          </div>
         </>
       )}
       <div className="modal-field">
@@ -638,20 +627,87 @@ function TabSistema() {
   )
 }
 
-// ─── PÁGINA ─────────────────────────────────────────────────────────────────
+// ─── NEXO: DOMINIO DE CORREO INSTITUCIONAL ─────────────────────────────────
+// Sigue viviendo en settings.sistema/dominio_correo (no se migra la fila en BD,
+// solo se reubica en la UI): es Nexo quien la usa (valida el correo de
+// usuarios creados a mano, por Carga Masiva o desde SICAU), no es transversal
+// al resto del Hub.
+function TabDominioCorreo() {
+  const [dominioCorreo, setDominioCorreo] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
-const TABS = [
-  { key: 'apariencia', label: 'Apariencia' },
-  { key: 'academico',  label: 'Académico' },
-  { key: 'home',       label: 'Home' },
-  { key: 'menu',        label: 'Menú' },
-  { key: 'moodle',      label: 'Moodle' },
-  { key: 'ia',          label: 'Inteligencia artificial' },
-  { key: 'sistema',     label: 'Sistema' },
+  useEffect(() => {
+    fetchSettings('sistema')
+      .then(settings => setDominioCorreo(asMap(settings).dominio_correo || ''))
+      .catch(e => console.error('Error cargando dominio de correo:', e.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const limpio = dominioCorreo.trim().toLowerCase().replace(/^@/, '')
+      await saveSetting('sistema', 'dominio_correo', limpio)
+      setDominioCorreo(limpio)
+      toastExito('Dominio de correo guardado')
+    } catch (e) {
+      alertError(e.message)
+    }
+    setSaving(false)
+  }
+
+  if (loading) return <div className="loading-box"><span className="loader"></span>Cargando...</div>
+
+  return (
+    <div className="modal-form" style={{ maxWidth: 480 }}>
+      <div className="modal-field">
+        <label>Dominio de correo institucional</label>
+        <input value={dominioCorreo} onChange={e => setDominioCorreo(e.target.value)} placeholder="pascualbravovirtual.edu.co" />
+        <p className="modal-hint" style={{ marginTop: 4 }}>
+          Si se llena, al crear usuarios a mano, por Carga Masiva o desde SICAU se exige que el correo termine en "@{dominioCorreo || 'dominio.edu.co'}" —
+          si no coincide, no se crea el usuario (en SICAU queda como error en Sync &gt; Novedades). Vacío = sin validar.
+        </p>
+      </div>
+      <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
+        <button className="btn-primary" onClick={handleSave} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>
+      </div>
+    </div>
+  )
+}
+
+// ─── PÁGINA ─────────────────────────────────────────────────────────────────
+// Dos niveles: primero la herramienta (General / Nexo / Informes Onix-IA...),
+// luego sus propias categorías. General es lo transversal a todo el Hub; cada
+// herramienta nueva (Formularios de Asistencia pendiente) trae su propio grupo
+// en vez de sumarse a una lista plana de tabs sin relación entre sí.
+const GRUPOS = [
+  { key: 'general', label: 'General', tabs: [
+      { key: 'apariencia', label: 'Apariencia' },
+      { key: 'home',       label: 'Home' },
+      { key: 'menu',        label: 'Menú' },
+      { key: 'sistema',     label: 'Sistema' },
+  ]},
+  { key: 'nexo', label: 'Nexo', tabs: [
+      { key: 'academico',      label: 'Académico' },
+      { key: 'moodle',         label: 'Moodle' },
+      { key: 'dominio_correo', label: 'Dominio de correo' },
+  ]},
+  { key: 'onix', label: 'Informes (Onix-IA)', tabs: [
+      { key: 'ia',     label: 'Inteligencia artificial' },
+      { key: 'google', label: 'Google' },
+  ]},
 ]
 
 export default function Configuracion() {
-  const [tab, setTab] = useState('apariencia')
+  const [grupo, setGrupo] = useState(GRUPOS[0].key)
+  const [tab, setTab] = useState(GRUPOS[0].tabs[0].key)
+  const grupoActivo = GRUPOS.find(g => g.key === grupo) || GRUPOS[0]
+
+  const handleGrupoChange = (g) => {
+    setGrupo(g.key)
+    setTab(g.tabs[0].key)
+  }
 
   return (
     <div className="sync-page">
@@ -659,8 +715,16 @@ export default function Configuracion() {
         <h2>Configuración</h2>
       </div>
 
+      <div className="novedades-tabs config-grupo-tabs" role="tablist" aria-label="Herramienta">
+        {GRUPOS.map(g => (
+          <button key={g.key} type="button" role="tab" aria-selected={grupo === g.key} className={grupo === g.key ? 'active' : ''} onClick={() => handleGrupoChange(g)}>
+            {g.label}
+          </button>
+        ))}
+      </div>
+
       <div className="novedades-tabs" role="tablist" aria-label="Categoría de configuración">
-        {TABS.map(t => (
+        {grupoActivo.tabs.map(t => (
           <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
             {t.label}
           </button>
@@ -668,12 +732,14 @@ export default function Configuracion() {
       </div>
 
       {tab === 'apariencia' && <TabApariencia />}
-      {tab === 'academico' && <TabAcademico />}
       {tab === 'home' && <TabHome />}
       {tab === 'menu' && <TabMenu />}
-      {tab === 'moodle' && <TabMoodle />}
-      {tab === 'ia' && <TabIA />}
       {tab === 'sistema' && <TabSistema />}
+      {tab === 'academico' && <TabAcademico />}
+      {tab === 'moodle' && <TabMoodle />}
+      {tab === 'dominio_correo' && <TabDominioCorreo />}
+      {tab === 'ia' && <TabIA />}
+      {tab === 'google' && <TabGoogle />}
     </div>
   )
 }

@@ -53,7 +53,7 @@ export default function PerfilTab({ perfil, onSaved }) {
         <div className="modal-field">
           <label htmlFor="perfil-3">Área</label>
           <select id="perfil-3" value={form.area_id} onChange={set('area_id')}>
-            <option value="">Sin área</option>
+            <option value="">Selecciona tu área</option>
             {areas.map((a) => <option key={a.id} value={a.id}>{a.nombre}</option>)}
           </select>
         </div>

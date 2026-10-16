@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell } from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import { fetchSettings } from '../../services/settings/fetchSettings'
 import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
+import { useNotificationsPolling } from '../../services/notifications/useNotificationsPolling'
+import { buildNavSearchIndex, searchNavIndex } from './navSearchIndex'
 import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
 import logoPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/bravo_hub_positivo.svg'
@@ -99,17 +101,65 @@ const Layout = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [userMenuOpen])
+
+  // Campanita de notificaciones (ver services/notifications)
+  const { unreadCount, notifications, loadingList, refreshList, markRead, markAllRead } = useNotificationsPolling()
+  const [notifOpen, setNotifOpen] = useState(false)
+  useEffect(() => {
+    setNotifOpen(false)
+  }, [location.pathname])
+  const notifRef = useRef(null)
+  useEffect(() => {
+    if (!notifOpen) return
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [notifOpen])
+  const toggleNotif = () => {
+    const next = !notifOpen
+    setNotifOpen(next)
+    if (next) refreshList()
+  }
+  const handleNotifClick = (n) => {
+    if (!n.read_at) markRead(n.id)
+    setNotifOpen(false)
+    if (n.link) navigate(n.link)
+  }
   const userName = profile?.username || auth.user?.profile?.email || 'Usuario'
   const userPhoto = profile?.photo_url
   // Guarda la URL que falló (no un booleano) para que una foto nueva se vuelva a intentar
   const [failedPhoto, setFailedPhoto] = useState(null)
   const userRole = permissions?.role
 
+  // Búsqueda del navbar: de navegación (páginas/módulos), no de datos -- "Buscar
+  // en Nexo..." (HomeNexo) sigue siendo la de usuarios/cursos/matrículas. Indexa
+  // el mismo árbol ya filtrado por permisos que arma el sidebar (sidebarMenu),
+  // así nunca sugiere una página a la que el usuario no tiene acceso.
   const [searchQ, setSearchQ] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef(null)
+  const navIndex = useMemo(() => buildNavSearchIndex(sidebarMenu), [sidebarMenu])
+  const searchResults = useMemo(() => searchNavIndex(navIndex, searchQ), [navIndex, searchQ])
+  useEffect(() => { setSearchOpen(false) }, [location.pathname])
+  useEffect(() => {
+    if (!searchOpen) return
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [searchOpen])
+  const goToSearchResult = (r) => {
+    setSearchQ('')
+    setSearchOpen(false)
+    if (r.external) window.open(r.href, '_blank', 'noopener,noreferrer')
+    else navigate(r.path)
+  }
   const handleSearchSubmit = (e) => {
     e.preventDefault()
-    if (!searchQ.trim()) return
-    navigate('/busqueda', { state: { q: searchQ.trim() } })
+    if (searchResults.length > 0) goToSearchResult(searchResults[0])
   }
 
   return (
@@ -139,24 +189,72 @@ const Layout = () => {
             />
           </span>
         </div>
-        <form className="navbar-search" onSubmit={handleSearchSubmit}>
-          <Search size={16} className="navbar-search-icon" />
-          <input
-            className="navbar-search-input"
-            placeholder="Buscar"
-            value={searchQ}
-            onChange={e => setSearchQ(e.target.value)}
-          />
-        </form>
+        <div className="navbar-search" ref={searchRef}>
+          <form className="navbar-search-form" onSubmit={handleSearchSubmit}>
+            <Search size={16} className="navbar-search-icon" />
+            <input
+              className="navbar-search-input"
+              placeholder="Buscar páginas, módulos..."
+              value={searchQ}
+              onChange={e => { setSearchQ(e.target.value); setSearchOpen(true) }}
+              onFocus={() => searchQ && setSearchOpen(true)}
+            />
+          </form>
+          {searchOpen && searchQ.trim() && (
+            <div className="nav-search-dropdown">
+              {searchResults.length === 0 && <p className="nav-search-empty">Sin resultados</p>}
+              {searchResults.map((r, i) => (
+                <button key={i} type="button" className="nav-search-item" onClick={() => goToSearchResult(r)}>
+                  <span className="nav-search-item-label">{r.label}</span>
+                  {r.breadcrumb && <span className="nav-search-item-breadcrumb">{r.breadcrumb}</span>}
+                  {r.external && <ExternalLink size={11} className="nav-search-item-ext" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="navbar-right">
-          <button
-            className="toggle-btn navbar-bell"
-            aria-label="Notificaciones"
-            title="Notificaciones (próximamente)"
-          >
-            <Bell size={18} />
-            <span className="navbar-bell-dot" />
-          </button>
+          <div className="notif-menu" ref={notifRef}>
+            <button
+              className="toggle-btn navbar-bell"
+              aria-label="Notificaciones"
+              title="Notificaciones"
+              onClick={toggleNotif}
+            >
+              <Bell size={18} />
+              {unreadCount > 0 && <span className="navbar-bell-dot" />}
+            </button>
+            {notifOpen && (
+              <div className="notif-dropdown">
+                <div className="notif-dropdown-header">
+                  <span>Notificaciones</span>
+                  {unreadCount > 0 && (
+                    <button className="notif-mark-all" onClick={markAllRead} title="Marcar todas como leídas">
+                      <CheckCheck size={14} /> Marcar todas
+                    </button>
+                  )}
+                </div>
+                <ul className="notif-list">
+                  {loadingList && <li className="notif-empty">Cargando...</li>}
+                  {!loadingList && notifications.length === 0 && (
+                    <li className="notif-empty">No tienes notificaciones</li>
+                  )}
+                  {!loadingList && notifications.map(n => (
+                    <li key={n.id}>
+                      <button
+                        className={`notif-item ${!n.read_at ? 'notif-item-unread' : ''}`}
+                        onClick={() => handleNotifClick(n)}
+                      >
+                        <span className="notif-item-title">{n.title}</span>
+                        {n.body && <span className="notif-item-body">{n.body}</span>}
+                        <span className="notif-item-date">{new Date(n.created_at).toLocaleString()}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
           <button
             className="toggle-btn"
             onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
