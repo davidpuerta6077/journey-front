@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
@@ -9,6 +9,7 @@ import { fetchSettings } from '../../services/settings/fetchSettings'
 import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
 import { useNotificationsPolling } from '../../services/notifications/useNotificationsPolling'
+import { buildNavSearchIndex, searchNavIndex } from './navSearchIndex'
 import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
 import logoPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/bravo_hub_positivo.svg'
@@ -132,11 +133,33 @@ const Layout = () => {
   const [failedPhoto, setFailedPhoto] = useState(null)
   const userRole = permissions?.role
 
+  // Búsqueda del navbar: de navegación (páginas/módulos), no de datos -- "Buscar
+  // en Nexo..." (HomeNexo) sigue siendo la de usuarios/cursos/matrículas. Indexa
+  // el mismo árbol ya filtrado por permisos que arma el sidebar (sidebarMenu),
+  // así nunca sugiere una página a la que el usuario no tiene acceso.
   const [searchQ, setSearchQ] = useState('')
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef(null)
+  const navIndex = useMemo(() => buildNavSearchIndex(sidebarMenu), [sidebarMenu])
+  const searchResults = useMemo(() => searchNavIndex(navIndex, searchQ), [navIndex, searchQ])
+  useEffect(() => { setSearchOpen(false) }, [location.pathname])
+  useEffect(() => {
+    if (!searchOpen) return
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setSearchOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [searchOpen])
+  const goToSearchResult = (r) => {
+    setSearchQ('')
+    setSearchOpen(false)
+    if (r.external) window.open(r.href, '_blank', 'noopener,noreferrer')
+    else navigate(r.path)
+  }
   const handleSearchSubmit = (e) => {
     e.preventDefault()
-    if (!searchQ.trim()) return
-    navigate('/busqueda', { state: { q: searchQ.trim() } })
+    if (searchResults.length > 0) goToSearchResult(searchResults[0])
   }
 
   return (
@@ -166,15 +189,30 @@ const Layout = () => {
             />
           </span>
         </div>
-        <form className="navbar-search" onSubmit={handleSearchSubmit}>
-          <Search size={16} className="navbar-search-icon" />
-          <input
-            className="navbar-search-input"
-            placeholder="Buscar"
-            value={searchQ}
-            onChange={e => setSearchQ(e.target.value)}
-          />
-        </form>
+        <div className="navbar-search" ref={searchRef}>
+          <form className="navbar-search-form" onSubmit={handleSearchSubmit}>
+            <Search size={16} className="navbar-search-icon" />
+            <input
+              className="navbar-search-input"
+              placeholder="Buscar páginas, módulos..."
+              value={searchQ}
+              onChange={e => { setSearchQ(e.target.value); setSearchOpen(true) }}
+              onFocus={() => searchQ && setSearchOpen(true)}
+            />
+          </form>
+          {searchOpen && searchQ.trim() && (
+            <div className="nav-search-dropdown">
+              {searchResults.length === 0 && <p className="nav-search-empty">Sin resultados</p>}
+              {searchResults.map((r, i) => (
+                <button key={i} type="button" className="nav-search-item" onClick={() => goToSearchResult(r)}>
+                  <span className="nav-search-item-label">{r.label}</span>
+                  {r.breadcrumb && <span className="nav-search-item-breadcrumb">{r.breadcrumb}</span>}
+                  {r.external && <ExternalLink size={11} className="nav-search-item-ext" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="navbar-right">
           <div className="notif-menu" ref={notifRef}>
             <button
