@@ -651,7 +651,7 @@ const App: React.FC<{ initialBlocks: BlockData[]; initialDark: boolean }> = ({ i
           </div>
           <div>
             <div className="font-black text-[12px] leading-none" style={{ color: '#ffffff', letterSpacing: '-0.3px' }}>C0deX</div>
-            <div className="font-semibold text-[9px] uppercase tracking-widest leading-none mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Editor de páginas</div>
+            <div className="font-semibold text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Constructor de experiencias virtuales</div>
           </div>
         </div>
 
