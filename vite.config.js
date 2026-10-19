@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      // codex.html = editor CodeX, que corre en un iframe dentro de /codex/:id.
+      // codex-editor.html = editor CodeX, que corre en un iframe dentro de /codex/:id.
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
-        codex: resolve(import.meta.dirname, 'codex.html'),
+        codex: resolve(import.meta.dirname, 'codex-editor.html'),
       },
     },
   },

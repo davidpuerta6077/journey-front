@@ -9,9 +9,9 @@ import { crearGuardador } from './guardador'
 import '../../../styles/main/Codex/Codex.css'
 
 const hora = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-const EDITOR_URL = `${import.meta.env.BASE_URL}codex.html`
+const EDITOR_URL = `${import.meta.env.BASE_URL}codex-editor.html`
 
-// El editor (codex.html) corre en un iframe del mismo origen: sus estilos no
+// El editor (codex-editor.html) corre en un iframe del mismo origen: sus estilos no
 // se mezclan con los del hub. Este componente le pasa la página y guarda en la
 // API lo que el editor le avisa (ver src/codex/bridge.ts).
 export default function CodexEditor() {
