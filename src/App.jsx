@@ -39,6 +39,8 @@ import FormulariosList from './pages/main/Formularios/FormulariosList'
 import FormularioEditor from './pages/main/Formularios/FormularioEditor'
 import FormularioInscritos from './pages/main/Formularios/FormularioInscritos'
 import InformesPage from './pages/main/Informes/InformesPage'
+import CodexPaginas from './pages/main/Codex/CodexPaginas'
+import CodexEditor from './pages/main/Codex/CodexEditor'
 import ReporteDetalle from './pages/main/Reportes/ReporteDetalle'
 import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Configuracion from './pages/main/Configuracion/Configuracion'
@@ -163,6 +165,18 @@ function App() {
           <Route path="informes" element={
             <PrivateRoute submoduleCode="onix_reports_use">
               <InformesPage />
+            </PrivateRoute>
+          } />
+
+          {/* ─── CODEX ─── */}
+          <Route path="codex" element={
+            <PrivateRoute submoduleCode="codex_use">
+              <CodexPaginas />
+            </PrivateRoute>
+          } />
+          <Route path="codex/:id" element={
+            <PrivateRoute submoduleCode="codex_use">
+              <CodexEditor />
             </PrivateRoute>
           } />
 

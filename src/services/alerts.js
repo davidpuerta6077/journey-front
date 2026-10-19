@@ -38,6 +38,28 @@ export async function confirmAccion({
   return result.isConfirmed
 }
 
+// Pide un texto corto (ej. el nombre de una página). Devuelve el texto sin
+// espacios sobrantes, o null si se cancela.
+export async function pedirTexto({
+  title,
+  inputValue = '',
+  confirmButtonText = 'Guardar',
+  maxLength = 150,
+} = {}) {
+  const result = await conEstiloApp.fire({
+    title,
+    input: 'text',
+    inputValue,
+    inputAttributes: { maxlength: String(maxLength), 'aria-label': title },
+    showCancelButton: true,
+    confirmButtonText,
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true,
+    inputValidator: (v) => (!v || !v.trim() ? 'Escribe un nombre' : undefined),
+  })
+  return result.isConfirmed ? result.value.trim() : null
+}
+
 // Confirmación de eliminar/quitar algo: ícono de error, Cancelar en rojo y
 // la acción en verde. Devuelve true/false.
 export async function confirmEliminar({
