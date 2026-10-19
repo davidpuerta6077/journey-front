@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Pencil } from 'lucide-react'
 import { obtenerPagina } from '../../../services/codex/obtenerPagina'
@@ -6,13 +6,15 @@ import { guardarBloques } from '../../../services/codex/guardarBloques'
 import { renombrarPagina } from '../../../services/codex/renombrarPagina'
 import { alertError, pedirTexto, toastExito } from '../../../services/alerts'
 import { crearGuardador } from './guardador'
+import { crearSesion } from './sesion'
 import '../../../styles/main/Codex/Codex.css'
 
 const hora = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
 const EDITOR_URL = `${import.meta.env.BASE_URL}codex-editor.html`
 
-// El editor (codex-editor.html) corre en un iframe del mismo origen: sus estilos no
-// se mezclan con los del hub. Este componente le pasa la página y guarda en la
+// Editor a pantalla completa (fuera del layout con menú). El editor
+// (codex-editor.html) corre en un iframe del mismo origen: sus estilos no se
+// mezclan con los del hub. Este componente le pasa la página y guarda en la
 // API lo que el editor le avisa (ver src/codex/bridge.ts).
 export default function CodexEditor() {
   const { id } = useParams()
@@ -20,6 +22,10 @@ export default function CodexEditor() {
   const iframeRef = useRef(null)
   const [pagina, setPagina] = useState(null)
   const [nombre, setNombre] = useState('')
+  const nombreRef = useRef('')
+  const salirRef = useRef(null)
+  const [saliendo, setSaliendo] = useState(false)
+  useEffect(() => { nombreRef.current = nombre }, [nombre])
 
   useEffect(() => {
     let vivo = true
@@ -33,9 +39,15 @@ export default function CodexEditor() {
     return () => { vivo = false }
   }, [id, navigate])
 
-  useEffect(() => {
+  // useLayoutEffect: su limpieza corre antes de quitar el iframe del DOM, así
+  // al salir todavía se puede leer el estado del editor que no alcanzó a enviar.
+  useLayoutEffect(() => {
     if (!pagina) return
-    const avisarEditor = (msg) => iframeRef.current?.contentWindow?.postMessage(msg, window.location.origin)
+    const frame = iframeRef.current
+    const avisarEditor = (msg) => frame?.contentWindow?.postMessage(msg, window.location.origin)
+    const leerActual = () => {
+      try { return frame?.contentWindow?.codexBloquesActuales?.() } catch { return undefined }
+    }
     const g = crearGuardador({
       guardar: (bloques) => guardarBloques(pagina.id, bloques),
       onGuardado: () => avisarEditor({ tipo: 'codex:saved', hora: hora() }),
@@ -45,17 +57,19 @@ export default function CodexEditor() {
       }),
     })
     g.inicial(pagina.bloques)
+    const sesion = crearSesion({ bloques: pagina.bloques, guardador: g })
+    salirRef.current = () => sesion.salir(leerActual)
 
     const onMessage = (e) => {
-      if (e.origin !== window.location.origin || e.source !== iframeRef.current?.contentWindow) return
-      if (e.data?.tipo === 'codex:ready') avisarEditor({ tipo: 'codex:load', bloques: pagina.bloques })
-      else if (e.data?.tipo === 'codex:change' && Array.isArray(e.data.bloques)) g.cambio(e.data.bloques)
+      if (e.origin !== window.location.origin || e.source !== frame?.contentWindow) return
+      const respuesta = sesion.mensaje(e.data)
+      if (respuesta) avisarEditor(respuesta)
     }
     // Cerrar la pestaña con cambios sin guardar: se intenta guardar y el
     // navegador pregunta antes de salir.
     const onBeforeUnload = (e) => {
+      sesion.salir(leerActual)
       if (!g.hayPendiente()) return
-      g.vaciar()
       e.preventDefault()
       e.returnValue = ''
     }
@@ -64,9 +78,24 @@ export default function CodexEditor() {
     return () => {
       window.removeEventListener('message', onMessage)
       window.removeEventListener('beforeunload', onBeforeUnload)
-      g.vaciar() // salir de la ruta (ej. "Mis páginas") guarda lo pendiente
+      // Salir de la ruta (ej. "Mis páginas") guarda lo pendiente; si falla, se avisa.
+      sesion.salir(leerActual).then((ok) => {
+        if (!ok) alertError(`No se pudieron guardar los últimos cambios de "${nombreRef.current}". Ábrela de nuevo para revisarla.`)
+      })
     }
   }, [pagina])
+
+  // "Mis páginas" espera a que se guarde; si falla, se queda en el editor (nada se pierde).
+  const volver = async () => {
+    setSaliendo(true)
+    const ok = await salirRef.current?.()
+    setSaliendo(false)
+    if (ok === false) {
+      alertError('No se pudieron guardar los últimos cambios. Revisa tu conexión e intenta de nuevo.')
+      return
+    }
+    navigate('/codex')
+  }
 
   const renombrar = async () => {
     const nuevo = await pedirTexto({ title: 'Renombrar página', inputValue: nombre })
@@ -74,13 +103,13 @@ export default function CodexEditor() {
     try { await renombrarPagina(pagina.id, nuevo); setNombre(nuevo); toastExito('Página renombrada') } catch (e) { alertError(e.message) }
   }
 
-  if (!pagina) return <div className="loading-box"><span className="loader"></span>Cargando...</div>
+  if (!pagina) return <div className="loading-box" style={{ minHeight: '100dvh' }}><span className="loader"></span>Cargando...</div>
 
   return (
     <div className="codex-editor">
       <div className="codex-editor-barra">
-        <button className="btn-secondary" onClick={() => navigate('/codex')}><ArrowLeft size={16} /> Mis páginas</button>
-        <h2 className="codex-editor-nombre" title={nombre}>{nombre}</h2>
+        <button className="btn-secondary" onClick={volver} disabled={saliendo}><ArrowLeft size={16} /> {saliendo ? 'Guardando...' : 'Mis páginas'}</button>
+        <h1 className="codex-editor-nombre" title={nombre}>{nombre}</h1>
         <button className="btn-icon btn-icon-edit" title="Renombrar" aria-label="Renombrar página" onClick={renombrar}><Pencil size={15} /></button>
       </div>
       <iframe

@@ -161,6 +161,9 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
+  // Lectura síncrona para Bravo Hub (mismo origen) al salir: cubre los cambios
+  // de los últimos 500 ms que el debounce aún no envió.
+  (window as any).codexBloquesActuales = () => blocksRef.current;
 
   // Los bloques ya no van a localStorage: se envían a Bravo Hub, que los guarda
   // en la BD y responde con codex:saved / codex:save-error.

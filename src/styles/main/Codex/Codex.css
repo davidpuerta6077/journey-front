@@ -1,9 +1,12 @@
-/* Editor: ocupa el alto visible del área de trabajo (navbar 64px + padding 28px arriba y abajo). */
-.codex-editor { display: flex; flex-direction: column; gap: 12px; height: calc(100dvh - 64px - 56px); min-height: 480px; }
-.codex-editor-barra { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.codex-editor-barra .btn-secondary { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.codex-editor-nombre { font-size: 1.25rem; color: var(--text-primary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.codex-editor-frame { flex: 1; width: 100%; border: 1px solid var(--border-soft); border-radius: 12px; background: #fff; }
+/* Editor a pantalla completa: barra fina arriba y el editor ocupa el resto de la ventana. */
+.codex-editor { display: flex; flex-direction: column; height: 100dvh; background: var(--bg-page); }
+.codex-editor-barra {
+  display: flex; align-items: center; gap: 12px; min-width: 0; flex-shrink: 0;
+  height: 48px; padding: 0 12px; background: var(--bg-surface); border-bottom: 1px solid var(--border-soft);
+}
+.codex-editor-barra .btn-secondary { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 6px 12px; }
+.codex-editor-nombre { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.codex-editor-frame { flex: 1; width: 100%; border: 0; display: block; }
 
 .codex-nombre-link { background: none; border: none; padding: 0; color: var(--primary, #5b84ff); font: inherit; font-weight: 600; cursor: pointer; text-align: left; }
 .codex-nombre-link:hover { text-decoration: underline; }

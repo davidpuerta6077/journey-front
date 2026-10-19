@@ -58,6 +58,13 @@ function App() {
         <Route path="/no-autorizado" element={<NoAutorizado />} />
         <Route path="/f/:publicToken" element={<FormularioPublico />} />
 
+        {/* Editor CodeX a pantalla completa (fuera del layout con menú) */}
+        <Route path="/codex/:id" element={
+          <PrivateRoute submoduleCode="codex_use">
+            <CodexEditor />
+          </PrivateRoute>
+        } />
+
         <Route path="/" element={
           <PrivateRoute>
             <SideNavMain />
@@ -172,11 +179,6 @@ function App() {
           <Route path="codex" element={
             <PrivateRoute submoduleCode="codex_use">
               <CodexPaginas />
-            </PrivateRoute>
-          } />
-          <Route path="codex/:id" element={
-            <PrivateRoute submoduleCode="codex_use">
-              <CodexEditor />
             </PrivateRoute>
           } />
 
