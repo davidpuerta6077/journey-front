@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-codex';
 import { v4 as uuidv4 } from 'uuid';
 import { ClipboardProvider, useClipboard, cloneFromClipboard } from './components/ClipboardContext';
+import { enviarAlHub, escucharHub } from './bridge';
 
 const KeyboardShortcutsHandler: React.FC<{ onPaste: (block: BlockData) => void }> = ({ onPaste }) => {
   const { clipboard } = useClipboard();
@@ -134,17 +135,8 @@ const cloneBlockDeep = (b: BlockData): BlockData => {
   return cloned;
 };
 
-const App: React.FC = () => {
-  const [blocks, setBlocks, undo, redo, canUndo, canRedo] = useHistory<BlockData[]>(() => {
-    try {
-      const s = localStorage.getItem('afrodita_v5_canvas');
-      if (!s) return [];
-      const parsed = JSON.parse(s);
-      // Un afrodita_canvas corrupto (ej. JSON válido pero no-array, de una versión vieja
-      // o edición manual) rompería blocks.map en todo el render si se acepta tal cual.
-      return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
-  });
+const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
+  const [blocks, setBlocks, undo, redo, canUndo, canRedo] = useHistory<BlockData[]>(() => initialBlocks);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
   const [darkMode, setDarkMode] = useState<boolean>(() => { try { return localStorage.getItem('afrodita_v5_dark') === 'true'; } catch { return false; } });
@@ -170,24 +162,22 @@ const App: React.FC = () => {
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
 
+  // Los bloques ya no van a localStorage: se envían a Bravo Hub, que los guarda
+  // en la BD y responde con codex:saved / codex:save-error.
   const persistCanvas = useCallback(() => {
-    try {
-      const data = JSON.stringify(blocksRef.current);
-      if (data.length > 4_000_000) {
-        setSaveError('');
-        setSavedAt('Canvas muy grande para guardar');
-        return;
-      }
-      localStorage.setItem('afrodita_v5_canvas', data);
+    const data = JSON.stringify(blocksRef.current);
+    if (data.length > 4_000_000) {
       setSaveError('');
-      setSavedAt(new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }));
-    } catch {
-      // Falla típica: cuota de localStorage excedida o modo privado del navegador.
-      // Antes esto quedaba en silencio y "savedAt" seguía mostrando la última hora
-      // exitosa como si todo estuviera bien, ocultando que se dejó de guardar.
-      setSaveError('No se pudo guardar (almacenamiento lleno o bloqueado)');
+      setSavedAt('Canvas muy grande para guardar');
+      return;
     }
+    enviarAlHub({ tipo: 'codex:change', bloques: blocksRef.current });
   }, []);
+
+  useEffect(() => escucharHub((msg) => {
+    if (msg.tipo === 'codex:saved') { setSaveError(''); setSavedAt(msg.hora); }
+    else if (msg.tipo === 'codex:save-error') setSaveError(msg.mensaje);
+  }), []);
 
   useEffect(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
