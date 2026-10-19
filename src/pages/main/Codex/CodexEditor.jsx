@@ -1,16 +1,31 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Pencil } from 'lucide-react'
+import { ArrowLeft, Pencil, Moon, Sun } from 'lucide-react'
 import { obtenerPagina } from '../../../services/codex/obtenerPagina'
 import { guardarBloques } from '../../../services/codex/guardarBloques'
 import { renombrarPagina } from '../../../services/codex/renombrarPagina'
 import { alertError, pedirTexto, toastExito } from '../../../services/alerts'
 import { crearGuardador } from './guardador'
 import { crearSesion } from './sesion'
+import { fetchSettings } from '../../../services/settings/fetchSettings'
+import { applyAppearance } from '../../../services/settings/applyAppearance'
 import '../../../styles/main/Codex/Codex.css'
 
 const hora = () => new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
 const EDITOR_URL = `${import.meta.env.BASE_URL}codex-editor.html`
+
+// Colores, fuente y claro/oscuro actuales del hub, para que el editor se vea igual.
+function leerTema() {
+  const css = getComputedStyle(document.documentElement)
+  const v = (n) => css.getPropertyValue(n).trim()
+  return {
+    oscuro: document.documentElement.getAttribute('data-theme') === 'dark',
+    primario: v('--primary'),
+    menu: v('--menu-bg') || '#1e3a6e',
+    fondo: v('--bg-page'),
+    fuente: v('--font-base'),
+  }
+}
 
 // Editor a pantalla completa (fuera del layout con menú). El editor
 // (codex-editor.html) corre en un iframe del mismo origen: sus estilos no se
@@ -25,6 +40,20 @@ export default function CodexEditor() {
   const nombreRef = useRef('')
   const salirRef = useRef(null)
   const [saliendo, setSaliendo] = useState(false)
+  const [tema, setTema] = useState(() => localStorage.getItem('bravohub_theme') || 'light')
+
+  const avisarTema = () => iframeRef.current?.contentWindow?.postMessage({ tipo: 'codex:tema', tema: leerTema() }, window.location.origin)
+
+  // Esta ruta va fuera del layout con menú: aplica aquí el tema y la apariencia del hub.
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', tema)
+    localStorage.setItem('bravohub_theme', tema)
+    avisarTema()
+  }, [tema])
+
+  useEffect(() => {
+    fetchSettings('apariencia').then((settings) => { applyAppearance(settings); avisarTema() }).catch(() => {})
+  }, [])
   useEffect(() => { nombreRef.current = nombre }, [nombre])
 
   useEffect(() => {
@@ -63,7 +92,7 @@ export default function CodexEditor() {
     const onMessage = (e) => {
       if (e.origin !== window.location.origin || e.source !== frame?.contentWindow) return
       const respuesta = sesion.mensaje(e.data)
-      if (respuesta) avisarEditor(respuesta)
+      if (respuesta) avisarEditor(respuesta.tipo === 'codex:load' ? { ...respuesta, tema: leerTema() } : respuesta)
     }
     // Cerrar la pestaña con cambios sin guardar: se intenta guardar y el
     // navegador pregunta antes de salir.
@@ -111,11 +140,19 @@ export default function CodexEditor() {
         <button className="btn-secondary" onClick={volver} disabled={saliendo}><ArrowLeft size={16} /> {saliendo ? 'Guardando...' : 'Mis páginas'}</button>
         <h1 className="codex-editor-nombre" title={nombre}>{nombre}</h1>
         <button className="btn-icon btn-icon-edit" title="Renombrar" aria-label="Renombrar página" onClick={renombrar}><Pencil size={15} /></button>
+        <button
+          className="btn-icon codex-editor-tema"
+          onClick={() => setTema((t) => (t === 'dark' ? 'light' : 'dark'))}
+          title={tema === 'dark' ? 'Tema claro' : 'Tema oscuro'}
+          aria-label={tema === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        >
+          {tema === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
       </div>
       <iframe
         ref={iframeRef}
         src={EDITOR_URL}
-        title={`Editor CodeX: ${nombre}`}
+        title={`Editor C0deX: ${nombre}`}
         className="codex-editor-frame"
         allow="clipboard-write"
       />

@@ -1,4 +1,7 @@
 import './index.css';
+import './hub-theme.css';
+import iconCodex from '../assets/Recursos/Iconos/Para fondo oscuros/SVG/codex.svg';
+import iconCodexClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/codex_1.svg';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BlockData, BlockType, BlockUpdate } from './types';
 import { BlockRenderer } from './components/BlockRenderer';
@@ -22,7 +25,7 @@ import {
 } from 'lucide-react-codex';
 import { v4 as uuidv4 } from 'uuid';
 import { ClipboardProvider, useClipboard, cloneFromClipboard } from './components/ClipboardContext';
-import { enviarAlHub, escucharHub } from './bridge';
+import { enviarAlHub, escucharHub, aplicarTema } from './bridge';
 
 const KeyboardShortcutsHandler: React.FC<{ onPaste: (block: BlockData) => void }> = ({ onPaste }) => {
   const { clipboard } = useClipboard();
@@ -135,11 +138,13 @@ const cloneBlockDeep = (b: BlockData): BlockData => {
   return cloned;
 };
 
-const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
+const App: React.FC<{ initialBlocks: BlockData[]; initialDark: boolean }> = ({ initialBlocks, initialDark }) => {
   const [blocks, setBlocks, undo, redo, canUndo, canRedo] = useHistory<BlockData[]>(() => initialBlocks);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [darkMode, setDarkMode] = useState<boolean>(() => { try { return localStorage.getItem('afrodita_v5_dark') === 'true'; } catch { return false; } });
+  // Claro/oscuro lo decide Bravo Hub (codex:load / codex:tema).
+  const [darkMode, setDarkMode] = useState<boolean>(initialDark);
+  useEffect(() => { document.documentElement.dataset.oscuro = String(darkMode); }, [darkMode]);
   const [leftOpen, setLeftOpen] = useState<boolean>(() => { try { return localStorage.getItem('afrodita_v5_left') !== 'false'; } catch { return true; } });
   const [rightOpen, setRightOpen] = useState<boolean>(() => { try { return localStorage.getItem('afrodita_v5_right') !== 'false'; } catch { return true; } });
   const [rightPanelWidth, setRightPanelWidth] = useState<number>(() => { try { return parseInt(localStorage.getItem('afrodita_v5_right_width') || '380', 10); } catch { return 380; } });
@@ -157,7 +162,6 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
   useEffect(() => { try { localStorage.setItem('afrodita_v5_left', String(leftOpen)); } catch {} }, [leftOpen]);
   useEffect(() => { try { localStorage.setItem('afrodita_v5_right', String(rightOpen)); } catch {} }, [rightOpen]);
   useEffect(() => { try { localStorage.setItem('afrodita_v5_right_width', String(rightPanelWidth)); } catch {} }, [rightPanelWidth]);
-  useEffect(() => { try { localStorage.setItem('afrodita_v5_dark', String(darkMode)); } catch {} }, [darkMode]);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
@@ -180,6 +184,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
   useEffect(() => escucharHub((msg) => {
     if (msg.tipo === 'codex:saved') { setSaveError(''); setSavedAt(msg.hora); }
     else if (msg.tipo === 'codex:save-error') setSaveError(msg.mensaje);
+    else if (msg.tipo === 'codex:tema') { aplicarTema(msg.tema); setDarkMode(!!msg.tema?.oscuro); }
   }), []);
 
   useEffect(() => {
@@ -642,29 +647,16 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
         {/* Dark half — aligns with sidebar */}
         <div className="flex items-center gap-2.5 px-3.5 flex-shrink-0" style={{ width: 240, background: 'var(--color-sidebar)' }}>
           <div className="flex-shrink-0">
-            <svg width="34" height="34" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="navBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#2D2A6E"/>
-                  <stop offset="100%" stopColor="#1E1B4B"/>
-                </linearGradient>
-              </defs>
-              <rect x="0" y="0" width="300" height="300" rx="68" fill="url(#navBg)"/>
-              <line x1="150" y1="52" x2="65" y2="228" stroke="white" strokeWidth="30" strokeLinecap="round"/>
-              <line x1="150" y1="52" x2="235" y2="228" stroke="white" strokeWidth="30" strokeLinecap="round"/>
-              <line x1="97" y1="168" x2="203" y2="168" stroke="#6366F1" strokeWidth="24" strokeLinecap="round"/>
-              <circle cx="150" cy="52" r="18" fill="#A5B4FC"/>
-              <rect x="190" y="196" width="50" height="34" rx="8" fill="#6366F1"/>
-            </svg>
+            <img src={iconCodex} alt="" width="34" height="34"/>
           </div>
           <div>
-            <div className="font-black text-[12px] leading-none" style={{ color: '#E0E0F8', letterSpacing: '-0.3px' }}>Moodle Builder</div>
-            <div className="font-semibold text-[9px] uppercase tracking-widest leading-none mt-0.5" style={{ color: 'rgba(165,180,252,0.85)' }}>Content Editor</div>
+            <div className="font-black text-[12px] leading-none" style={{ color: '#ffffff', letterSpacing: '-0.3px' }}>C0deX</div>
+            <div className="font-semibold text-[9px] uppercase tracking-widest leading-none mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Editor de páginas</div>
           </div>
         </div>
 
         {/* Light half — over canvas + panel */}
-        <div className="flex flex-1 items-center gap-1.5 px-3.5" style={{ background: 'var(--color-surface-light)', borderBottom: '1px solid rgba(99,102,241,0.12)' }}>
+        <div className="codex-toolbar flex flex-1 items-center gap-1.5 px-3.5" style={{ background: 'var(--color-surface-light)', borderBottom: '1px solid color-mix(in srgb, var(--color-accent) 12%, transparent)' }}>
           {/* Undo */}
           <button onClick={undo} disabled={!canUndo} title="Deshacer (Ctrl+Z)" aria-label="Deshacer"
             className={`nb-btn nb-btn-icon ${canUndo ? 'nb-btn-accent' : 'nb-btn-muted'}`}
@@ -679,7 +671,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
           </button>
 
           {/* Divider */}
-          <div className="w-px mx-1" style={{ height: 20, background: 'rgba(99,102,241,0.18)' }}/>
+          <div className="w-px mx-1" style={{ height: 20, background: 'color-mix(in srgb, var(--color-accent) 18%, transparent)' }}/>
 
           {/* Limpiar — most prominent secondary action */}
           <button onClick={handleClearCanvas} title="Limpiar canvas" aria-label="Limpiar canvas"
@@ -689,15 +681,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
           </button>
 
           {/* Divider */}
-          <div className="w-px mx-1" style={{ height: 20, background: 'rgba(99,102,241,0.18)' }}/>
-
-          {/* Dark mode */}
-          <button onClick={() => setDarkMode(!darkMode)}
-            title={darkMode ? 'Modo claro' : 'Modo oscuro'}
-            aria-label={darkMode ? 'Activar modo claro' : 'Activar modo oscuro'}
-            className="nb-btn nb-btn-icon nb-btn-muted">
-            {darkMode ? <Sun size={13}/> : <Moon size={13}/>}
-          </button>
+          <div className="w-px mx-1" style={{ height: 20, background: 'color-mix(in srgb, var(--color-accent) 18%, transparent)' }}/>
 
           {/* Plantillas */}
           <button onClick={() => setShowTemplatesModal(true)} title="Plantillas prediseñadas" aria-label="Abrir plantillas"
@@ -735,7 +719,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
           )}
 
           {/* Divider */}
-          <div className="w-px mx-1" style={{ height: 20, background: 'rgba(99,102,241,0.18)' }}/>
+          <div className="w-px mx-1" style={{ height: 20, background: 'color-mix(in srgb, var(--color-accent) 18%, transparent)' }}/>
 
           {/* Guardar */}
           <button onClick={handleSaveHtmlFile} aria-label="Guardar archivo HTML"
@@ -754,7 +738,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
           {/* Viewport toggles (preview mode only) */}
           {previewMode && (
             <>
-              <div className="w-px mx-1" style={{ height: 20, background: 'rgba(99,102,241,0.18)' }}/>
+              <div className="w-px mx-1" style={{ height: 20, background: 'color-mix(in srgb, var(--color-accent) 18%, transparent)' }}/>
               <button onClick={() => setPreviewViewport('desktop')} title="Desktop" className={`nb-btn nb-btn-icon ${previewViewport === 'desktop' ? 'nb-btn-accent' : 'nb-btn-muted'}`}><Monitor size={13}/></button>
               <button onClick={() => setPreviewViewport('tablet')} title="Tablet" className={`nb-btn nb-btn-icon ${previewViewport === 'tablet' ? 'nb-btn-accent' : 'nb-btn-muted'}`}><Tablet size={13}/></button>
               <button onClick={() => setPreviewViewport('mobile')} title="Mobile" className={`nb-btn nb-btn-icon ${previewViewport === 'mobile' ? 'nb-btn-accent' : 'nb-btn-muted'}`}><Smartphone size={13}/></button>
@@ -781,7 +765,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
         )}
         {!previewMode && leftOpen && (
           <div className="sidebar-scroll flex flex-col z-40 overflow-y-auto flex-shrink-0"
-            style={{ width: 240, background: 'var(--color-sidebar)', borderRight: '1px solid rgba(99,102,241,0.12)' }}>
+            style={{ width: 240, background: 'var(--color-sidebar)', borderRight: '1px solid color-mix(in srgb, var(--color-accent) 12%, transparent)' }}>
 
             {/* Search + collapse */}
             <div className="px-2.5 pt-3 pb-2 sticky top-0 z-10 flex items-center gap-2"
@@ -860,7 +844,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
           </div>
         )}
         <div className={`flex-1 overflow-y-auto p-6 relative ${previewMode ? 'flex justify-center pt-10' : 'edit-canvas'}`}
-          style={{ background: darkMode ? '#0f0e2a' : 'var(--color-app-bg)' }}
+          style={{ background: darkMode ? 'var(--codex-dark-app)' : 'var(--color-app-bg)' }}
           onClick={() => setSelectedBlockId(null)}>
           <div className={`min-h-full pb-20 ${previewMode ? 'w-full max-w-6xl' : 'flex justify-center'}`}>
             <div className={`w-full min-h-[800px] flex flex-col transition-all duration-300
@@ -870,7 +854,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
               ${!previewMode ? 'max-w-5xl rounded-xl' : ''}
               ${draggedType ? "ring-2 ring-[var(--color-accent)] ring-offset-4" : ""}`}
               style={{
-                background: darkMode ? '#16134A' : 'var(--color-canvas)',
+                background: darkMode ? 'var(--codex-dark-canvas)' : 'var(--color-canvas)',
                 boxShadow: darkMode ? 'var(--neu-dark-out)' : 'var(--neu-canvas)',
                 padding: previewMode ? (previewViewport === 'mobile' ? '8px' : previewViewport === 'tablet' ? '24px' : '48px') : '48px',
               }}
@@ -879,23 +863,10 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
               {blocks.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center select-none pointer-events-none py-16">
                   {/* Logo grande en empty state */}
-                  <div className="mb-8" style={{ filter: 'drop-shadow(0 8px 24px rgba(99,102,241,.35))' }}>
-                    <svg width="72" height="72" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <linearGradient id="emptyBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#2D2A6E"/>
-                          <stop offset="100%" stopColor="#1E1B4B"/>
-                        </linearGradient>
-                      </defs>
-                      <rect x="0" y="0" width="300" height="300" rx="68" fill="url(#emptyBg)"/>
-                      <line x1="150" y1="52" x2="65" y2="228" stroke="white" strokeWidth="30" strokeLinecap="round"/>
-                      <line x1="150" y1="52" x2="235" y2="228" stroke="white" strokeWidth="30" strokeLinecap="round"/>
-                      <line x1="97" y1="168" x2="203" y2="168" stroke="#6366F1" strokeWidth="24" strokeLinecap="round"/>
-                      <circle cx="150" cy="52" r="18" fill="#A5B4FC"/>
-                      <rect x="190" y="196" width="50" height="34" rx="8" fill="#6366F1"/>
-                    </svg>
+                  <div className="mb-8">
+                    <img src={darkMode ? iconCodex : iconCodexClaro} alt="" width="72" height="72"/>
                   </div>
-                  <h3 className={`text-2xl font-black mb-2 tracking-tight ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>Moodle Builder</h3>
+                  <h3 className={`text-2xl font-black mb-2 tracking-tight ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>C0deX</h3>
                   <p className={`text-sm mb-10 text-center max-w-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>Diseña contenido educativo profesional para tu campus virtual de forma visual</p>
 
                   {/* Tres pasos */}
@@ -907,7 +878,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
                     ].map((s, i) => (
                       <div key={i} className="flex-1 flex flex-col items-center text-center">
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg mb-3 font-black"
-                          style={{ background: i === 2 ? '#6366F1' : 'var(--color-surface-light)', color: i === 2 ? 'white' : 'var(--color-text-primary)', boxShadow: i === 2 ? '0 4px 12px rgba(99,102,241,.35)' : 'var(--neu-light-out)' }}>
+                          style={{ background: i === 2 ? '#6366F1' : 'var(--color-surface-light)', color: i === 2 ? 'white' : 'var(--color-text-primary)', boxShadow: i === 2 ? '0 4px 12px color-mix(in srgb, var(--color-accent) 35%, transparent)' : 'var(--neu-light-out)' }}>
                           {s.step}
                         </div>
                         <p className="text-xs font-bold text-gray-700 mb-1">{s.title}</p>
@@ -953,9 +924,9 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
                         insertBlockAt(block, insertIdx);
                       }} />
                       <div className="h-24 w-full flex flex-col items-center justify-center transition-all cursor-default rounded-[10px] py-5"
-                        style={{ border: '1.5px dashed rgba(99,102,241,0.4)', color: 'var(--color-text-active)' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-accent)'; (e.currentTarget as HTMLElement).style.background = 'rgba(99,102,241,0.04)'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.4)'; (e.currentTarget as HTMLElement).style.background = ''; }}
+                        style={{ border: '1.5px dashed color-mix(in srgb, var(--color-accent) 40%, transparent)', color: 'var(--color-text-active)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-accent)'; (e.currentTarget as HTMLElement).style.background = 'color-mix(in srgb, var(--color-accent) 4%, transparent)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--color-accent) 40%, transparent)'; (e.currentTarget as HTMLElement).style.background = ''; }}
                         onDragOver={(e) => handleDragOver(e, blocks.length)} onDrop={(e) => handleDrop(e, blocks.length)}>
                         <Plus size={24} className="mb-1.5 opacity-60"/>
                         <span className="text-xs font-semibold">Suelta aquí para añadir al final</span>
@@ -1001,7 +972,7 @@ const App: React.FC<{ initialBlocks: BlockData[] }> = ({ initialBlocks }) => {
         )}
         {!previewMode && rightOpen && (
           <div className="flex flex-col z-40 flex-shrink-0"
-            style={{ width: rightPanelWidth, background: darkMode ? 'var(--color-sidebar)' : 'var(--color-surface-light)', borderLeft: '1px solid rgba(99,102,241,0.12)' }}>
+            style={{ width: rightPanelWidth, background: darkMode ? 'var(--color-sidebar)' : 'var(--color-surface-light)', borderLeft: '1px solid color-mix(in srgb, var(--color-accent) 12%, transparent)' }}>
             <div className="flex justify-end px-3 pt-2">
               <button onClick={() => setRightOpen(false)} title="Ocultar propiedades" aria-label="Ocultar propiedades"
                 className="p-1.5 rounded-lg transition-colors"

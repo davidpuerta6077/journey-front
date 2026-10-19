@@ -1439,7 +1439,7 @@ case BlockType.SECTION_BANNER: {
           if (preview || e.target !== e.currentTarget) return;
           if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); onSelect(block.id); }
         }}
-        className={`group relative transition-all duration-200 ${wrapperClasses} ${isSelected && !preview ? 'block-selected z-10' : 'border-transparent'} ${!preview && !isSelected ? 'hover:border-[rgba(99,102,241,0.2)]' : ''} ${block.type === BlockType.LAYOUT ? 'p-1' : ''} ${!preview ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]' : ''}`}
+        className={`group relative transition-all duration-200 ${wrapperClasses} ${isSelected && !preview ? 'block-selected z-10' : 'border-transparent'} ${!preview && !isSelected ? 'hover:border-[color-mix(in_srgb,var(--color-accent)_20%,transparent)]' : ''} ${block.type === BlockType.LAYOUT ? 'p-1' : ''} ${!preview ? 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]' : ''}`}
       >
         {/* Drag handle */}
         {!preview && (
@@ -1540,7 +1540,7 @@ case BlockType.SECTION_BANNER: {
         {/* ── INSTRUCCIÓN POR TIPO (solo si vacío y en edición) ── */}
         {!preview && isBlockEmpty(block) && BLOCK_HINTS[block.type] && (
           <div className="flex items-start gap-2 mx-2 mb-2 mt-1.5 px-3 py-2 rounded-lg select-none pointer-events-none"
-            style={{ background: 'rgba(99,102,241,0.07)', border: '1px dashed rgba(99,102,241,0.28)' }}>
+            style={{ background: 'color-mix(in srgb, var(--color-accent) 7%, transparent)', border: '1px dashed color-mix(in srgb, var(--color-accent) 28%, transparent)' }}>
             <Info size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--color-accent)' }}/>
             {/* --color-text-label (#4D4F82) está pensado para el canvas claro (#FFFFFF);
                 en modo oscuro el canvas pasa a #16134A y ese gris-índigo queda casi ilegible. */}

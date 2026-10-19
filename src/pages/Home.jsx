@@ -32,7 +32,7 @@ const findMenuItem = (label) => menuItems.find(m => m.label === label)
 
 const tools = [
   { name: 'Nexo',   icon: iconNexoClaro,   path: findMenuItem('Nexo')?.path },
-  { name: 'Codex',  icon: iconCodexClaro,  path: findMenuItem('CodeX')?.path },
+  { name: 'C0deX',  icon: iconCodexClaro,  path: findMenuItem('C0deX')?.path },
   { name: 'Visor',  icon: iconVisorClaro,  href: findMenuItem('Visor')?.href },
   { name: 'Hub',    icon: iconHubClaro,    href: findMenuItem('Hub')?.href },
   { name: 'Bebras', icon: iconBebrasClaro, href: findMenuItem('Bebras')?.href },

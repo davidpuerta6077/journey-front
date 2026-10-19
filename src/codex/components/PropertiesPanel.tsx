@@ -568,7 +568,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ block, onUpdat
       {/* Header — antes siempre usaba --color-surface-light y --color-text-primary (claros)
           sin importar darkMode, quedando blanca con texto oscuro dentro del panel oscuro. */}
       <div className="px-4 py-3.5 sticky top-0 z-10"
-        style={{ background: darkMode ? 'var(--color-sidebar)' : 'var(--color-surface-light)', borderBottom: '1px solid rgba(99,102,241,0.1)' }}>
+        style={{ background: darkMode ? 'var(--color-sidebar)' : 'var(--color-surface-light)', borderBottom: '1px solid color-mix(in srgb, var(--color-accent) 10%, transparent)' }}>
         <div className="flex items-center gap-2.5">
           <div className="px-2 py-0.5 rounded-[7px]"
             style={{ background: 'var(--color-sidebar)', boxShadow: 'var(--neu-dark-out)' }}>

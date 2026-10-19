@@ -50,7 +50,7 @@ export default function CodexPaginas() {
   return (
     <div className="sync-page">
       <div className="sync-page-header">
-        <h2>CodeX — Mis páginas</h2>
+        <h2>C0deX — Mis páginas</h2>
         <button className="btn-primary" onClick={nueva}><Plus size={16} /> Nueva página</button>
       </div>
 

@@ -12,3 +12,4 @@
 .codex-nombre-link:hover { text-decoration: underline; }
 .codex-nombre-link:focus-visible { outline: 2px solid var(--primary, #5b84ff); outline-offset: 2px; }
 .codex-vacio { padding: 48px 16px; text-align: center; color: var(--text-muted); }
+.codex-editor-tema { margin-left: auto; }
