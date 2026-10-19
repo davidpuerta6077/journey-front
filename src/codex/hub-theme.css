@@ -1,0 +1,63 @@
+/* Apariencia de Bravo Hub para el editor C0deX. Se carga después de index.css
+   y solo cambia el "cromo" del editor (barras, biblioteca, botones, paneles).
+   La simulación de Moodle del canvas (--brand-*, clases Bootstrap) y el HTML
+   exportado no se tocan. Las --hub-* llegan de Bravo Hub (codex:load/codex:tema);
+   los valores por defecto son los del hub. */
+:root {
+  --hub-primary: #5b84ff;
+  --hub-menu:    #1e3a6e;
+  --hub-bg:      #f8fafc;
+  --hub-font:    "Segoe UI";
+
+  --color-sidebar:       var(--hub-menu);
+  --color-accent:        var(--hub-primary);
+  --color-accent-hover:  color-mix(in srgb, var(--hub-primary) 82%, #000);
+  --color-accent-dim:    color-mix(in srgb, var(--hub-primary) 12%, transparent);
+  --color-app-bg:        var(--hub-bg);
+  --color-surface-light: #ffffff;
+
+  --color-text-primary:  #1e293b;
+  --color-text-body:     #334155;
+  --color-text-muted:    #64748b;
+  --color-text-sidebar:  rgba(255, 255, 255, 0.6);
+  --color-text-active:   rgba(255, 255, 255, 0.92);
+  --color-text-label:    #475569;
+
+  /* Estilo plano del hub en vez de neumorfismo */
+  --neu-dark-out:  none;
+  --neu-dark-in:   inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  --neu-dark-ring: 0 0 0 1.5px color-mix(in srgb, var(--hub-primary) 70%, transparent);
+  --neu-light-out: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --neu-light-in:  inset 0 1px 2px rgba(15, 23, 42, 0.08);
+  --neu-canvas:    0 1px 3px rgba(15, 23, 42, 0.08);
+
+  /* Fondo del área de trabajo y del canvas en modo oscuro (paleta oscura del hub) */
+  --codex-dark-app:    #0b1220;
+  --codex-dark-canvas: #16202e;
+}
+
+body, .font-sans { font-family: var(--hub-font), "Segoe UI", Inter, system-ui, sans-serif; }
+
+.nb-btn { border: 1px solid #e2e8f0; border-radius: 8px; }
+.nb-btn:hover { box-shadow: none; border-color: color-mix(in srgb, var(--hub-primary) 45%, #e2e8f0); background: #f8fafc; }
+.nb-btn-primary { border-color: transparent; box-shadow: none; }
+.nb-btn-primary:hover { background: var(--color-accent-hover); }
+
+.neu-widget { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; }
+.neu-widget:hover { background: rgba(255, 255, 255, 0.11); border-color: rgba(255, 255, 255, 0.22); }
+.neu-search { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.16); border-radius: 8px; }
+.neu-search:focus { border-color: rgba(255, 255, 255, 0.4); box-shadow: 0 0 0 2px color-mix(in srgb, var(--hub-primary) 35%, transparent); }
+.neu-search::placeholder { color: rgba(255, 255, 255, 0.55); }
+.neu-input:focus { box-shadow: var(--neu-light-in), 0 0 0 1.5px color-mix(in srgb, var(--hub-primary) 45%, transparent); }
+.block-selected {
+  outline-color: color-mix(in srgb, var(--hub-primary) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--hub-primary) 10%, transparent);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.25); }
+
+/* Modo oscuro (lo decide Bravo Hub): barra de herramientas con la paleta oscura del hub */
+:root[data-oscuro="true"] .codex-toolbar { background: #16202e !important; border-bottom-color: rgba(148, 163, 184, 0.22) !important; }
+:root[data-oscuro="true"] .codex-toolbar .nb-btn { background: #1b2636; border-color: rgba(148, 163, 184, 0.22); color: #e2e8f0; }
+:root[data-oscuro="true"] .codex-toolbar .nb-btn:hover { background: #223047; }
+:root[data-oscuro="true"] .codex-toolbar .nb-btn-danger { color: #f87171; }
+:root[data-oscuro="true"] .codex-toolbar .nb-btn-primary { background: var(--color-accent); border-color: transparent; color: #fff; }
