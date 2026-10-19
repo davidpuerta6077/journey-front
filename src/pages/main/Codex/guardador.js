@@ -8,6 +8,7 @@ export function crearGuardador({ guardar, onGuardado, onError, espera = 2000 }) 
   let pendiente = null  // JSON por guardar
   let timer = null
   let enVuelo = null
+  let fallo = false     // el último intento falló (el editor muestra error)
 
   function inicial(bloques) {
     confirmado = JSON.stringify(bloques)
@@ -24,7 +25,12 @@ export function crearGuardador({ guardar, onGuardado, onError, espera = 2000 }) 
     timer = null
     while (enVuelo) await enVuelo
     if (pendiente === null) return
-    if (pendiente === confirmado) { pendiente = null; return }
+    if (pendiente === confirmado) {
+      pendiente = null
+      // Tras un error, volver (ej. deshacer) a lo ya guardado: quitar el aviso de error.
+      if (fallo) { fallo = false; onGuardado?.() }
+      return
+    }
     const json = pendiente
     pendiente = null
     // guardar se llama ya (sin esperar un tick): al salir de la página la
@@ -33,8 +39,8 @@ export function crearGuardador({ guardar, onGuardado, onError, espera = 2000 }) 
     try { peticion = Promise.resolve(guardar(JSON.parse(json))) } catch (e) { peticion = Promise.reject(e) }
     enVuelo = peticion
       .then(
-        () => { confirmado = json; onGuardado?.() },
-        (e) => { if (pendiente === null) pendiente = json; onError?.(e) },
+        () => { confirmado = json; fallo = false; onGuardado?.() },
+        (e) => { if (pendiente === null) pendiente = json; fallo = true; onError?.(e) },
       )
       .finally(() => { enVuelo = null })
     await enVuelo

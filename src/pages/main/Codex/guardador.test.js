@@ -71,6 +71,22 @@ test('error persistente: avisa, no reintenta en bucle y el siguiente cambio vuel
   llamadas[1].resolve()
 })
 
+test('tras un error, volver al estado ya guardado avisa "guardado" sin llamar a la API', async () => {
+  const { llamadas, guardar } = guardarControlado()
+  let ok = 0
+  const g = crearGuardador({ guardar, espera: 10, onGuardado: () => ok++ })
+  g.inicial(['a'])
+  g.cambio([])
+  await dormir(25)
+  llamadas[0].reject(new Error('caída'))
+  await dormir(10)
+  g.cambio(['a'])
+  await dormir(25)
+  assert.strictEqual(llamadas.length, 1)
+  assert.strictEqual(ok, 1)
+  assert.strictEqual(g.hayPendiente(), false)
+})
+
 test('vaciar guarda de inmediato lo pendiente sin esperar el debounce', async () => {
   const { llamadas, guardar } = guardarControlado()
   const g = crearGuardador({ guardar, espera: 10_000 })
