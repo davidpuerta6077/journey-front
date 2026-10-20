@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Plus, History, FileDown, ChevronRight, CheckCircle2, Image as ImageIcon, Link2, CalendarDays } from 'lucide-react'
+import { Plus, History, FileDown, ChevronRight, CheckCircle2, Image as ImageIcon, Link2, CalendarDays, Mail, ListChecks } from 'lucide-react'
 import { descargarArchivo } from '../../../services/onix/descargarArchivo'
 import { alertError } from '../../../services/alerts'
 import SubactividadModal from './SubactividadModal'
 import SubactividadForm from './SubactividadForm'
 import TraerLogsModal from './TraerLogsModal'
 import TraerGoogleModal from './TraerGoogleModal'
+import TraerCorreoModal from './TraerCorreoModal'
+import TraerAtomModal from './TraerAtomModal'
 import { generada, plural, tituloDe } from './evidencias'
 import { MESES } from './periodo'
 
@@ -19,6 +21,8 @@ export default function ActividadMes({
   const [nueva, setNueva] = useState(false)
   const [traerLogs, setTraerLogs] = useState(false)
   const [traerGoogle, setTraerGoogle] = useState(false)
+  const [traerCorreo, setTraerCorreo] = useState(false)
+  const [traerAtom, setTraerAtom] = useState(false)
   const [descargando, setDescargando] = useState(false)
 
   const generadas = registros.filter(generada).length
@@ -56,6 +60,8 @@ export default function ActividadMes({
           <button className="btn-primary" onClick={() => setNueva(true)}><Plus size={16} /> Agregar subactividad</button>
           <button className="btn-secondary" onClick={() => setTraerLogs(true)}><History size={16} /> Traer de mis acciones en Bravo Hub</button>
           <button className="btn-secondary" onClick={() => setTraerGoogle(true)}><CalendarDays size={16} /> Traer de mi Google Calendar</button>
+          <button className="btn-secondary" onClick={() => setTraerCorreo(true)}><Mail size={16} /> Traer de mis correos enviados</button>
+          <button className="btn-secondary" onClick={() => setTraerAtom(true)}><ListChecks size={16} /> Traer de mis tareas de Atom</button>
         </div>
       )}
 
@@ -132,6 +138,14 @@ export default function ActividadMes({
           onAgregado={() => { setTraerGoogle(false); onCambio() }} />
       )}
 
+      {traerAtom && (
+        <TraerAtomModal actividad={actividad} periodo={periodo} registros={registros} onClose={() => setTraerAtom(false)}
+          onAgregado={() => { setTraerAtom(false); onCambio() }} />
+      )}
+      {traerCorreo && (
+        <TraerCorreoModal actividad={actividad} periodo={periodo} registros={registros} onClose={() => setTraerCorreo(false)}
+          onAgregado={() => { setTraerCorreo(false); onCambio() }} />
+      )}
       {traerLogs && (
         <TraerLogsModal actividad={actividad} periodo={periodo} registros={registros} onClose={() => setTraerLogs(false)}
           onAgregado={() => { setTraerLogs(false); onCambio() }} />
