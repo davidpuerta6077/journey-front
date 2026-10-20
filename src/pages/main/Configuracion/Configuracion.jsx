@@ -575,12 +575,17 @@ const ZONAS_HORARIAS = [
 
 function TabSistema() {
   const [zonaHoraria, setZonaHoraria] = useState('')
+  const [sesionMaxHoras, setSesionMaxHoras] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchSettings('sistema')
-      .then(settings => setZonaHoraria(asMap(settings).zona_horaria || 'America/Bogota'))
+      .then(settings => {
+        const m = asMap(settings)
+        setZonaHoraria(m.zona_horaria || 'America/Bogota')
+        setSesionMaxHoras(m.sesion_max_horas || '')
+      })
       .catch(e => console.error('Error cargando sistema:', e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -588,8 +593,11 @@ function TabSistema() {
   const handleSaveZona = async () => {
     setSaving(true)
     try {
-      await saveSetting('sistema', 'zona_horaria', zonaHoraria)
-      toastExito('Zona horaria guardada')
+      await Promise.all([
+        saveSetting('sistema', 'zona_horaria', zonaHoraria),
+        saveSetting('sistema', 'sesion_max_horas', sesionMaxHoras),
+      ])
+      toastExito('Configuración guardada')
     } catch (e) {
       alertError(e.message)
     }
@@ -610,6 +618,19 @@ function TabSistema() {
             <select className="filter-select" value={zonaHoraria} onChange={e => setZonaHoraria(e.target.value)}>
               {ZONAS_HORARIAS.map(z => <option key={z.value} value={z.value}>{z.label}</option>)}
             </select>
+          </div>
+          <div className="modal-field">
+            <label>Tiempo máximo de sesión (horas)</label>
+            <input
+              type="number"
+              min="1"
+              value={sesionMaxHoras}
+              onChange={e => setSesionMaxHoras(e.target.value)}
+              placeholder="Sin límite"
+            />
+            <p className="modal-hint" style={{ marginTop: 4 }}>
+              Pasadas estas horas desde el inicio de sesión, el usuario se desconecta solo (sin necesidad de borrar cookies/localStorage a mano). Vacío = sin límite.
+            </p>
           </div>
           <div className="modal-actions" style={{ justifyContent: 'flex-start', paddingLeft: 0 }}>
             <button className="btn-primary" onClick={handleSaveZona} disabled={saving}>{saving ? 'Guardando...' : 'Guardar cambios'}</button>

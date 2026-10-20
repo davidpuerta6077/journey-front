@@ -1,9 +1,25 @@
 import { useAuth } from "react-oidc-context";
+import { useEffect, useRef } from "react";
 import '../styles/global/Login.css'
 import config from "../config.js";
 
 function Login() {
   const auth = useAuth();
+  // Errores de oidc-client-ts (state corrupto por volver atrás, token de otra
+  // sesión, etc.) dejaban al usuario en un mensaje sin salida, obligando a
+  // borrar localStorage/cookies a mano. Se limpia la sesión sola y se
+  // reintenta el login una vez; si vuelve a fallar, ahí sí se pide reintentar.
+  const reintentoAutomatico = useRef(false);
+  useEffect(() => {
+    if (!auth.error || reintentoAutomatico.current) return;
+    reintentoAutomatico.current = true;
+    auth.removeUser()
+      .catch(() => {})
+      .finally(() => {
+        auth.clearStaleState().catch(() => {});
+        auth.signinRedirect();
+      });
+  }, [auth.error]);
 
   const signOutRedirect = () => {
     const clientId = "5hpvb84h2hm3rfsf6mbfs936hc";
@@ -19,7 +35,17 @@ function Login() {
   }
 
   if (auth.error) {
-    return <div className="login-container"><p>Error: {auth.error.message}</p></div>;
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <span className="loader"></span>
+          <p>Renovando la sesión...</p>
+          <button className="btn btn-signin" onClick={() => { reintentoAutomatico.current = true; auth.removeUser().finally(() => auth.signinRedirect()); }}>
+            Reintentar manualmente
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (auth.isAuthenticated) {

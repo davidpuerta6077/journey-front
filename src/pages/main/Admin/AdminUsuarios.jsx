@@ -8,7 +8,7 @@ import { fetchRoles } from '../../../services/admin/fetchRoles'
 import { confirmAccion, confirmGuardarCambios, alertError, toastExito } from '../../../services/alerts'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
 
-const EMPTY_FORM = { username: '', email: '', role_id: '', departamento: '' }
+const EMPTY_FORM = { username: '', email: '', role_id: '', departamento: '', fecha_nacimiento: '' }
 
 function UserModal({ title, initial, roles, disableEmail, onClose, onSave }) {
   const [form, setForm] = useState(initial)
@@ -73,6 +73,11 @@ function UserModal({ title, initial, roles, disableEmail, onClose, onSave }) {
           <div className="modal-field">
             <label>Departamento</label>
             <input name="departamento" value={form.departamento || ''} onChange={handleChange} placeholder="Departamento" />
+          </div>
+          <div className="modal-field">
+            <label>Fecha de nacimiento</label>
+            <input type="date" name="fecha_nacimiento" value={form.fecha_nacimiento || ''} onChange={handleChange} />
+            <p className="modal-hint">Opcional. Si se llena, le llega una notificación de cumpleaños ese día.</p>
           </div>
           <p className="modal-hint">El acceso se valida contra el correo institucional (Cognito), aquí solo se asigna el rol.</p>
         </div>
@@ -217,11 +222,11 @@ export default function AdminUsuarios() {
       {editUser && (
         <UserModal
           title="Editar Usuario de Plataforma"
-          initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id || '', departamento: editUser.departamento || '' }}
+          initial={{ username: editUser.username, email: editUser.email, role_id: editUser.role_id || '', departamento: editUser.departamento || '', fecha_nacimiento: editUser.fecha_nacimiento ? String(editUser.fecha_nacimiento).slice(0, 10) : '' }}
           roles={roles}
           disableEmail
           onClose={() => setEditUser(null)}
-          onSave={(form) => updatePlatformUser(editUser.id, { username: form.username, role_id: form.role_id, departamento: form.departamento }).then(loadData)}
+          onSave={(form) => updatePlatformUser(editUser.id, { username: form.username, role_id: form.role_id, departamento: form.departamento, fecha_nacimiento: form.fecha_nacimiento }).then(loadData)}
         />
       )}
     </div>
