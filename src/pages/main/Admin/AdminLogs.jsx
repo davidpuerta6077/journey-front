@@ -40,6 +40,10 @@ const ROUTE_APP = {
   auth:         { aplicacion: 'Nexo', modulo: 'Sesión / Perfil' },
   admin:        { aplicacion: 'Administrador', modulo: 'Administrador' },
   virtual_labs: { aplicacion: 'Laboratorios Virtuales', modulo: 'Laboratorios Virtuales' },
+  // Atom vive dentro del Index como widget (sin ruta ni entrada en el sidebar
+  // propias, ver components/atom/), así que no cuelga de submoduleIndex: se
+  // resuelve por el prefijo de ruta /atom/... de la descripción del log.
+  atom: { aplicacion: 'Nexo', modulo: 'Atom' },
 }
 
 // Nombres legacy de entity_type / type que ya existían en la tabla.
