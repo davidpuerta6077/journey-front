@@ -1,0 +1,132 @@
+/* Widget Atom — vive dentro del Index (Home.jsx), no es una página aparte. */
+
+.hub-atom { grid-column: 1 / span 12; }
+
+.atom-card {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.atom-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.atom-header-info { display: flex; align-items: center; gap: 12px; }
+
+.atom-header-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: var(--hub-primary, #1e3a6e);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+
+.atom-header-title { display: flex; flex-direction: column; }
+.atom-header-title h2 { margin: 0; font-size: 1.15rem; color: var(--hub-text, #1e293b); }
+.atom-header-title p { margin: 2px 0 0; font-size: .85rem; color: var(--text-secondary, #64748b); }
+
+.atom-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.atom-counts { display: flex; gap: 10px; flex-wrap: wrap; }
+.atom-count-chip {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 6px 14px; border-radius: 10px;
+  background: var(--bg-soft, #f1f5f9);
+  min-width: 64px;
+}
+.atom-count-chip strong { font-size: 1.1rem; line-height: 1.1; color: var(--hub-text, #1e293b); }
+.atom-count-chip span { font-size: .7rem; color: var(--text-secondary, #64748b); }
+.atom-count-chip.atom-count-vencidas strong { color: var(--danger, #dc2626); }
+
+.atom-quickviews {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.atom-quickview-btn {
+  border: 1px solid var(--border, #e2e8f0);
+  background: transparent;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: .82rem;
+  cursor: pointer;
+  color: var(--text-secondary, #475569);
+  white-space: nowrap;
+}
+.atom-quickview-btn:hover { border-color: var(--hub-primary, #1e3a6e); }
+.atom-quickview-btn.active {
+  background: var(--hub-primary, #1e3a6e);
+  border-color: var(--hub-primary, #1e3a6e);
+  color: #fff;
+}
+
+.atom-filters {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  margin-bottom: 14px;
+}
+.atom-filters select, .atom-filters input[type="date"] {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border, #e2e8f0);
+  font-size: .85rem; background: var(--card-bg, #fff); color: inherit;
+}
+
+.atom-bulkbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--bg-soft, #f1f5f9);
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  font-size: .85rem;
+}
+
+.atom-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.atom-prioridad-baja    { background: #e2e8f0; color: #475569; }
+.atom-prioridad-media   { background: #dbeafe; color: #1d4ed8; }
+.atom-prioridad-alta    { background: #fef3c7; color: #b45309; }
+.atom-prioridad-urgente { background: #fee2e2; color: #b91c1c; }
+
+.atom-estado-pendiente     { background: #e2e8f0; color: #475569; }
+.atom-estado-en-proceso    { background: #dbeafe; color: #1d4ed8; }
+.atom-estado-en-revision   { background: #ede9fe; color: #6d28d9; }
+.atom-estado-completada    { background: #dcfce7; color: #15803d; }
+.atom-estado-cancelada     { background: #fee2e2; color: #991b1b; }
+
+.atom-vencida { color: var(--danger, #dc2626); font-weight: 600; }
+
+.atom-empty { text-align: center; color: var(--text-secondary, #64748b); padding: 24px; }
+
+/* Detalle / crear */
+.atom-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .atom-detail-grid { grid-template-columns: 1fr; } }
+
+.atom-subtasks-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+.atom-subtask-row { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
+.atom-subtask-row.done span { text-decoration: line-through; color: var(--text-secondary, #94a3b8); }
+
+.atom-comments-list { display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto; margin-bottom: 10px; }
+.atom-comment { background: var(--bg-soft, #f1f5f9); border-radius: 10px; padding: 8px 12px; font-size: .85rem; }
+.atom-comment strong { display: block; font-size: .8rem; color: var(--hub-text, #1e293b); }
+.atom-comment time { font-size: .7rem; color: var(--text-secondary, #94a3b8); }
+
+.atom-history-list { display: flex; flex-direction: column; gap: 6px; font-size: .8rem; color: var(--text-secondary, #64748b); }
+
+.atom-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border, #e2e8f0); margin: 14px 0 12px; }
+.atom-tab-btn {
+  border: none; background: none; padding: 8px 14px; cursor: pointer;
+  font-size: .85rem; color: var(--text-secondary, #64748b);
+  border-bottom: 2px solid transparent;
+}
+.atom-tab-btn.active { color: var(--hub-primary, #1e3a6e); border-bottom-color: var(--hub-primary, #1e3a6e); font-weight: 600; }
