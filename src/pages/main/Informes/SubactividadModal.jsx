@@ -10,6 +10,7 @@ import { descargarArchivo } from '../../../services/onix/descargarArchivo'
 import { alertError, confirmAccion, confirmEliminar, toastExito } from '../../../services/alerts'
 import EvidenciaImagen from './EvidenciaImagen'
 import ImagenesDrop from './ImagenesDrop'
+import Redactando from './Redactando'
 import { tituloDe, generada } from './evidencias'
 
 // Pie de una imagen: se guarda al salir del campo si cambió.
@@ -248,7 +249,9 @@ export default function SubactividadModal({ registro: r, numero, soloLectura = f
               <span className="onix-paso-num">3</span> Redactar con IA
               <span className={`badge ${lista ? 'badge-synced' : 'badge-pending'}`}>{lista ? 'Redactada' : 'Sin redactar'}</span>
             </h4>
-            {r.parrafo ? (
+            {ocupado === 'generar' ? (
+              <Redactando texto="Redactando el párrafo y el documento de evidencia..." />
+            ) : r.parrafo ? (
               <>
                 <textarea aria-label="Párrafo para el informe" rows={4} value={parrafo} readOnly={soloLectura} onChange={(e) => setParrafo(e.target.value)} />
                 <p className="onix-informe-meta">

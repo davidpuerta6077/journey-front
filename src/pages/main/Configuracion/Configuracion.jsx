@@ -452,7 +452,8 @@ const PROVEEDORES_IA = {
 }
 
 function TabIA() {
-  const [form, setForm] = useState({ proveedor: 'ollama', modelo: '', ollama_url: '', openai_url: '', api_key: '' })
+  const [form, setForm] = useState({ proveedor: 'ollama', modelo: '', ollama_url: '', openai_url: '', api_key: '', prompt_informes: '' })
+  const [promptDefecto, setPromptDefecto] = useState('')
   const [keys, setKeys] = useState({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -462,7 +463,8 @@ function TabIA() {
   const cargar = useCallback(async () => {
     try {
       const c = await fetchIAConfig()
-      setForm({ proveedor: c.proveedor, modelo: c.modelo, ollama_url: c.ollama_url, openai_url: c.openai_url, api_key: '' })
+      setForm({ proveedor: c.proveedor, modelo: c.modelo, ollama_url: c.ollama_url, openai_url: c.openai_url, api_key: '', prompt_informes: c.prompt_informes || '' })
+      setPromptDefecto(c.prompt_defecto || '')
       setKeys(c.keys || {})
     } catch (e) {
       alertError(e.message)
@@ -550,6 +552,16 @@ function TabIA() {
           </p>
         </div>
       )}
+      <div className="modal-field">
+        <label htmlFor="ia-prompt">Instrucciones para redactar informes (Onix)</label>
+        <textarea id="ia-prompt" name="prompt_informes" rows={10} maxLength={8000} value={form.prompt_informes} onChange={handleChange} />
+        <p className="modal-hint">
+          Rol, tono y reglas con las que la IA redacta el párrafo y el documento de evidencia de cada subactividad. El formato de respuesta (JSON) lo agrega el sistema y no se edita aquí.{' '}
+          {form.prompt_informes !== promptDefecto && (
+            <button type="button" className="btn-secondary" onClick={() => setForm({ ...form, prompt_informes: promptDefecto })}>Restaurar instrucciones de fábrica</button>
+          )}
+        </p>
+      </div>
       <p className="modal-hint">Los cambios aplican de inmediato en la siguiente generación (no hace falta reiniciar).</p>
       {prueba && (
         <p className="modal-hint" role="status" style={{ color: prueba.ok ? 'var(--success)' : 'var(--danger)' }}>{prueba.texto}</p>
