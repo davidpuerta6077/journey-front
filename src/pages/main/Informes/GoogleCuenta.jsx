@@ -5,8 +5,9 @@ import { getGoogleUrl } from '../../../services/onix/getGoogleUrl'
 import { desconectarGoogle } from '../../../services/onix/desconectarGoogle'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 
-// Conexión de la cuenta de Google de cada usuario (solo lectura del calendario),
-// para traer reuniones y eventos del mes como subactividades.
+// Conexión de la cuenta de Google de cada usuario (solo lectura del calendario
+// y del asunto/destinatarios de los correos enviados), para traer reuniones,
+// eventos y correos del mes como subactividades.
 export default function GoogleCuenta() {
   const [estado, setEstado] = useState(null)
   const [ocupado, setOcupado] = useState(false)
@@ -28,7 +29,7 @@ export default function GoogleCuenta() {
   const desconectar = async () => {
     if (!(await confirmAccion({
       title: '¿Desconectar Google?',
-      text: 'Bravo Hub dejará de leer tu calendario. Lo que ya agregaste a tus subactividades se conserva.',
+      text: 'Bravo Hub dejará de leer tu calendario y tus correos enviados. Lo que ya agregaste a tus subactividades se conserva.',
       confirmButtonText: 'Sí, desconectar',
     }))) return
     setOcupado(true)
@@ -52,12 +53,12 @@ export default function GoogleCuenta() {
         ) : estado.conectado ? (
           <>
             <strong>Conectado como {estado.email}</strong>
-            <span>En "Mi mes", cada actividad tiene el botón "Traer de mi Google Calendar" para agregar tus reuniones y eventos.</span>
+            <span>En "Mi mes", cada actividad tiene los botones "Traer de mi Google Calendar" y "Traer de mis correos enviados". Si los correos piden permiso, desconecta y vuelve a conectar.</span>
           </>
         ) : (
           <>
-            <strong>Conecta tu Google Calendar</strong>
-            <span>Así puedes traer tus reuniones, capacitaciones y eventos del mes como subactividades. Bravo Hub solo lee tu calendario: no crea ni cambia nada.</span>
+            <strong>Conecta tu cuenta de Google</strong>
+            <span>Así puedes traer tus reuniones, eventos y correos enviados del mes como subactividades. Bravo Hub solo lee tu calendario y el asunto, destinatarios y fecha de tus correos enviados (nunca su contenido); no crea, envía ni cambia nada.</span>
           </>
         )}
       </div>
