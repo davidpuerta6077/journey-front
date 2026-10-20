@@ -6,6 +6,7 @@ import { generarSubactividad } from '../../../services/onix/generarSubactividad'
 import { descargarArchivo } from '../../../services/onix/descargarArchivo'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import ActividadMes from './ActividadMes'
+import Redactando from './Redactando'
 import { generada, tituloDe, plural } from './evidencias'
 import { MESES, periodoActual } from './periodo'
 
@@ -78,7 +79,7 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
     }
     const fallos = []
     for (let i = 0; i < objetivo.length; i++) {
-      setProgreso({ actual: i + 1, total: objetivo.length })
+      setProgreso({ actual: i + 1, total: objetivo.length, titulo: tituloDe(objetivo[i]) })
       try {
         actualizar(await generarSubactividad(objetivo[i].id))
       } catch (e) {
@@ -146,6 +147,8 @@ export default function MiMesTab({ perfilCompleto = true, onIrAConfig, userId, s
           </div>
         </div>
       )}
+
+      {progreso && <Redactando key={progreso.actual} texto={`Redactando subactividad ${progreso.actual} de ${progreso.total}: "${progreso.titulo}"`} />}
 
       {!soloLectura && !perfilCompleto && (
         <p className="onix-aviso">
