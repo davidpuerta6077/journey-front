@@ -28,7 +28,7 @@ const tools = [
   { name: 'Nexo',   icon: iconNexoClaro,   path: findMenuItem('Nexo')?.path },
   { name: 'C0deX',  icon: iconCodexClaro,  path: findMenuItem('C0deX')?.path },
   { name: 'Visor',  icon: iconVisorClaro,  href: findMenuItem('Visor')?.href },
-  { name: 'Hub',    icon: iconHubClaro,    href: findMenuItem('Hub')?.href },
+  { name: 'Proyecto', icon: iconHubClaro, href: findMenuItem('Proyecto')?.href },
   { name: 'Campus Bebras', icon: iconBebrasClaro, href: findMenuItem('Campus Bebras')?.href },
 ]
 

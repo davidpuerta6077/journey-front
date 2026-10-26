@@ -67,7 +67,7 @@ export const menuItems = [
   { type: 'divider' },
 
   // Enlaces externos (los enlaces configurables del menú se insertan en 'extraLinks')
-  { label: 'Hub', icon: iconHub, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
+  { label: 'Proyecto', icon: iconHub, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
   { label: 'Visor', icon: iconVisor, moduleCode: 'visor', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
   // Sin moduleCode: son páginas de login, visibles para todos los roles
   { label: 'Campus Pascual', icon: GraduationCap, href: 'https://campus.pascualbravovirtual.edu.co/logincampus/login.html' },
