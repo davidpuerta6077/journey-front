@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
 import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
+import MegaMenuPanel from './MegaMenuPanel'
 import { fetchSettings } from '../../services/settings/fetchSettings'
 import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
@@ -67,11 +68,14 @@ const Layout = () => {
     fetchActiveMenuLinks().then(setExtraLinks).catch(() => {})
   }, [])
 
-  const sidebarMenu = extraLinks.length > 0
-    ? [...filteredMenu, { type: 'divider' }, ...extraLinks.map(l => ({
-        label: l.nombre, icon: ExternalLink, href: l.url, nueva_pestana: l.nueva_pestana,
-      }))]
-    : filteredMenu
+  // Los enlaces configurables van en la sección de enlaces externos; luego se quitan
+  // los divisores sobrantes (secciones que quedaron vacías por permisos)
+  const sidebarMenu = filteredMenu
+    .flatMap(item => item.type === 'extraLinks'
+      ? extraLinks.map(l => ({ label: l.nombre, icon: ExternalLink, href: l.url, nueva_pestana: l.nueva_pestana }))
+      : [item])
+    .filter((item, i, arr) => item.type !== 'divider'
+      || (i > 0 && arr[i - 1].type !== 'divider' && arr.slice(i + 1).some(n => n.type !== 'divider')))
 
   const [sidebarMini, setSidebarMini] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -89,6 +93,16 @@ const Layout = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Panel de submenú (Nexo, Administrador): queda atado a la ruta donde se abrió,
+  // así se cierra solo al navegar
+  const [mega, setMega] = useState(null)
+  const megaItem = mega?.path === location.pathname ? mega.item : null
+  const setMegaItem = useCallback(item => setMega(item && { item, path: location.pathname }), [location.pathname])
+  const closeMega = useCallback(() => setMega(null), [])
+  const closeMenusOnLink = (e) => {
+    if (e.target.closest('a')) { setMobileMenuOpen(false); setMegaItem(null) }
+  }
   useEffect(() => {
     setUserMenuOpen(false)
   }, [location.pathname])
@@ -309,10 +323,11 @@ const Layout = () => {
           >
             <ul>
               {sidebarMenu.map((item, i) => (
-                <SidebarItem key={i} item={item} />
+                <SidebarItem key={i} item={item} onOpenMega={setMegaItem} megaLabel={megaItem?.label} />
               ))}
             </ul>
           </aside>
+          {megaItem && <MegaMenuPanel key={megaItem.label} item={megaItem} onClose={closeMega} onLinkClick={closeMenusOnLink} />}
         </div>
         <main className="main-content">
           <Outlet />

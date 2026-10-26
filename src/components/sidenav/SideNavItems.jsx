@@ -59,24 +59,35 @@ export const menuItems = [
 
   { type: 'divider' },
 
-  { label: 'Centro de soporte', icon: iconCentroSoporte, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
+  // Desarrollos integrados
+  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
+  { label: 'Formularios de Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
+  { label: 'C0deX', icon: iconCodex, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
+
+  { type: 'divider' },
+
+  // Enlaces externos (los enlaces configurables del menú se insertan en 'extraLinks')
   { label: 'Hub', icon: iconHub, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
   { label: 'Visor', icon: iconVisor, moduleCode: 'visor', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
+  { label: 'Bebras', icon: iconBebras, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
+  { label: 'Encuestas', icon: iconEncuestas, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
+  { type: 'extraLinks' },
+
+  { type: 'divider' },
+
+  // Próximamente
   { label: 'Monitoreo', icon: Activity, moduleCode: 'monitoring', submoduleCode: 'access', children: [
       { label: 'Matomo', icon: iconMatomo, comingSoon: true },
       { label: 'Zabbix', icon: iconZabbix, comingSoon: true },
       { label: 'PM2', icon: iconPm2, comingSoon: true },
       { label: 'Bases de Datos', icon: Database, comingSoon: true },
   ]},
-  { label: 'Bebras', icon: iconBebras, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
   { label: 'Rags', icon: iconRags, moduleCode: 'rags', submoduleCode: 'access', comingSoon: true },
-  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
-  { label: 'C0deX', icon: iconCodex, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
-  { label: 'Encuestas', icon: iconEncuestas, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
   { label: 'Laboratorios Virtuales', icon: FlaskConical, moduleCode: 'virtual_labs', submoduleCode: 'virtual_labs_grades', comingSoon: true },
-  { label: 'Formularios de Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
 
   { type: 'divider' },
+
+  { label: 'Centro de soporte', icon: iconCentroSoporte, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
 
   { label: 'Administrador', icon: iconAdministrador, moduleCode: 'admin', children: [
       { label: 'Usuarios',      icon: iconUsuarios, path: '/admin/usuarios',      submoduleCode: 'admin_users' },
