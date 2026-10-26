@@ -436,6 +436,17 @@
 /* ─── ICONS ─── */
 .sidebar-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 .chevron { margin-left: auto; transition: transform 0.2s; flex-shrink: 0; }
+/* Mismo lugar que "Próx." pero resaltado: el módulo ya se usa, en prueba */
+.sidebar-badge-beta {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(125,211,252,0.18);
+  color: #7dd3fc;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
 .chevron.open { transform: rotate(180deg); }
 
 /* ─── MINI SIDEBAR ─── */
@@ -687,3 +698,68 @@
   .mega-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .mega-link { padding: 10px; font-size: 1rem; }
 }
+
+/* ─── BARRA DE NAVEGACIÓN DE NEXO (SectionNav.jsx) ─── */
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  margin-bottom: 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.section-nav-group { position: relative; flex: 1; display: flex; }
+.section-nav-tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.section-nav-tab:hover,
+.section-nav-tab.open { background: var(--bg-surface-hover); color: var(--text-primary); }
+.section-nav-tab.active { background: rgba(91,132,255,0.12); color: var(--primary); }
+.section-nav-tab .chevron { margin-left: 2px; }
+.section-nav-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  min-width: 100%;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgba(15,23,42,0.12);
+}
+.section-nav-link {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.section-nav-link:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.section-nav-link.active { background: rgba(91,132,255,0.12); color: var(--primary); font-weight: 600; }
+.section-nav-tab:focus-visible,
+.section-nav-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+:root[data-theme="dark"] .section-nav-tab.active,
+:root[data-theme="dark"] .section-nav-link.active { color: #93b4ff; }

@@ -2,8 +2,9 @@ import {
   RefreshCw, BookOpen, FileText,
   Activity, Upload, Shield, Globe, BarChart2, Settings,
   Search, ClipboardList, FlaskConical, History,
-  Users, GraduationCap, UserX, Bell, LayoutGrid, ListChecks, LayoutTemplate, Database, Server
+  Users, GraduationCap, UserX, Bell, LayoutGrid, ListChecks, LayoutTemplate, Database, Server, Mountain
 } from 'lucide-react'
+import BeaverIcon from './BeaverIcon'
 
 // Iconos de marca "Bravo Hub" (mockup): el sidebar tiene fondo navy fijo
 // siempre (ver --menu-bg en Layout.css, no reacciona al tema claro/oscuro
@@ -20,7 +21,6 @@ import iconVisor from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/visor
 import iconMatomo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/matomo.svg'
 import iconZabbix from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/zabbix.svg'
 import iconPm2 from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/pm2.svg'
-import iconBebras from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/bebras.svg'
 import iconRags from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/rags.svg'
 import iconInformesOnix from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/informe_onix.svg'
 import iconCodex from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/codex.svg'
@@ -60,8 +60,8 @@ export const menuItems = [
   { type: 'divider' },
 
   // Desarrollos integrados
-  { label: 'Informes (Onix-IA)', icon: iconInformesOnix, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
-  { label: 'Formularios de Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
+  { label: 'Onix-IA', icon: iconInformesOnix, beta: true, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
+  { label: 'Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
   { label: 'C0deX', icon: iconCodex, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
 
   { type: 'divider' },
@@ -69,7 +69,10 @@ export const menuItems = [
   // Enlaces externos (los enlaces configurables del menú se insertan en 'extraLinks')
   { label: 'Hub', icon: iconHub, moduleCode: 'hub', submoduleCode: 'access', href: 'https://hub.pascualbravovirtual.edu.co/login' },
   { label: 'Visor', icon: iconVisor, moduleCode: 'visor', submoduleCode: 'access', href: 'https://seguimiento.pascualbravovirtual.edu.co/' },
-  { label: 'Bebras', icon: iconBebras, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
+  // Sin moduleCode: son páginas de login, visibles para todos los roles
+  { label: 'Campus Pascual', icon: GraduationCap, href: 'https://campus.pascualbravovirtual.edu.co/logincampus/login.html' },
+  { label: 'Campus Regiones', icon: Mountain, href: 'https://regiones.pascualbravovirtual.edu.co/loginRegiones/login.html' },
+  { label: 'Campus Bebras', icon: BeaverIcon, moduleCode: 'bebras', submoduleCode: 'access', href: 'https://bebras.pascualbravovirtual.edu.co/Siadi/public/' },
   { label: 'Encuestas', icon: iconEncuestas, moduleCode: 'surveys', submoduleCode: 'access', href: 'https://encuestas.pascualbravovirtual.edu.co/index.php/admin/authentication/sa/login' },
   { type: 'extraLinks' },
 

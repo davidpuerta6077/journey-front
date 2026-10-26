@@ -171,6 +171,7 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
       <NavLink to={item.path} end={item.path === '/'} className={({ isActive }) => isActive ? 'active' : ''}>
         <MenuIcon item={item} />
         <span>{item.label}</span>
+        {item.beta && <span className="sidebar-badge-beta">Beta</span>}
       </NavLink>
     </li>
   )

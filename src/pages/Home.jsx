@@ -29,7 +29,7 @@ const tools = [
   { name: 'C0deX',  icon: iconCodexClaro,  path: findMenuItem('C0deX')?.path },
   { name: 'Visor',  icon: iconVisorClaro,  href: findMenuItem('Visor')?.href },
   { name: 'Hub',    icon: iconHubClaro,    href: findMenuItem('Hub')?.href },
-  { name: 'Bebras', icon: iconBebrasClaro, href: findMenuItem('Bebras')?.href },
+  { name: 'Campus Bebras', icon: iconBebrasClaro, href: findMenuItem('Campus Bebras')?.href },
 ]
 
 const alerts = Array.from({ length: 4 }, () => ({
