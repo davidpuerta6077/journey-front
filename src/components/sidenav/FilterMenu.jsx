@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { BookOpen, ChevronDown, ExternalLink } from 'lucide-react'
+import { BookOpen, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
 
 // item.icon puede ser un componente de lucide-react (la mayoría) o la URL de
 // un SVG propio de marca importado como asset (ver SideNavItems.jsx) para los
@@ -66,13 +66,22 @@ export const filterMenuByPermissions = (items, allowedModuleCodes, allowedPairs,
   }, [])
 }
 
-export const SidebarItem = ({ item, depth }) => {
+const hasNestedGroups = (item) => !!item.children?.some(c => c.children)
+
+export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
 
   // El submenú solo abre/cierra con clic (antes también abría con hover,
   // pero el salto de layout al pasar el mouse se veía mal).
   const [open, setOpen] = useState(false)
 
-  const handleToggleClick = () => setOpen(o => !o)
+  // Los ítems de primer nivel con subgrupos abren el panel lateral (MegaMenuPanel)
+  // en vez de desplegarse en acordeón
+  const usaPanel = !!onOpenMega && hasNestedGroups(item)
+  const megaActivo = usaPanel && megaLabel === item.label
+  const handleToggleClick = () => usaPanel ? onOpenMega(megaActivo ? null : item) : setOpen(o => !o)
+  const chevron = usaPanel
+    ? <ChevronRight size={14} className="chevron" />
+    : <ChevronDown size={14} className={open ? 'chevron open' : 'chevron'} />
 
   if (item.type === 'divider') {
     return <li><div className="sidebar-section-divider" /></li>
@@ -110,7 +119,7 @@ export const SidebarItem = ({ item, depth }) => {
     if (item.path) {
       return (
         <li>
-          <div className={`sidebar-toggle sidebar-group-row ${item.nexoApp ? 'nexo-toggle' : ''}`}>
+          <div className={`sidebar-toggle sidebar-group-row ${item.nexoApp ? 'nexo-toggle' : ''} ${megaActivo ? 'mega-active' : ''}`}>
             <NavLink to={item.path} end className={({ isActive }) => `sidebar-group-link${isActive ? ' active' : ''}`}>
               <MenuIcon item={item} />
               <span>{item.label}</span>
@@ -118,13 +127,13 @@ export const SidebarItem = ({ item, depth }) => {
             <button
               className="sidebar-chevron-btn"
               onClick={handleToggleClick}
-              aria-expanded={open}
+              aria-expanded={usaPanel ? megaActivo : open}
               aria-label={`Mostrar submenú de ${item.label}`}
             >
-              <ChevronDown size={14} className={open ? 'chevron open' : 'chevron'} />
+              {chevron}
             </button>
           </div>
-          {open && (
+          {open && !usaPanel && (
             <ul className="submenu">
               {item.children.map((child, i) => (
                 <SidebarItem key={i} item={child} depth={depth + 1} />
@@ -138,15 +147,15 @@ export const SidebarItem = ({ item, depth }) => {
     return (
       <li>
         <button
-          className={`sidebar-toggle ${item.nexoApp ? 'nexo-toggle' : ''}`}
+          className={`sidebar-toggle ${item.nexoApp ? 'nexo-toggle' : ''} ${megaActivo ? 'mega-active' : ''}`}
           onClick={handleToggleClick}
-          aria-expanded={open}
+          aria-expanded={usaPanel ? megaActivo : open}
         >
           <MenuIcon item={item} />
           <span>{item.label}</span>
-          <ChevronDown size={14} className={open ? 'chevron open' : 'chevron'} />
+          {chevron}
         </button>
-        {open && (
+        {open && !usaPanel && (
           <ul className="submenu">
             {item.children.map((child, i) => (
               <SidebarItem key={i} item={child} depth={depth + 1} />

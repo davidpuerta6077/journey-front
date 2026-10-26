@@ -533,3 +533,157 @@
   width: 100%;
 }
 .logout-btn:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+/* ─── PANEL DE SUBMENÚ (MegaMenuPanel.jsx) ─── */
+/* Ítems con subgrupos (Nexo, Administrador) abren un panel al lado del sidebar
+   con cada subgrupo en columna, en vez del acordeón. */
+.sidebar .mega-active,
+.sidebar .mega-active:hover {
+  background: rgba(91,132,255,0.28) !important;
+  box-shadow: inset 3px 0 0 #7dd3fc; /* barra lateral: distingue "panel abierto" de "página actual" */
+  color: #fff;
+}
+.mega-backdrop {
+  position: fixed;
+  inset: 64px 0 0 0;
+  z-index: 85;
+  background: rgba(15,23,42,0.35);
+}
+.mega-panel {
+  position: fixed;
+  top: 64px;
+  bottom: 0;
+  left: 260px;
+  z-index: 89; /* debajo del sidebar (90) para que, en modo mini con hover, el menú quede encima */
+  /* El ancho se ajusta al número de columnas (ver --mega-cols en .mega-grid) */
+  max-width: calc(100vw - 260px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-right: 1px solid var(--border);
+  box-shadow: 8px 0 24px rgba(0,0,0,0.18);
+  animation: mega-in 0.18s ease;
+}
+.sidebar-slot-mini .mega-panel {
+  left: 52px;
+  max-width: calc(100vw - 52px);
+}
+@keyframes mega-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+.mega-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.mega-header-text { display: flex; flex-direction: column; gap: 4px; }
+.mega-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.mega-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: fit-content;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+.mega-home-link:hover { text-decoration: underline; }
+.mega-close {
+  display: flex;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.mega-close:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.mega-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--mega-cols, 3), 200px);
+  gap: 24px 32px;
+}
+.mega-section ul { list-style: none; margin: 0; padding: 0; }
+/* Sangría = ícono (28px) + gap (8px): el texto de los links queda alineado con el del título */
+.mega-section ul { display: flex; flex-direction: column; gap: 2px; padding-left: 36px; }
+.mega-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.mega-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(91,132,255,0.12);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.mega-section-icon img { width: 16px; height: 16px; }
+.mega-link {
+  display: block;
+  margin-left: -10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.mega-link:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.mega-link.active { background: rgba(91,132,255,0.12); color: var(--primary); font-weight: 600; }
+.mega-link-disabled { color: var(--text-muted); cursor: default; }
+.mega-link-disabled:hover { background: transparent; color: var(--text-muted); }
+.mega-link:focus-visible,
+.mega-home-link:focus-visible,
+.mega-close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mega-panel { animation: none; }
+}
+/* --primary puede venir de Apariencia (navy de marca), ilegible sobre el fondo oscuro */
+:root[data-theme="dark"] .mega-section-icon,
+:root[data-theme="dark"] .mega-home-link,
+:root[data-theme="dark"] .mega-link.active { color: #93b4ff; }
+:root[data-theme="dark"] .mega-section-icon { background: rgba(147,180,255,0.14); }
+
+/* Pantallas medianas: 3 columnas no caben al lado del sidebar */
+@media (min-width: 769px) and (max-width: 1080px) {
+  .mega-grid { grid-template-columns: repeat(var(--mega-cols-md, 2), 200px); }
+}
+
+/* En móvil el sidebar ya ocupa toda la pantalla: el panel lo cubre completo */
+@media (max-width: 768px) {
+  .mega-backdrop { display: none; }
+  .mega-panel,
+  .sidebar-slot-mini .mega-panel {
+    left: 0;
+    width: 100%;
+    max-width: none;
+    z-index: 95;
+    padding: 18px 16px;
+  }
+  .mega-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .mega-link { padding: 10px; font-size: 1rem; }
+}
