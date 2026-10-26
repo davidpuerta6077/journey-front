@@ -6,6 +6,7 @@ import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Be
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import MegaMenuPanel from './MegaMenuPanel'
+import SectionNav from './SectionNav'
 import { fetchSettings } from '../../services/settings/fetchSettings'
 import { applyAppearance } from '../../services/settings/applyAppearance'
 import { fetchActiveMenuLinks } from '../../services/settings/fetchActiveMenuLinks'
@@ -100,6 +101,9 @@ const Layout = () => {
   const megaItem = mega?.path === location.pathname ? mega.item : null
   const setMegaItem = useCallback(item => setMega(item && { item, path: location.pathname }), [location.pathname])
   const closeMega = useCallback(() => setMega(null), [])
+  // Dentro de una sección con subgrupos (Nexo, Administrador) se muestra su barra de navegación
+  const contienePath = (item, path) => item.path === path || !!item.children?.some(c => contienePath(c, path))
+  const seccionActual = sidebarMenu.find(i => i.children?.some(c => c.children) && contienePath(i, location.pathname))
   const closeMenusOnLink = (e) => {
     if (e.target.closest('a')) { setMobileMenuOpen(false); setMegaItem(null) }
   }
@@ -330,6 +334,7 @@ const Layout = () => {
           {megaItem && <MegaMenuPanel key={megaItem.label} item={megaItem} onClose={closeMega} onLinkClick={closeMenusOnLink} />}
         </div>
         <main className="main-content">
+          {seccionActual && <SectionNav key={seccionActual.label} item={seccionActual} />}
           <Outlet />
         </main>
       </div>
