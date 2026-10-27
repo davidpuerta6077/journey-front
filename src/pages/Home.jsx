@@ -8,8 +8,6 @@ import { fetchSettings } from '../services/settings/fetchSettings'
 import { usePermissions } from '../services/PermissionsContext'
 import { menuItems } from '../components/sidenav/SideNavItems'
 import { filterMenuByPermissions } from '../components/sidenav/FilterMenu'
-import fondoBanner from '../assets/Recursos/Banner/fondo-banner.png'
-import portatil from '../assets/Recursos/Banner/portatil.png'
 // Tarjetas de "Herramientas frecuentes": fondo blanco, así que usan el set
 // "Para fondo claros" (mismo criterio que el logo positivo del nav).
 import iconNexoClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/nexo.svg'
@@ -71,22 +69,33 @@ export default function Home() {
       .catch(() => {})
   }, [])
 
+  const [texto, autor] = frase.split(/\s*By:\s*/i)
+
   return (
     <div className="hub-home">
-      <section className="hub-welcome" style={{ backgroundImage: `url(${fondoBanner})` }}>
+      <section className="hub-welcome">
         <div className="hub-welcome-text">
           <h1>{saludoPorHora()}, {userName}</h1>
-          <p>{frase}</p>
+          <blockquote className="hub-welcome-quote">
+            <p>{texto.trim()}</p>
+            {autor && <span>— {autor.trim()}</span>}
+          </blockquote>
         </div>
-        <img className="hub-welcome-illustration" src={portatil} alt="" />
       </section>
 
       <aside className="hub-alerts">
         <h2 className="hub-title">Alertas y notificaciones</h2>
+        {/* Gradiente compartido por los íconos lucide de las alertas (mismos colores que .hub-tool-icon) */}
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <linearGradient id="hub-icon-grad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0" stopColor="#5b7cfa" />
+            <stop offset="1" stopColor="#9b6cff" />
+          </linearGradient>
+        </svg>
         <ul className="hub-alert-list">
           {alerts.map((a, i) => (
             <li key={i} className="hub-alert-item">
-              <span className="hub-alert-icon"><Bell size={14} /></span>
+              <span className="hub-alert-icon"><Bell size={20} stroke="url(#hub-icon-grad)" /></span>
               <div>
                 <strong>{a.title}</strong>
                 <span>{a.text}</span>
@@ -102,7 +111,7 @@ export default function Home() {
           {toolsVisibles.map((t, i) => {
             const content = (
               <>
-                <span className="hub-tool-icon"><img src={t.icon} alt="" /></span>
+                <span className="hub-tool-icon" style={{ '--icon': `url("${t.icon}")` }} />
                 {t.name}
               </>
             )

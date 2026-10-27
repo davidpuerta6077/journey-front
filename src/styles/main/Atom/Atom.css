@@ -3,7 +3,7 @@
 .hub-atom { grid-column: 1 / span 12; }
 
 .atom-card {
-  background: var(--card-bg, #fff);
+  background: var(--bg-surface, #fff);
   border-radius: 16px;
   padding: 20px 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
@@ -39,7 +39,7 @@
 .atom-count-chip {
   display: flex; flex-direction: column; align-items: center;
   padding: 6px 14px; border-radius: 10px;
-  background: var(--bg-soft, #f1f5f9);
+  background: var(--bg-surface-alt, #f1f5f9);
   min-width: 64px;
 }
 .atom-count-chip strong { font-size: 1.1rem; line-height: 1.1; color: var(--hub-text, #1e293b); }
@@ -73,12 +73,12 @@
 }
 .atom-filters select, .atom-filters input[type="date"] {
   padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border, #e2e8f0);
-  font-size: .85rem; background: var(--card-bg, #fff); color: inherit;
+  font-size: .85rem; background: var(--bg-surface, #fff); color: inherit;
 }
 
 .atom-bulkbar {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  background: var(--bg-soft, #f1f5f9);
+  background: var(--bg-surface-alt, #f1f5f9);
   border-radius: 10px;
   padding: 8px 14px;
   margin-bottom: 10px;
@@ -117,7 +117,7 @@
 .atom-subtask-row.done span { text-decoration: line-through; color: var(--text-secondary, #94a3b8); }
 
 .atom-comments-list { display: flex; flex-direction: column; gap: 10px; max-height: 220px; overflow-y: auto; margin-bottom: 10px; }
-.atom-comment { background: var(--bg-soft, #f1f5f9); border-radius: 10px; padding: 8px 12px; font-size: .85rem; }
+.atom-comment { background: var(--bg-surface-alt, #f1f5f9); border-radius: 10px; padding: 8px 12px; font-size: .85rem; }
 .atom-comment strong { display: block; font-size: .8rem; color: var(--hub-text, #1e293b); }
 .atom-comment time { font-size: .7rem; color: var(--text-secondary, #94a3b8); }
 
