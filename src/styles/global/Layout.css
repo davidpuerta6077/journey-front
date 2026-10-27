@@ -114,13 +114,19 @@
 }
 .navbar-bell-dot {
   position: absolute;
-  top: 6px;
-  right: 7px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+  top: -6px;
+  left: 60%;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
   background: var(--danger);
   border: 1.5px solid var(--bg-surface);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
 }
 .notif-dropdown {
   position: absolute;
@@ -183,6 +189,7 @@
 .notif-item:hover { background: var(--bg-surface-hover); }
 .notif-item-unread { background: var(--bg-surface-alt); }
 .notif-item-title { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
+.notif-item-icon { flex: none; margin-right: 6px; vertical-align: -2px; color: var(--text-secondary); }
 .notif-item-body { font-size: 0.8rem; color: var(--text-secondary); }
 .notif-item-date { font-size: 0.72rem; color: var(--text-muted); }
 

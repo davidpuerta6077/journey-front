@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck } from 'lucide-react'
+import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck, ClipboardList, UserMinus, CalendarClock, CircleCheck, CircleX, MessageSquare, AtSign, ListChecks, Cake, TriangleAlert, Clock, ChartColumn, Hourglass } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import MegaMenuPanel from './MegaMenuPanel'
@@ -19,6 +19,19 @@ import logoNegativo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/br
 
 // Debe coincidir con el breakpoint móvil del sidebar en Layout.css
 const MOBILE_QUERY = '(max-width: 768px)'
+
+// Los títulos de notificación vienen con un emoji al inicio (ver journey-api/api/notifications y api/atom):
+// se quita y se muestra un ícono de un solo color en su lugar
+const NOTIF_ICONS = {
+  '📋': ClipboardList, '🚫': UserMinus, '🗓': CalendarClock, '✅': CircleCheck, '❌': CircleX,
+  '💬': MessageSquare, '📣': AtSign, '☑': ListChecks, '🎉': Cake, '⚠': TriangleAlert,
+  '⏰': Clock, '📊': ChartColumn, '💤': Hourglass,
+}
+const parseNotifTitle = (title = '') => {
+  const m = title.match(/^(\p{Extended_Pictographic})️?\s*/u)
+  if (!m) return { Icon: Bell, text: title }
+  return { Icon: NOTIF_ICONS[m[1]] || Bell, text: title.slice(m[0].length) }
+}
 
 
 const Layout = () => {
@@ -240,7 +253,7 @@ const Layout = () => {
               onClick={toggleNotif}
             >
               <Bell size={18} />
-              {unreadCount > 0 && <span className="navbar-bell-dot" />}
+              {unreadCount > 0 && <span className="navbar-bell-dot">{unreadCount > 99 ? '99+' : unreadCount}</span>}
             </button>
             {notifOpen && (
               <div className="notif-dropdown">
@@ -257,18 +270,21 @@ const Layout = () => {
                   {!loadingList && notifications.length === 0 && (
                     <li className="notif-empty">No tienes notificaciones</li>
                   )}
-                  {!loadingList && notifications.map(n => (
+                  {!loadingList && notifications.map(n => {
+                    const { Icon, text } = parseNotifTitle(n.title)
+                    return (
                     <li key={n.id}>
                       <button
                         className={`notif-item ${!n.read_at ? 'notif-item-unread' : ''}`}
                         onClick={() => handleNotifClick(n)}
                       >
-                        <span className="notif-item-title">{n.title}</span>
+                        <span className="notif-item-title"><Icon size={14} className="notif-item-icon" />{text}</span>
                         {n.body && <span className="notif-item-body">{n.body}</span>}
                         <span className="notif-item-date">{new Date(n.created_at).toLocaleString()}</span>
                       </button>
                     </li>
-                  ))}
+                    )
+                  })}
                 </ul>
               </div>
             )}
