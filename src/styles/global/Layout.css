@@ -988,3 +988,12 @@
 /* Panel de submenú (Nexo, Administrador): títulos en el azul oscuro de marca, como el resto */
 .mega-title, .mega-section-title { color: #2d4375; }
 :root[data-theme="dark"] .mega-title, :root[data-theme="dark"] .mega-section-title { color: #b9cdf7; }
+
+/* ─── Títulos de página en toda la app: azul oscuro de marca ───
+   main.main-content (0,1,2) gana a las reglas propias de cada página (.nexo-home-header h1,
+   .sync-page-header h2...). En tema oscuro el saludo del Home conserva su color claro
+   (:root[data-theme="dark"] .hub-welcome h1 es más específica). Login, formulario público
+   y el editor de C0deX quedan fuera porque no viven dentro de .main-content. */
+:root { --titulo: #2d4375; }
+:root[data-theme="dark"] { --titulo: #b9cdf7; }
+main.main-content :is(h1, h2) { color: var(--titulo); letter-spacing: -0.01em; }
