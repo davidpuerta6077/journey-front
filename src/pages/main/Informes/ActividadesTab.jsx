@@ -58,33 +58,32 @@ export default function ActividadesTab() {
   }
 
   return (
-    <div>
-      <div className="onix-toolbar">
-        <h3>Actividades del contrato</h3>
-        <button className="btn-primary" onClick={() => abrirForm(null)}><Plus size={16} /> Nueva actividad</button>
-      </div>
+    <section className="onix-seccion" aria-labelledby="config-actividades">
+      <h4 id="config-actividades">Actividades de tu contrato</h4>
+      <p className="onix-seccion-ayuda">Las obligaciones de tu contrato. Se crean una vez y cada mes registras en ellas lo que hiciste; el número es el orden en el informe.</p>
 
       {loading ? (
         <div className="loading-box"><span className="loader"></span>Cargando actividades...</div>
       ) : actividades.length === 0 ? (
-        <p className="onix-vacio">Aún no tienes actividades. Crea las actividades de tu contrato (una vez); luego registra cada mes sus subactividades en "Mi mes".</p>
+        <p className="onix-vacio-texto">Aún no tienes actividades. Agrega las de tu contrato y luego registra cada mes lo que hiciste en "Mi mes".</p>
       ) : (
-        <div className="onix-grid">
+        <ol className="onix-actividades">
           {actividades.map((act, i) => (
-            <div key={act.id} className="onix-card onix-actividad">
-              <div className="onix-actividad-abrir">
-                <span className="onix-num">Actividad {i + 1}</span>
-                <h4>{act.nombre}</h4>
-                <p>{act.descripcion}</p>
-              </div>
-              <div className="action-btns">
-                <button className="btn-icon btn-icon-edit" title="Editar" aria-label="Editar actividad" onClick={() => abrirForm(act)}><Pencil size={15} /></button>
-                <button className="btn-icon btn-icon-delete" title="Eliminar" aria-label="Eliminar actividad" onClick={() => eliminar(act)}><Trash2 size={15} /></button>
-              </div>
-            </div>
+            <li key={act.id} className="onix-actividad-fila onix-actividad-config">
+              <span className="onix-act-num" aria-hidden="true">{i + 1}</span>
+              <span className="onix-actividad-info">
+                <span className="onix-actividad-nombre">{act.nombre}</span>
+                {act.descripcion && <span className="onix-actividad-desc">{act.descripcion}</span>}
+              </span>
+              <span className="onix-fila-acciones">
+                <button type="button" className="onix-texto-btn" onClick={() => abrirForm(act)} aria-label={`Editar ${act.nombre}`}><Pencil size={15} /> Editar</button>
+                <button type="button" className="onix-texto-btn onix-texto-peligro" onClick={() => eliminar(act)} aria-label={`Eliminar ${act.nombre}`}><Trash2 size={15} /> Eliminar</button>
+              </span>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
+      <button type="button" className="btn-secondary onix-agregar" onClick={() => abrirForm(null)}><Plus size={16} /> Agregar actividad</button>
 
       {editando && (
         <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setEditando(null)}>
@@ -114,6 +113,6 @@ export default function ActividadesTab() {
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }

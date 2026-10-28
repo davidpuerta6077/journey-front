@@ -26,9 +26,10 @@ const SectionNav = ({ item }) => {
     }
   }, [abierto])
 
-  // Los íconos SVG del sidebar son para fondo oscuro: si algún hijo usa uno, la
-  // barra va sin íconos para que todas las pestañas se vean iguales
-  const conIconos = item.children.every(c => typeof c.icon !== 'string')
+  // Los íconos SVG del sidebar son para fondo oscuro: aquí se usa navIcon si el hijo
+  // lo trae; si aún queda alguno en SVG, la barra va sin íconos para que todas se vean iguales
+  const iconoDe = (c) => c.navIcon || c.icon
+  const conIconos = item.children.every(c => typeof iconoDe(c) !== 'string')
 
   return (
     <nav ref={navRef} className="section-nav" aria-label={`Navegación de ${item.label}`}>
@@ -38,7 +39,7 @@ const SectionNav = ({ item }) => {
         </NavLink>
       )}
       {item.children.map(child => {
-        const Icon = conIconos ? child.icon : null
+        const Icon = conIconos ? iconoDe(child) : null
         if (!child.children) {
           return (
             <NavLink key={child.label} to={child.path} end className={({ isActive }) => `section-nav-tab${isActive ? ' active' : ''}`}>

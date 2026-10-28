@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from 'react-oidc-context'
-import { Bell } from 'lucide-react'
 import '../styles/global/Global.css'
 import '../styles/global/Home.css'
 import { fetchSettings } from '../services/settings/fetchSettings'
@@ -11,11 +10,13 @@ import { filterMenuByPermissions } from '../components/sidenav/FilterMenu'
 // Tarjetas de "Herramientas frecuentes": fondo blanco, así que usan el set
 // "Para fondo claros" (mismo criterio que el logo positivo del nav).
 import iconNexoClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/nexo.svg'
-import iconCodexClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/codex_1.svg'
+// C0deX es un constructor de páginas: ícono de plantilla de página en vez del birrete del set
+import iconCodexClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/codex_constructor.svg'
 import iconVisorClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/visor_1.svg'
 import iconHubClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/hub_1.svg'
 import iconBebrasClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/bebras_1.svg'
 import AtomWidget from '../components/atom/AtomWidget'
+import HomeAlertas from './HomeAlertas'
 
 /* ---------- Herramientas frecuentes ----------
    Mismo destino (path/href) que ya tiene cada módulo en el sidebar
@@ -29,11 +30,6 @@ const tools = [
   { name: 'Proyectos', icon: iconHubClaro, href: findMenuItem('Proyectos')?.href },
   { name: 'Campus Bebras', icon: iconBebrasClaro, href: findMenuItem('Campus Bebras')?.href },
 ]
-
-const alerts = Array.from({ length: 4 }, () => ({
-  title: 'Lorem ipsum dolor sit amet',
-  text: 'consectetur adipiscing elit',
-}))
 
 /* ---------- Página ---------- */
 const FRASE_DEFAULT = 'Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod'
@@ -83,27 +79,7 @@ export default function Home() {
         </div>
       </section>
 
-      <aside className="hub-alerts">
-        <h2 className="hub-title">Alertas y notificaciones</h2>
-        {/* Gradiente compartido por los íconos lucide de las alertas (mismos colores que .hub-tool-icon) */}
-        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-          <linearGradient id="hub-icon-grad" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0" stopColor="#5b7cfa" />
-            <stop offset="1" stopColor="#9b6cff" />
-          </linearGradient>
-        </svg>
-        <ul className="hub-alert-list">
-          {alerts.map((a, i) => (
-            <li key={i} className="hub-alert-item">
-              <span className="hub-alert-icon"><Bell size={20} stroke="url(#hub-icon-grad)" /></span>
-              <div>
-                <strong>{a.title}</strong>
-                <span>{a.text}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </aside>
+      <HomeAlertas conOnix={etiquetasPermitidas.has('Onix-IA')} conNexo={etiquetasPermitidas.has('Nexo')} />
 
       <section className="hub-tools">
         <h2 className="hub-title">Herramientas frecuentes</h2>

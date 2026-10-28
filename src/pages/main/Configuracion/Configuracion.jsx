@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Pencil, Trash2, Plus } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Pencil, Trash2, Plus, ChevronDown, SlidersHorizontal, RefreshCw, FileText, Palette, House, Menu, Server, GraduationCap, School, AtSign, Sparkles, CalendarDays } from 'lucide-react'
 import { fetchSettings } from '../../../services/settings/fetchSettings'
 import { saveSetting } from '../../../services/settings/saveSetting'
 import { uploadLogo } from '../../../services/settings/uploadLogo'
@@ -715,31 +715,45 @@ function TabDominioCorreo() {
 // herramienta nueva (Formularios de Asistencia pendiente) trae su propio grupo
 // en vez de sumarse a una lista plana de tabs sin relación entre sí.
 const GRUPOS = [
-  { key: 'general', label: 'General', tabs: [
-      { key: 'apariencia', label: 'Apariencia' },
-      { key: 'home',       label: 'Home' },
-      { key: 'menu',        label: 'Menú' },
-      { key: 'sistema',     label: 'Sistema' },
+  { key: 'general', label: 'General', Icon: SlidersHorizontal, tabs: [
+      { key: 'apariencia', label: 'Apariencia', Icon: Palette, desc: 'Logo, favicon, colores y tipografía de Bravo Hub.' },
+      { key: 'home',       label: 'Home', Icon: House, desc: 'La frase de bienvenida que ve cada persona al entrar.' },
+      { key: 'menu',        label: 'Menú', Icon: Menu, desc: 'Accesos a sitios externos que aparecen en el menú lateral.' },
+      { key: 'sistema',     label: 'Sistema', Icon: Server, desc: 'Zona horaria, duración de la sesión y caché de pantallas.' },
   ]},
-  { key: 'nexo', label: 'Nexo', tabs: [
-      { key: 'academico',      label: 'Académico' },
-      { key: 'moodle',         label: 'Moodle' },
-      { key: 'dominio_correo', label: 'Dominio de correo' },
+  { key: 'nexo', label: 'Nexo', Icon: RefreshCw, tabs: [
+      { key: 'academico',      label: 'Académico', Icon: GraduationCap, desc: 'Periodo académico vigente y cierre de semestre.' },
+      { key: 'moodle',         label: 'Moodle', Icon: School, desc: 'Conexión con el webservice de Moodle.' },
+      { key: 'dominio_correo', label: 'Dominio de correo', Icon: AtSign, desc: 'Dominio de correo institucional que usa Nexo.' },
   ]},
-  { key: 'onix', label: 'Informes (Onix-IA)', tabs: [
-      { key: 'ia',     label: 'Inteligencia artificial' },
-      { key: 'google', label: 'Google' },
+  { key: 'onix', label: 'Informes (Onix-IA)', Icon: FileText, tabs: [
+      { key: 'ia',     label: 'Inteligencia artificial', Icon: Sparkles, desc: 'Proveedor, modelo e instrucciones que usa Onix para redactar los informes.' },
+      { key: 'google', label: 'Google', Icon: CalendarDays, desc: 'Credenciales de Google para traer Calendar y correos enviados a Onix.' },
   ]},
 ]
 
+// Una sola barra (como la de Nexo): cada grupo abre un desplegable con sus secciones.
 export default function Configuracion() {
   const [grupo, setGrupo] = useState(GRUPOS[0].key)
   const [tab, setTab] = useState(GRUPOS[0].tabs[0].key)
+  const [abierto, setAbierto] = useState(null)
+  const navRef = useRef(null)
   const grupoActivo = GRUPOS.find(g => g.key === grupo) || GRUPOS[0]
+  const tabActiva = grupoActivo.tabs.find(t => t.key === tab) || grupoActivo.tabs[0]
 
-  const handleGrupoChange = (g) => {
+  useEffect(() => {
+    if (!abierto) return
+    const cerrar = (e) => { if (!navRef.current?.contains(e.target)) setAbierto(null) }
+    const esc = (e) => { if (e.key === 'Escape') setAbierto(null) }
+    document.addEventListener('mousedown', cerrar)
+    document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', cerrar); document.removeEventListener('keydown', esc) }
+  }, [abierto])
+
+  const elegir = (g, t) => {
     setGrupo(g.key)
-    setTab(g.tabs[0].key)
+    setTab(t.key)
+    setAbierto(null)
   }
 
   return (
@@ -748,31 +762,53 @@ export default function Configuracion() {
         <h2>Configuración</h2>
       </div>
 
-      <div className="novedades-tabs config-grupo-tabs" role="tablist" aria-label="Herramienta">
-        {GRUPOS.map(g => (
-          <button key={g.key} type="button" role="tab" aria-selected={grupo === g.key} className={grupo === g.key ? 'active' : ''} onClick={() => handleGrupoChange(g)}>
-            {g.label}
-          </button>
-        ))}
-      </div>
+      <nav ref={navRef} className="section-nav" aria-label="Configuración">
+        {GRUPOS.map(g => {
+          const estaAbierto = abierto === g.key
+          return (
+            <div key={g.key} className="section-nav-group">
+              <button type="button" className={`section-nav-tab${grupo === g.key ? ' active' : ''}${estaAbierto ? ' open' : ''}`}
+                aria-expanded={estaAbierto} aria-haspopup="true" onClick={() => setAbierto(estaAbierto ? null : g.key)}>
+                <g.Icon size={15} aria-hidden="true" /> {g.label}
+                <ChevronDown size={14} className={estaAbierto ? 'chevron open' : 'chevron'} aria-hidden="true" />
+              </button>
+              {estaAbierto && (
+                <ul className="section-nav-dropdown">
+                  {g.tabs.map(t => (
+                    <li key={t.key}>
+                      <button type="button" className={`section-nav-link config-nav-link${grupo === g.key && tab === t.key ? ' active' : ''}`} onClick={() => elegir(g, t)}>
+                        <t.Icon size={15} aria-hidden="true" /> {t.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )
+        })}
+      </nav>
 
-      <div className="novedades-tabs" role="tablist" aria-label="Categoría de configuración">
-        {grupoActivo.tabs.map(t => (
-          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={tab === t.key ? 'active' : ''} onClick={() => setTab(t.key)}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'apariencia' && <TabApariencia />}
-      {tab === 'home' && <TabHome />}
-      {tab === 'menu' && <TabMenu />}
-      {tab === 'sistema' && <TabSistema />}
-      {tab === 'academico' && <TabAcademico />}
-      {tab === 'moodle' && <TabMoodle />}
-      {tab === 'dominio_correo' && <TabDominioCorreo />}
-      {tab === 'ia' && <TabIA />}
-      {tab === 'google' && <TabGoogle />}
+      <section className="config-seccion" aria-labelledby="config-seccion-titulo">
+        <header className="config-seccion-cabeza">
+          <span className="config-seccion-icono" aria-hidden="true"><tabActiva.Icon size={20} /></span>
+          <div>
+            <span className="config-seccion-ruta">{grupoActivo.label}</span>
+            <h3 id="config-seccion-titulo">{tabActiva.label}</h3>
+            <p>{tabActiva.desc}</p>
+          </div>
+        </header>
+        <div className="config-seccion-cuerpo">
+          {tab === 'apariencia' && <TabApariencia />}
+          {tab === 'home' && <TabHome />}
+          {tab === 'menu' && <TabMenu />}
+          {tab === 'sistema' && <TabSistema />}
+          {tab === 'academico' && <TabAcademico />}
+          {tab === 'moodle' && <TabMoodle />}
+          {tab === 'dominio_correo' && <TabDominioCorreo />}
+          {tab === 'ia' && <TabIA />}
+          {tab === 'google' && <TabGoogle />}
+        </div>
+      </section>
     </div>
   )
 }

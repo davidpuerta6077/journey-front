@@ -118,8 +118,9 @@
   flex-direction: column;
   gap: 10px;
   margin-top: 4px;
-  padding-left: 12px;
-  border-left: 2px solid var(--border-soft);
+  padding: 10px 12px;
+  background: var(--bg-surface-alt);
+  border-radius: 8px;
 }
 .log-detail-sublist .log-detail-grid { gap: 6px 16px; }
 
@@ -187,7 +188,6 @@
 .expand-content {
   background: var(--bg-surface-alt);
   padding: 16px 24px;
-  border-left: 3px solid #5b84ff;
   border-bottom: 1px solid var(--border-soft);
 }
 .expand-grid {

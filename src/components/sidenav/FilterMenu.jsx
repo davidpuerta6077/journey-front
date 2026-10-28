@@ -68,7 +68,7 @@ export const filterMenuByPermissions = (items, allowedModuleCodes, allowedPairs,
 
 const hasNestedGroups = (item) => !!item.children?.some(c => c.children)
 
-export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
+export const SidebarItem = ({ item, depth, onOpenMega, megaLabel, onExpandir }) => {
 
   // El submenú solo abre/cierra con clic (antes también abría con hover,
   // pero el salto de layout al pasar el mouse se veía mal).
@@ -78,7 +78,12 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
   // en vez de desplegarse en acordeón
   const usaPanel = !!onOpenMega && hasNestedGroups(item)
   const megaActivo = usaPanel && megaLabel === item.label
-  const handleToggleClick = () => usaPanel ? onOpenMega(megaActivo ? null : item) : setOpen(o => !o)
+  // Con el sidebar encogido el acordeón no tiene espacio: se expande el menú y se abre (onExpandir solo llega en modo mini)
+  const handleToggleClick = () => {
+    if (usaPanel) return onOpenMega(megaActivo ? null : item)
+    if (onExpandir) { onExpandir(); setOpen(true); return }
+    setOpen(o => !o)
+  }
   const chevron = usaPanel
     ? <ChevronRight size={14} className="chevron" />
     : <ChevronDown size={14} className={open ? 'chevron open' : 'chevron'} />
@@ -91,7 +96,7 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
     const nuevaPestana = item.nueva_pestana !== false
     return (
       <li>
-        <a href={item.href} target={nuevaPestana ? '_blank' : '_self'} rel={nuevaPestana ? 'noopener noreferrer' : undefined} className="sidebar-external">
+        <a href={item.href} target={nuevaPestana ? '_blank' : '_self'} rel={nuevaPestana ? 'noopener noreferrer' : undefined} className="sidebar-external" title={item.label}>
           <MenuIcon item={item} />
           <span>{item.label}</span>
           <ExternalLink size={11} style={{ marginLeft: 'auto', opacity: 0.4 }} />
@@ -103,7 +108,7 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
   if (item.comingSoon) {
     return (
       <li>
-        <span className="sidebar-disabled">
+        <span className="sidebar-disabled" title={`${item.label} (próximamente)`}>
           <MenuIcon item={item} />
           <span>{item.label}</span>
           <span style={{ marginLeft: 'auto', fontSize: '10px' }}>Próx.</span>
@@ -120,7 +125,7 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
       return (
         <li>
           <div className={`sidebar-toggle sidebar-group-row ${item.nexoApp ? 'nexo-toggle' : ''} ${megaActivo ? 'mega-active' : ''}`}>
-            <NavLink to={item.path} end className={({ isActive }) => `sidebar-group-link${isActive ? ' active' : ''}`}>
+            <NavLink to={item.path} end title={item.label} className={({ isActive }) => `sidebar-group-link${isActive ? ' active' : ''}`}>
               <MenuIcon item={item} />
               <span>{item.label}</span>
             </NavLink>
@@ -148,6 +153,7 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
       <li>
         <button
           className={`sidebar-toggle ${item.nexoApp ? 'nexo-toggle' : ''} ${megaActivo ? 'mega-active' : ''}`}
+          title={item.label}
           onClick={handleToggleClick}
           aria-expanded={usaPanel ? megaActivo : open}
         >
@@ -168,7 +174,7 @@ export const SidebarItem = ({ item, depth, onOpenMega, megaLabel }) => {
 
   return (
     <li>
-      <NavLink to={item.path} end={item.path === '/'} className={({ isActive }) => isActive ? 'active' : ''}>
+      <NavLink to={item.path} end={item.path === '/'} title={item.label} className={({ isActive }) => isActive ? 'active' : ''}>
         <MenuIcon item={item} />
         <span>{item.label}</span>
         {item.beta && <span className="sidebar-badge-beta">Beta</span>}

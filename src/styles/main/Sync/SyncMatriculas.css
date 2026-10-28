@@ -139,7 +139,6 @@
 .expand-content {
   background: var(--bg-surface-alt);
   padding: 16px 24px;
-  border-left: 3px solid #5b84ff;
   border-bottom: 1px solid var(--border-soft);
 }
 .expand-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

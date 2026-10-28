@@ -107,20 +107,35 @@
   color: #374151;
 }
 
-/* Alertas */
-.hub-alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+/* Alertas (HomeAlertas.jsx): cada una es un botón que lleva a su sistema */
+.hub-alert-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hub-alert-list li + li { border-top: 1px solid var(--border-softer, var(--border-soft)); }
 .hub-alert-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 6px 0;
-  font-size: .75rem;
-  color: var(--hub-text);
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 4px;
+  background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: var(--hub-text);
+  transition: background .15s;
 }
-.hub-alert-item div { display: flex; flex-direction: column; gap: 2px; }
-.hub-alert-item span:not(.hub-alert-icon) { color: var(--text-secondary); }
+.hub-alert-item:hover:not(:disabled) { background: var(--bg-surface-hover); }
+.hub-alert-item:disabled { cursor: default; }
+.hub-alert-item:focus-visible { outline: 2px solid #5b7cfa; outline-offset: -2px; }
+.hub-alert-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hub-alert-texto strong { font-size: .85rem; color: var(--hub-text); }
+.hub-alert-texto span { font-size: .78rem; line-height: 1.4; color: var(--text-secondary); }
 .hub-alert-icon {
-  display: grid; place-items: center;
-  flex: none;
+  flex: none; width: 34px; height: 34px; display: grid; place-items: center;
+  background: linear-gradient(to right top, #5b7cfa1f, #9b6cff2e);
 }
+.hub-alert-item.peligro .hub-alert-icon { background: #fee2e2; }
+.hub-alert-item.peligro .hub-alert-icon svg.lucide { stroke: #dc2626; }
+.hub-alert-item.peligro strong { color: #dc2626; }
+.hub-alert-flecha { flex: none; color: var(--text-muted); }
+/* En escritorio el panel mide lo mismo que saludo + herramientas (contain: size hace que no
+   estire la fila) y la lista se desplaza por dentro si hay muchas alertas */
+@media (min-width: 1201px) {
+  .hub-alerts { contain: size; display: flex; flex-direction: column; }
+  .hub-alert-list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+}
+.hub-alert-vacio { margin: 0; display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--text-secondary); }
 
 /* Herramientas */
 .hub-tool-card {

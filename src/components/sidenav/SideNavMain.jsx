@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from 'react'
 import { useAuth } from "react-oidc-context";
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { usePermissions } from '../../services/PermissionsContext'
-import { ChevronDown, Menu, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck, ClipboardList, UserMinus, CalendarClock, CircleCheck, CircleX, MessageSquare, AtSign, ListChecks, Cake, TriangleAlert, Clock, ChartColumn, Hourglass } from 'lucide-react'
+import { ChevronDown, Menu, ChevronsLeft, User, LogOut, X, ExternalLink, Sun, Moon, Search, Bell, CheckCheck, ClipboardList, UserMinus, CalendarClock, CircleCheck, CircleX, MessageSquare, AtSign, ListChecks, Cake, TriangleAlert, Clock, ChartColumn, Hourglass } from 'lucide-react'
 import { menuItems } from './SideNavItems';
 import { filterMenuByPermissions, SidebarItem } from './FilterMenu';
 import MegaMenuPanel from './MegaMenuPanel'
@@ -153,6 +153,8 @@ const Layout = () => {
     setNotifOpen(next)
     if (next) refreshList()
   }
+  // No leídas primero (sort estable: dentro de cada grupo se mantiene el orden por fecha)
+  const sortedNotifs = useMemo(() => [...notifications].sort((a, b) => !b.read_at - !a.read_at), [notifications])
   const handleNotifClick = (n) => {
     if (!n.read_at) markRead(n.id)
     setNotifOpen(false)
@@ -195,18 +197,49 @@ const Layout = () => {
 
   return (
     <div className="app">
+      {/* Gradiente de todos los íconos lucide salvo los del menú (regla svg.lucide en
+          styles/global/index.css); mismos colores que las alertas del Home. Usa
+          userSpaceOnUse (viewBox 24 de lucide): con objectBoundingBox los trazos
+          rectos (ancho o alto 0) se quedan sin pintar */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <linearGradient id="app-icon-grad" gradientUnits="userSpaceOnUse" x1="0" y1="24" x2="24" y2="0">
+          <stop offset="0" stopColor="#5b7cfa" />
+          <stop offset="1" stopColor="#9b6cff" />
+        </linearGradient>
+        {/* Para íconos sobre fondo oscuro: blanco a amarillo de marca (--nexo-yellow) */}
+        <linearGradient id="app-icon-grad-dark" gradientUnits="userSpaceOnUse" x1="0" y1="24" x2="24" y2="0">
+          <stop offset="0" stopColor="#ffffff" />
+          <stop offset="1" stopColor="#f9ec8f" />
+        </linearGradient>
+      </svg>
       <nav className="navbar">
         <div className="navbar-left">
-          <button
-            className="toggle-btn"
-            onClick={toggleSidebar}
-            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          <span className="navbar-brand">
+          {/* En escritorio este bloque tiene el ancho y color del sidebar, así logo y
+              hamburguesa quedan "dentro" del menú. Con el sidebar abierto lleva el logo
+              negativo; al encogerlo solo queda la hamburguesa y el logo del tema pasa al navbar */}
+          <div className={`navbar-menu-block ${sidebarMini ? 'navbar-menu-block-mini' : ''}`}>
+            {!sidebarMini && (
+              <img
+                className="navbar-brand-logo navbar-brand-logo-sidebar"
+                src={(logoUrl && !logoFailed) ? `${config.api_domain.url_base}${logoUrl}` : logoNegativo}
+                alt={brandLogo}
+                onError={() => setLogoFailed(true)}
+              />
+            )}
+            <button
+              className="toggle-btn"
+              onClick={toggleSidebar}
+              aria-label={mobileMenuOpen ? 'Cerrar menú' : sidebarMini ? 'Expandir menú' : 'Contraer menú'}
+              title={sidebarMini ? 'Expandir menú' : 'Contraer menú'}
+            >
+              {/* Escritorio: hamburguesa con el menú encogido, « para contraerlo; móvil: hamburguesa/cerrar (CSS elige cuál se ve) */}
+              <span className="toggle-icon-desktop">{sidebarMini ? <Menu size={20} /> : <ChevronsLeft size={20} />}</span>
+              <span className="toggle-icon-mobile">{mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}</span>
+            </button>
+          </div>
+          <span className={`navbar-brand ${!sidebarMini ? 'navbar-brand-onsidebar' : ''}`}>
             <img
-              className="navbar-brand-logo"
+              className="navbar-brand-logo navbar-brand-logo-theme"
               // Logo de marca: viene empaquetado con el build (src/assets/Recursos),
               // no de /uploads (esa carpeta está en .gitignore y no viaja con el
               // deploy). Un admin puede seguir subiendo un logo propio desde
@@ -258,31 +291,47 @@ const Layout = () => {
             {notifOpen && (
               <div className="notif-dropdown">
                 <div className="notif-dropdown-header">
-                  <span>Notificaciones</span>
+                  <span className="notif-dropdown-title">
+                    Notificaciones
+                    {unreadCount > 0 && <span className="notif-count">{unreadCount} {unreadCount === 1 ? 'nueva' : 'nuevas'}</span>}
+                  </span>
                   {unreadCount > 0 && (
                     <button className="notif-mark-all" onClick={markAllRead} title="Marcar todas como leídas">
-                      <CheckCheck size={14} /> Marcar todas
+                      <CheckCheck size={14} /> Marcar como leídas
                     </button>
                   )}
                 </div>
                 <ul className="notif-list">
-                  {loadingList && <li className="notif-empty">Cargando...</li>}
+                  {/* Solo se muestra "Cargando" la primera vez; al reabrir se refresca sin vaciar la lista */}
+                  {loadingList && notifications.length === 0 && <li className="notif-empty">Cargando...</li>}
                   {!loadingList && notifications.length === 0 && (
-                    <li className="notif-empty">No tienes notificaciones</li>
+                    <li className="notif-empty"><Bell size={28} /><span>No tienes notificaciones</span></li>
                   )}
-                  {!loadingList && notifications.map(n => {
+                  {sortedNotifs.map((n, i) => {
                     const { Icon, text } = parseNotifTitle(n.title)
+                    const unread = !n.read_at
+                    const prevUnread = i > 0 && !sortedNotifs[i - 1].read_at
                     return (
-                    <li key={n.id}>
-                      <button
-                        className={`notif-item ${!n.read_at ? 'notif-item-unread' : ''}`}
-                        onClick={() => handleNotifClick(n)}
-                      >
-                        <span className="notif-item-title"><Icon size={14} className="notif-item-icon" />{text}</span>
-                        {n.body && <span className="notif-item-body">{n.body}</span>}
-                        <span className="notif-item-date">{new Date(n.created_at).toLocaleString()}</span>
-                      </button>
-                    </li>
+                    <Fragment key={n.id}>
+                      {i === 0 && unread && <li className="notif-section">Nuevas</li>}
+                      {!unread && (i === 0 || prevUnread) && <li className="notif-section">Anteriores</li>}
+                      <li>
+                        <button
+                          className={`notif-item ${unread ? 'notif-item-unread' : 'notif-item-read'}`}
+                          onClick={() => handleNotifClick(n)}
+                        >
+                          <span className="notif-item-icon"><Icon size={16} /></span>
+                          <span className="notif-item-content">
+                            <span className="notif-item-title">{text}</span>
+                            {n.body && <span className="notif-item-body">{n.body}</span>}
+                            <span className="notif-item-date">
+                              {new Date(n.created_at).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
+                            </span>
+                          </span>
+                          {unread && <span className="notif-item-dot" aria-label="No leída" />}
+                        </button>
+                      </li>
+                    </Fragment>
                     )
                   })}
                 </ul>
@@ -343,13 +392,14 @@ const Layout = () => {
           >
             <ul>
               {sidebarMenu.map((item, i) => (
-                <SidebarItem key={i} item={item} onOpenMega={setMegaItem} megaLabel={megaItem?.label} />
+                <SidebarItem key={i} item={item} onOpenMega={setMegaItem} megaLabel={megaItem?.label} onExpandir={sidebarMini ? () => setSidebarMini(false) : undefined} />
               ))}
             </ul>
           </aside>
           {megaItem && <MegaMenuPanel key={megaItem.label} item={megaItem} onClose={closeMega} onLinkClick={closeMenusOnLink} />}
         </div>
-        <main className="main-content">
+        {/* Nexo y Administrador usan el estilo de Onix-IA (esquinas rectas, títulos azul oscuro): solo apariencia, ver .estilo-hub en Layout.css */}
+        <main className={`main-content${['Nexo', 'Administrador'].includes(seccionActual?.label) ? ' estilo-hub' : ''}`}>
           {seccionActual && <SectionNav key={seccionActual.label} item={seccionActual} />}
           <Outlet />
         </main>

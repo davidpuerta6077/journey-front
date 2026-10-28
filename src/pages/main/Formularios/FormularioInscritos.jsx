@@ -10,6 +10,7 @@ import Paginacion from '../../../components/Paginacion'
 import { confirmEliminar, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Formularios/Formularios.css'
+import '../../../styles/main/Informes/Informes.css'
 
 export default function FormularioInscritos() {
   const { id } = useParams()
@@ -95,7 +96,7 @@ export default function FormularioInscritos() {
   }
 
   return (
-    <div className="sync-page">
+    <div className="sync-page onix-root">
       <div className="sync-page-header">
         <h2>
           <button className="btn-icon" onClick={() => navigate('/formularios')} style={{ marginRight: 10 }}><ArrowLeft size={14} /></button>

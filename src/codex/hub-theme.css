@@ -61,3 +61,22 @@ body, .font-sans { font-family: var(--hub-font), "Segoe UI", Inter, system-ui, s
 :root[data-oscuro="true"] .codex-toolbar .nb-btn:hover { background: #223047; }
 :root[data-oscuro="true"] .codex-toolbar .nb-btn-danger { color: #f87171; }
 :root[data-oscuro="true"] .codex-toolbar .nb-btn-primary { background: var(--color-accent); border-color: transparent; color: #fff; }
+
+/* ─── Identidad Bravo Hub en el cromo del editor (solo apariencia) ───
+   Esquinas rectas en barras, biblioteca, panel de propiedades y ventanas.
+   El lienzo (.codex-lienzo) queda igual: simula Moodle y es lo que se exporta. */
+:is(.rounded, .rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl,
+    .rounded-l, .rounded-r, .rounded-t, .rounded-b, .rounded-r-xl):not(.codex-lienzo *) { border-radius: 0; }
+.nb-btn, .neu-widget, .neu-search, .neu-input { border-radius: 0; }
+
+/* Botones como los de Bravo Hub: Space Grotesk 400; el principal con degradado leve y esquina cortada */
+.nb-btn { font-family: "Space Grotesk", var(--hub-font), sans-serif; font-weight: 400; font-size: 12px; letter-spacing: 0.01em; }
+.nb-btn-primary {
+  background: linear-gradient(100deg, #2a3f6e, #3e5996); color: #fff;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+.nb-btn-primary:hover { background: linear-gradient(100deg, #30487a, #4a67a8); }
+.nb-btn:not(.nb-btn-primary) { background: linear-gradient(100deg, #ffffff, #eef2fa); border-color: #cfd7e8; color: #2d4375; }
+.nb-btn-danger:not(.nb-btn-primary) { color: #dc2626; }
+:root[data-oscuro="true"] .codex-toolbar .nb-btn:not(.nb-btn-primary) { background: #1b2636; color: #e2e8f0; }
+:root[data-oscuro="true"] .codex-toolbar .nb-btn-primary { background: linear-gradient(100deg, #3a5596, #5a76bf); }

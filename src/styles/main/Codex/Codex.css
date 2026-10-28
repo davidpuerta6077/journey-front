@@ -13,3 +13,12 @@
 .codex-nombre-link:focus-visible { outline: 2px solid var(--primary, #5b84ff); outline-offset: 2px; }
 .codex-vacio { padding: 48px 16px; text-align: center; color: var(--text-muted); }
 .codex-editor-tema { margin-left: auto; }
+
+/* Mis páginas: fila con estilo de Onix; el nombre abre el constructor */
+.codex-pagina-abrir {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 18px;
+  background: none; border: 0; padding: 0; text-align: left; cursor: pointer; font: inherit; color: inherit;
+}
+.codex-pagina-abrir:hover .onix-actividad-nombre { text-decoration: underline; text-underline-offset: 3px; }
+.codex-pagina-abrir:focus-visible { outline: 2px solid var(--onix-link, #3d5bd9); outline-offset: 4px; }
+.codex-pagina .onix-act-num svg.lucide { stroke: currentColor; }
