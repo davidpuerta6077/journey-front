@@ -1,7 +1,5 @@
 import './index.css';
 import './hub-theme.css';
-import iconCodex from '../assets/Recursos/Iconos/Para fondo oscuros/SVG/codex.svg';
-import iconCodexClaro from '../assets/Recursos/Iconos/Para fondo claros/SVG/codex_1.svg';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { BlockData, BlockType, BlockUpdate } from './types';
 import { BlockRenderer } from './components/BlockRenderer';
@@ -21,7 +19,7 @@ import {
   Undo, Redo, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Search,
   FolderOpen, Moon, Sun, Clock, BarChart2, Flag,
   Quote as QuoteIcon, FileDown, Download, Upload, ChevronRight, Terminal, ChevronDown, ImagePlus,
-  BookOpen, Clipboard, ClipboardPaste, Monitor, Tablet, Smartphone, ArrowDown,
+  BookOpen, Clipboard, ClipboardPaste, Monitor, Tablet, Smartphone, ArrowDown, LayoutTemplate,
 } from 'lucide-react-codex';
 import { v4 as uuidv4 } from 'uuid';
 import { ClipboardProvider, useClipboard, cloneFromClipboard } from './components/ClipboardContext';
@@ -647,7 +645,8 @@ const App: React.FC<{ initialBlocks: BlockData[]; initialDark: boolean }> = ({ i
         {/* Dark half — aligns with sidebar */}
         <div className="flex items-center gap-2.5 px-3.5 flex-shrink-0" style={{ width: 240, background: 'var(--color-sidebar)' }}>
           <div className="flex-shrink-0">
-            <img src={iconCodex} alt="" width="34" height="34"/>
+            {/* C0deX es un constructor de páginas: plantilla de página, como en el menú de Bravo Hub */}
+            <LayoutTemplate size={28} color="#ffffff" strokeWidth={1.6} aria-hidden="true"/>
           </div>
           <div>
             <div className="font-black text-[12px] leading-none" style={{ color: '#ffffff', letterSpacing: '-0.3px' }}>C0deX</div>
@@ -843,7 +842,7 @@ const App: React.FC<{ initialBlocks: BlockData[]; initialDark: boolean }> = ({ i
             <span>VISTA PREVIA — Así se verá el contenido en Moodle</span>
           </div>
         )}
-        <div className={`flex-1 overflow-y-auto p-6 relative ${previewMode ? 'flex justify-center pt-10' : 'edit-canvas'}`}
+        <div className={`codex-lienzo flex-1 overflow-y-auto p-6 relative ${previewMode ? 'flex justify-center pt-10' : 'edit-canvas'}`}
           style={{ background: darkMode ? 'var(--codex-dark-app)' : 'var(--color-app-bg)' }}
           onClick={() => setSelectedBlockId(null)}>
           <div className={`min-h-full pb-20 ${previewMode ? 'w-full max-w-6xl' : 'flex justify-center'}`}>
@@ -864,7 +863,7 @@ const App: React.FC<{ initialBlocks: BlockData[]; initialDark: boolean }> = ({ i
                 <div className="flex-1 flex flex-col items-center justify-center select-none pointer-events-none py-16">
                   {/* Logo grande en empty state */}
                   <div className="mb-8">
-                    <img src={darkMode ? iconCodex : iconCodexClaro} alt="" width="72" height="72"/>
+                    <LayoutTemplate size={64} strokeWidth={1.4} color={darkMode ? '#9dbaf9' : 'var(--color-accent)'} aria-hidden="true"/>
                   </div>
                   <h3 className={`text-2xl font-black mb-2 tracking-tight ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>C0deX</h3>
                   <p className={`text-sm mb-10 text-center max-w-sm leading-relaxed ${darkMode ? 'text-gray-400' : 'text-gray-400'}`}>Diseña contenido educativo profesional para tu campus virtual de forma visual</p>

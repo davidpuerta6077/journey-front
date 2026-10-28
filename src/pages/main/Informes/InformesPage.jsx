@@ -1,3 +1,4 @@
+import { CalendarDays, Settings, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { usePermissions } from '../../../services/PermissionsContext'
 import { getPerfil } from '../../../services/onix/getPerfil'
@@ -41,17 +42,17 @@ export default function InformesPage() {
   }, [])
 
   const tabs = useMemo(() => [
-    { id: 'mes', label: 'Mi mes' },
-    { id: 'config', label: 'Configuración' },
-    ...(puedeArea || puedeAdmin ? [{ id: 'area', label: puedeAdmin ? 'Todos los informes' : 'Mi área' }] : []),
+    { id: 'mes', label: 'Mi mes', Icon: CalendarDays },
+    { id: 'config', label: 'Configuración', Icon: Settings },
+    ...(puedeArea || puedeAdmin ? [{ id: 'area', label: puedeAdmin ? 'Todos los informes' : 'Mi área', Icon: Users }] : []),
   ], [puedeArea, puedeAdmin])
 
   return (
-    <div className="sync-page">
+    <div className="sync-page onix-root">
       <div className="sync-page-header">
         <div>
           <h2>Informes (Onix-IA)</h2>
-          <p className="onix-sub">Registra cada mes las subactividades de tus actividades con sus evidencias; la IA arma el informe y los documentos de evidencia.</p>
+          <p className="onix-sub">Tu informe mensual de contrato: lo que hiciste, con sus evidencias, redactado por la IA.</p>
         </div>
       </div>
 
@@ -59,7 +60,7 @@ export default function InformesPage() {
         {tabs.map((t) => (
           <button key={t.id} role="tab" aria-selected={tab === t.id}
             className={tab === t.id ? 'onix-tab active' : 'onix-tab'} onClick={() => setTab(t.id)}>
-            {t.label}
+            <t.Icon size={15} aria-hidden="true" /> {t.label}
           </button>
         ))}
       </div>

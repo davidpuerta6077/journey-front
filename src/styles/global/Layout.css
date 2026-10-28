@@ -12,7 +12,7 @@
   z-index: 100;
   gap: 24px;
 }
-.navbar-left { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.navbar-left { display: flex; align-items: center; align-self: stretch; gap: 12px; flex-shrink: 0; }
 .navbar-brand {
   display: flex;
   align-items: center;
@@ -23,10 +23,37 @@
   user-select: none;
 }
 .navbar-brand-logo {
-  height: 40px;
+  height: 34px; /* mismo tamaño con el menú abierto (bloque azul) y encogido */
   max-width: 220px;
   object-fit: contain;
   display: block;
+}
+.navbar-brand-logo-sidebar { display: none; }
+.navbar-menu-block { display: flex; align-items: center; }
+.toggle-icon-desktop, .toggle-icon-mobile { display: flex; }
+.toggle-icon-mobile { display: none; }
+@media (max-width: 768px) {
+  .toggle-icon-desktop { display: none; }
+  .toggle-icon-mobile { display: flex; }
+}
+/* Escritorio: bloque del mismo ancho y color que el sidebar, pegado al borde
+   izquierdo, con el logo y la hamburguesa adentro (se encoge junto con el menú) */
+@media (min-width: 769px) {
+  .navbar-menu-block {
+    align-self: stretch;
+    justify-content: space-between;
+    gap: 8px;
+    width: 260px;
+    margin: 0 0 -1px -24px; /* tapa el padding izquierdo y el borde inferior del navbar */
+    padding: 0 10px 0 20px;
+    background: var(--menu-bg, #1e3a6e);
+    transition: width 0.25s ease;
+  }
+  .navbar-menu-block-mini { width: 52px; padding: 0; justify-content: center; }
+  .navbar-menu-block .toggle-btn { color: rgba(255,255,255,0.85); }
+  .navbar-menu-block .toggle-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .navbar-menu-block .navbar-brand-logo-sidebar { display: block; height: 34px; min-width: 0; }
+  .navbar-brand-onsidebar { display: none; }
 }
 .toggle-btn {
   background: transparent;
@@ -108,7 +135,13 @@
 .nav-search-item-ext { color: var(--text-muted); flex-shrink: 0; }
 
 /* ─── CAMPANA ─── */
-.notif-menu { position: relative; }
+.notif-menu {
+  position: relative;
+  /* --primary es el navy del menú: en tema oscuro casi no contrasta, así que la
+     campana usa el azul claro del logo como acento */
+  --notif-accent: #4a67c4;
+}
+:root[data-theme="dark"] .notif-menu { --notif-accent: #9dbaf9; }
 .navbar-bell {
   position: relative;
 }
@@ -136,27 +169,41 @@
   border-radius: 12px;
   border: 1px solid var(--border-soft);
   box-shadow: var(--shadow);
-  width: 340px;
-  max-width: 90vw;
+  width: 380px;
+  max-width: 92vw;
   z-index: 200;
+  overflow: hidden;
 }
 .notif-dropdown-header {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  gap: 12px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border-soft);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+}
+.notif-dropdown-title { display: flex; align-items: center; gap: 8px; }
+.notif-count {
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--notif-accent) 14%, transparent);
+  color: var(--notif-accent);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
 }
 .notif-mark-all {
+  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 4px;
   background: none;
   border: none;
-  color: var(--primary);
+  color: var(--notif-accent);
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 500;
@@ -165,33 +212,74 @@
 .notif-list {
   list-style: none;
   margin: 0;
-  padding: 4px 0;
-  max-height: 360px;
+  padding: 0 0 6px;
+  max-height: 420px;
   overflow-y: auto;
+  scrollbar-width: none; /* sin barra visible; sigue desplazándose con rueda/touch */
 }
+.notif-list::-webkit-scrollbar { display: none; }
 .notif-empty {
-  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
   text-align: center;
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+.notif-section {
+  padding: 12px 16px 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 .notif-item {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 12px;
   width: 100%;
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
   padding: 10px 16px;
+  transition: background 0.15s ease;
 }
 .notif-item:hover { background: var(--bg-surface-hover); }
-.notif-item-unread { background: var(--bg-surface-alt); }
-.notif-item-title { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); }
-.notif-item-icon { flex: none; margin-right: 6px; vertical-align: -2px; color: var(--text-secondary); }
-.notif-item-body { font-size: 0.8rem; color: var(--text-secondary); }
-.notif-item-date { font-size: 0.72rem; color: var(--text-muted); }
+.notif-item:focus-visible { outline: 2px solid var(--notif-accent); outline-offset: -2px; }
+.notif-item-unread {
+  background: color-mix(in srgb, var(--notif-accent) 7%, transparent);
+}
+.notif-item-icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  /* El trazo usa el degradado #notif-icon-grad (mismo de las alertas del Home) */
+  background: linear-gradient(to right top, #5b7cfa1f, #9b6cff2e);
+}
+.notif-item-read .notif-item-icon { opacity: 0.6; }
+.notif-item-content { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.notif-item-title { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); line-height: 1.35; }
+.notif-item-unread .notif-item-title { font-weight: 700; color: var(--text-primary); }
+.notif-item-body { font-size: 0.8rem; color: var(--text-muted); line-height: 1.35; }
+.notif-item-unread .notif-item-body { color: var(--text-secondary); }
+.notif-item-date { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.notif-item-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--notif-accent);
+}
 
 /* ─── USER MENU ─── */
 .navbar-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -294,11 +382,9 @@
 .sidebar::-webkit-scrollbar { display: none; }
 
 @media (min-width: 769px) {
+  /* Encogido es encogido: no se expande con el mouse (se veía partido junto al bloque del logo
+     y el panel de submenú quedaba debajo). Se abre solo con el botón del navbar. */
   .sidebar-mini { width: 52px; }
-  .sidebar-mini:hover {
-    width: 260px;
-    box-shadow: 8px 0 24px rgba(0,0,0,0.25);
-  }
 }
 
 .sidebar ul { list-style: none; margin: 0; padding: 0; }
@@ -457,29 +543,27 @@
 .chevron.open { transform: rotate(180deg); }
 
 /* ─── MINI SIDEBAR ─── */
-/* Solo escritorio y solo mientras no tenga el mouse encima (con hover se ve completo).
-   Todas las reglas de .sidebar-mini viven acá: una regla sin :not(:hover) en otro
-   archivo vuelve a ocultar el contenido cuando el menú se expande con hover. */
+/* Solo escritorio. El nombre de cada ítem se ve al pasar el mouse (atributo title). */
 @media (min-width: 769px) {
-  .sidebar-mini:not(:hover) a span,
-  .sidebar-mini:not(:hover) .sidebar-toggle span,
-  .sidebar-mini:not(:hover) .sidebar-external span,
-  .sidebar-mini:not(:hover) .sidebar-disabled span,
-  .sidebar-mini:not(:hover) .chevron,
-  .sidebar-mini:not(:hover) .sidebar-external svg:last-child {
+  .sidebar-mini a span,
+  .sidebar-mini .sidebar-toggle span,
+  .sidebar-mini .sidebar-external span,
+  .sidebar-mini .sidebar-disabled span,
+  .sidebar-mini .chevron,
+  .sidebar-mini .sidebar-external svg:last-child {
     display: none;
   }
-  .sidebar-mini:not(:hover) a,
-  .sidebar-mini:not(:hover) .sidebar-toggle,
-  .sidebar-mini:not(:hover) .sidebar-external,
-  .sidebar-mini:not(:hover) .sidebar-disabled {
+  .sidebar-mini a,
+  .sidebar-mini .sidebar-toggle,
+  .sidebar-mini .sidebar-external,
+  .sidebar-mini .sidebar-disabled {
     justify-content: center;
     padding: 12px 0;
   }
-  .sidebar-mini:not(:hover) .submenu { display: none; }
-  .sidebar-mini:not(:hover) .sidebar-section-divider { margin: 6px 4px; }
-  .sidebar-mini:not(:hover) .sidebar-chevron-btn { display: none; }
-  .sidebar-mini:not(:hover) .sidebar-group-link { justify-content: center; padding: 12px 0; }
+  .sidebar-mini .submenu { display: none; }
+  .sidebar-mini .sidebar-section-divider { margin: 6px 4px; }
+  .sidebar-mini .sidebar-chevron-btn { display: none; }
+  .sidebar-mini .sidebar-group-link { justify-content: center; padding: 12px 0; }
 }
 
 /* ─── NAVBAR MÓVIL ─── */
@@ -492,6 +576,10 @@
   .navbar { gap: 10px; padding: 0 14px; }
   .navbar-search { display: none; }
   .user-btn-info { display: none; }
+  .navbar-left { flex-shrink: 1; min-width: 0; }
+  .navbar-brand-logo { height: 30px; max-width: 100%; }
+  /* Anclado a la pantalla, no a la campana: si no, se sale por la izquierda */
+  .notif-dropdown { position: fixed; top: 60px; left: 8px; right: 8px; width: auto; max-width: none; }
 }
 
 /* ─── SIDEBAR MÓVIL ─── */
@@ -770,3 +858,133 @@
 .section-nav-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 :root[data-theme="dark"] .section-nav-tab.active,
 :root[data-theme="dark"] .section-nav-link.active { color: #93b4ff; }
+
+/* ─── Estándar: toda barra de pestañas superior se ve como la de Nexo (.section-nav) ───
+   Onix-IA (.onix-tabs), Novedades y Configuración (.novedades-tabs) y Atom (.atom-quickviews) mantienen su
+   marcado y solo toman esta apariencia. */
+.onix-tabs,
+.novedades-tabs,
+.config-grupo-tabs,
+.atom-card .atom-quickviews {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; margin-bottom: 24px;
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px;
+}
+.config-grupo-tabs { margin-bottom: 10px; }
+.onix-tabs > .onix-tab,
+.novedades-tabs > button[role="tab"],
+.config-grupo-tabs > button[role="tab"],
+.atom-quickviews > .atom-quickview-btn {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  margin: 0; padding: 9px 14px; border: none; border-radius: 8px; background: transparent;
+  color: var(--text-secondary); font: inherit; font-size: 0.9rem; font-weight: 600;
+  white-space: nowrap; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.onix-tabs > .onix-tab:hover,
+.novedades-tabs > button[role="tab"]:hover,
+.config-grupo-tabs > button[role="tab"]:hover,
+.atom-quickviews > .atom-quickview-btn:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.onix-tabs > .onix-tab.active,
+.novedades-tabs > button[role="tab"].active,
+.config-grupo-tabs > button[role="tab"].active,
+.atom-quickviews > .atom-quickview-btn.active { background: rgba(91,132,255,0.12); color: var(--primary); }
+:root[data-theme="dark"] .onix-tabs > .onix-tab.active,
+:root[data-theme="dark"] .novedades-tabs > button[role="tab"].active,
+:root[data-theme="dark"] .config-grupo-tabs > button[role="tab"].active,
+:root[data-theme="dark"] .atom-quickviews > .atom-quickview-btn.active { color: #93b4ff; }
+
+/* ─── Estilo Bravo Hub en Nexo (el mismo de Onix-IA) — solo apariencia, la estructura no cambia ───
+   Lo activa SideNavMain en <main> en Nexo y Administrador, y AtomWidget en el Inicio. */
+.estilo-hub { --hub-titulo: #2d4375; }
+:root[data-theme="dark"] .estilo-hub { --hub-titulo: #b9cdf7; }
+/* Esquinas rectas en todo; siguen redondos el indicador de carga, los puntos de color y los radio */
+.estilo-hub *:not(.loader):not([class*="dot"]):not(input[type="radio"]) { border-radius: 0 !important; }
+/* Títulos en azul oscuro de marca */
+.estilo-hub h1,
+.estilo-hub h2,
+.estilo-hub .nexo-panel-title,
+.estilo-hub .modal-header h3,
+.estilo-hub .carga-topbar h2 { color: var(--hub-titulo); font-weight: 600; letter-spacing: -0.01em; }
+/* Superficies planas: borde, sin sombra en reposo */
+.estilo-hub .nexo-card,
+.estilo-hub .atom-card,
+.hub-atom.estilo-hub { box-shadow: none; }
+.hub-atom.estilo-hub { border-radius: 0; }
+/* En celular estas barras van en una sola fila que se desliza (la de Nexo no: sus menús desplegables se cortarían) */
+@media (max-width: 600px) {
+  .onix-tabs, .novedades-tabs, .config-grupo-tabs, .atom-card .atom-quickviews {
+    flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+  }
+  .onix-tabs::-webkit-scrollbar, .novedades-tabs::-webkit-scrollbar,
+  .config-grupo-tabs::-webkit-scrollbar, .atom-card .atom-quickviews::-webkit-scrollbar { display: none; }
+  .onix-tabs > .onix-tab, .novedades-tabs > button[role="tab"],
+  .config-grupo-tabs > button[role="tab"], .atom-quickviews > .atom-quickview-btn { flex: none; }
+}
+
+/* ─── Administrador > Configuración: barra con desplegables + panel de la sección elegida ─── */
+.config-nav-link {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  background: none; border: 0; text-align: left; font: inherit; font-size: 0.88rem; cursor: pointer;
+}
+.config-seccion { background: var(--bg-surface); border: 1px solid var(--border-soft); }
+.config-seccion-cabeza {
+  display: flex; align-items: flex-start; gap: 14px; padding: 20px 24px;
+  border-bottom: 1px solid var(--border-softer, var(--border-soft));
+}
+.config-seccion-icono {
+  flex: none; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(to right top, #5b7cfa1f, #9b6cff2e);
+}
+.config-seccion-ruta { font-size: 0.8rem; color: var(--text-muted); }
+.config-seccion-cabeza h3 { margin: 2px 0 4px; font-size: 1.2rem; font-weight: 600; color: var(--hub-titulo, var(--text-primary)); }
+.config-seccion-cabeza p { margin: 0; font-size: 0.9rem; color: var(--text-secondary); max-width: 70ch; }
+.config-seccion-cuerpo { padding: 22px 24px 26px; }
+/* Contenido de cada sección: el formulario ocupa todo el panel en dos columnas simétricas.
+   Todas las secciones usan el mismo marcado (.modal-form > .modal-field / .modal-row /
+   .modal-hint / .modal-actions), así que se ordena solo con CSS, sin tocar su lógica. */
+.config-seccion-cuerpo > .modal-form {
+  max-width: none !important; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 32px; align-items: start;
+}
+.config-seccion-cuerpo > .modal-form > .modal-row { display: contents; }
+/* A todo el ancho: notas, listas de pasos, áreas de texto, bloques solo informativos, acciones y cargas */
+.config-seccion-cuerpo > .modal-form > :is(.modal-hint, ol, .modal-actions, .loading-box),
+.config-seccion-cuerpo > .modal-form > .modal-field:has(textarea),
+.config-seccion-cuerpo > .modal-form > .modal-field:not(:has(input, select, textarea)) { grid-column: 1 / -1; }
+.config-seccion-cuerpo .modal-field { gap: 6px; margin: 0; }
+.config-seccion-cuerpo .modal-field > label { font-weight: 600; font-size: 0.88rem; color: var(--text-primary); }
+.config-seccion-cuerpo .modal-hint { margin: 0; font-size: 0.82rem; line-height: 1.5; color: var(--text-muted); }
+.config-seccion-cuerpo ol.modal-hint { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+/* Botones de guardar en una franja propia, separada del formulario */
+.config-seccion-cuerpo > .modal-form > .modal-actions {
+  justify-content: flex-start !important; padding: 18px 0 0 !important; margin: 4px 0 0;
+  border-top: 1px solid var(--border-softer, var(--border-soft)); gap: 10px;
+}
+.config-seccion-cuerpo > .modal-form > .modal-actions + .modal-field { margin-top: 12px; }
+/* Selectores de color y de archivo con el estilo de la marca */
+.config-seccion-cuerpo input[type="color"] {
+  width: 100%; height: 42px; padding: 4px; cursor: pointer;
+  background: var(--bg-surface); border: 1px solid var(--border-soft);
+}
+.config-seccion-cuerpo input[type="file"] {
+  width: 100%; padding: 6px; font-size: 0.85rem; color: var(--text-secondary);
+  background: var(--bg-surface-alt); border: 1px dashed var(--border-soft);
+}
+.config-seccion-cuerpo input[type="file"]::file-selector-button {
+  margin-right: 12px; padding: 7px 14px; cursor: pointer; border: 1px solid #cfd7e8;
+  background: linear-gradient(100deg, #ffffff, #eef2fa); color: #2d4375;
+  font-family: var(--btn-font); font-size: 0.85rem;
+}
+.config-seccion-cuerpo img { display: block; }
+.config-seccion-cuerpo textarea { font: inherit; font-size: 0.9rem; line-height: 1.55; padding: 12px 14px; }
+/* Menú (accesos externos): la línea de ayuda y el botón quedan alineados sobre la tabla */
+.config-seccion-cuerpo > .sync-page-header { align-items: center; }
+@media (max-width: 760px) {
+  .config-seccion-cuerpo > .modal-form { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .config-seccion-cabeza, .config-seccion-cuerpo { padding: 16px; }
+}
+
+/* Panel de submenú (Nexo, Administrador): títulos en el azul oscuro de marca, como el resto */
+.mega-title, .mega-section-title { color: #2d4375; }
+:root[data-theme="dark"] .mega-title, :root[data-theme="dark"] .mega-section-title { color: #b9cdf7; }

@@ -8,6 +8,7 @@ import QuestionField from './QuestionField'
 import { confirmAccion, confirmGuardarCambios, toastExito } from '../../../services/alerts'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Formularios/Formularios.css'
+import '../../../styles/main/Informes/Informes.css'
 
 const QUESTION_TYPES = [
   { value: 'texto_corto', label: 'Texto corto' },
@@ -170,7 +171,7 @@ export default function FormularioEditor() {
 
   if (isEdit && !isOwner) {
     return (
-      <div className="sync-page">
+      <div className="sync-page onix-root">
         <div className="sync-error">No tienes permiso para editar este formulario — solo el creador puede hacerlo.</div>
         <button className="btn-secondary" onClick={() => navigate(`/formularios/${id}/inscritos`)}>Ver inscritos</button>
       </div>
@@ -178,7 +179,7 @@ export default function FormularioEditor() {
   }
 
   return (
-    <div className="sync-page">
+    <div className="sync-page onix-root">
       <div className="sync-page-header">
         <h2>{isEdit ? 'Editar Formulario' : 'Crear Formulario'}</h2>
         <div className="action-btns">

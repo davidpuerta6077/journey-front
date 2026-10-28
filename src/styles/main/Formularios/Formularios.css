@@ -96,3 +96,12 @@
 .public-form-state { text-align: center; padding: 20px 0; }
 .public-form-state h2 { color: #1e293b; margin-bottom: 8px; }
 .public-form-state p { color: #64748b; }
+
+/* Lista de formularios con el estilo de Onix-IA */
+.form-fila { flex-wrap: wrap; }
+.form-fila .badge { flex: none; white-space: nowrap; }
+.form-fila .onix-fila-acciones { align-items: center; flex-wrap: wrap; }
+.onix-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 900px) {
+  .form-fila .onix-fila-acciones { width: 100%; padding-left: 58px; }
+}

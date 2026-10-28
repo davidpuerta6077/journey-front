@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Atom as AtomIcon, Plus, Search, Pencil, CheckCircle2, XCircle } from 'lucide-react'
+import { Atom as AtomIcon, Plus, Search, Pencil, CheckCircle2, XCircle, ListTodo, Send, Inbox, CalendarClock, AlarmClock } from 'lucide-react'
 import { usePermissions } from '../../services/PermissionsContext'
 import { fetchMyTasks } from '../../services/atom/fetchMyTasks'
 import { bulkUpdateEstado } from '../../services/atom/bulkUpdateEstado'
@@ -10,12 +10,12 @@ import { ESTADOS, PRIORIDADES, slug } from './atomConstants'
 import '../../styles/main/Atom/Atom.css'
 
 const VISTAS = (misId) => [
-  { key: 'mias', label: 'Mis tareas', filtros: {} },
-  { key: 'asignadas_por_mi', label: 'Asignadas por mí', filtros: { creado_por: misId } },
-  { key: 'asignadas_a_mi', label: 'Asignadas a mí', filtros: { asignado_a: misId } },
-  { key: 'hoy', label: 'Tareas de hoy', filtros: { hoy: true } },
-  { key: 'vencidas', label: 'Vencidas', filtros: { vencidas: true } },
-  { key: 'completadas', label: 'Completadas', filtros: { estado: 'Completada' } },
+  { key: 'mias', label: 'Mis tareas', Icon: ListTodo, filtros: {} },
+  { key: 'asignadas_por_mi', label: 'Asignadas por mí', Icon: Send, filtros: { creado_por: misId } },
+  { key: 'asignadas_a_mi', label: 'Asignadas a mí', Icon: Inbox, filtros: { asignado_a: misId } },
+  { key: 'hoy', label: 'Tareas de hoy', Icon: CalendarClock, filtros: { hoy: true } },
+  { key: 'vencidas', label: 'Vencidas', Icon: AlarmClock, filtros: { vencidas: true } },
+  { key: 'completadas', label: 'Completadas', Icon: CheckCircle2, filtros: { estado: 'Completada' } },
 ]
 
 const FILTROS_VACIOS = { estado: '', prioridad: '', q: '', desde: '', hasta: '' }
@@ -113,7 +113,7 @@ export default function AtomWidget() {
   const paginadas = tasks.slice((page - 1) * perPage, page * perPage)
 
   return (
-    <section className="hub-atom">
+    <section className="hub-atom estilo-hub">
       <div className="atom-card">
         <div className="atom-header">
           <div className="atom-header-info">
@@ -143,7 +143,7 @@ export default function AtomWidget() {
               className={`atom-quickview-btn ${vistaActiva === v.key ? 'active' : ''}`}
               onClick={() => cambiarVista(v)}
             >
-              {v.label}
+              <v.Icon size={15} aria-hidden="true" /> {v.label}
             </button>
           ))}
         </div>

@@ -104,3 +104,89 @@ html, body, #root {
   justify-content: center;
   gap: 14px;
 }
+/* Íconos lucide con el degradado de marca (#app-icon-grad, definido en SideNavMain).
+   El menú lateral y el bloque del logo (fondo azul) conservan su color plano; el panel de
+   submenú es blanco, así que sí lleva el degradado como el resto. */
+svg.lucide { stroke: url(#app-icon-grad) currentColor; }
+.sidebar svg.lucide,
+.navbar-menu-block svg.lucide { stroke: currentColor; }
+/* Sobre fondo oscuro (botones sólidos, tema oscuro): blanco a amarillo */
+:root[data-theme="dark"] svg.lucide,
+.btn-primary svg.lucide,
+.btn-reiniciar svg.lucide,
+.btn-reiniciar-inline svg.lucide,
+.atom-header-icon svg.lucide { stroke: url(#app-icon-grad-dark) currentColor; }
+:root[data-theme="dark"] .sidebar svg.lucide,
+:root[data-theme="dark"] .navbar-menu-block svg.lucide { stroke: currentColor; }
+
+/* ─── IDENTIDAD DE BOTONES ───
+   Firma propia de Bravo Hub: esquinas rectas con la esquina superior derecha cortada
+   en diagonal, un bloque aparte para el ícono (más oscuro en el primario, teñido en el
+   secundario), degradado leve y Space Grotesk a peso 400.
+   Selectores "button.x" / "a.x" para ganar a las hojas de cada página (Vite las carga
+   todas globales y en distinto orden). */
+:root {
+  --btn-font: "Space Grotesk", var(--font-base, "Segoe UI"), sans-serif;
+  --btn-cut: 9px;
+  --btn-primary-grad: linear-gradient(100deg, #2a3f6e, #3e5996);
+  --btn-primary-grad-hover: linear-gradient(100deg, #30487a, #4a67a8);
+  --btn-primary-cell: rgba(10, 18, 40, 0.28);
+  --btn-secondary-grad: linear-gradient(100deg, #ffffff, #eef2fa);
+  --btn-secondary-grad-hover: linear-gradient(100deg, #f6f8fd, #e4eaf7);
+  --btn-secondary-cell: rgba(61, 89, 150, 0.09);
+  --btn-secondary-border: #cfd7e8;
+  --btn-secondary-ink: #2d4375;
+}
+:root[data-theme="dark"] {
+  --btn-primary-grad: linear-gradient(100deg, #3a5596, #5a76bf);
+  --btn-primary-grad-hover: linear-gradient(100deg, #4361a8, #6884cc);
+  --btn-primary-cell: rgba(5, 10, 25, 0.3);
+  --btn-secondary-grad: linear-gradient(100deg, #223047, #1b2636);
+  --btn-secondary-grad-hover: linear-gradient(100deg, #2a3a55, #223047);
+  --btn-secondary-cell: rgba(157, 186, 249, 0.1);
+  --btn-secondary-border: #34445e;
+  --btn-secondary-ink: #dbe4f6;
+}
+button[class*="btn"], a[class*="btn"], .onix-texto-btn, .onix-mes-flecha { border-radius: 0 !important; }
+
+button.btn-primary, a.btn-primary, button.swal-btn-primary,
+button.btn-secondary, a.btn-secondary, button.swal-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-height: 38px;
+  padding: 0 16px;
+  font-family: var(--btn-font);
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  clip-path: polygon(0 0, calc(100% - var(--btn-cut)) 0, 100% var(--btn-cut), 100% 100%, 0 100%);
+  transition: background 0.2s, transform 0.1s;
+}
+/* Bloque del ícono: ocupa todo el alto, pegado al borde izquierdo */
+button.btn-primary > svg:first-child, a.btn-primary > svg:first-child,
+button.btn-secondary > svg:first-child, a.btn-secondary > svg:first-child {
+  box-sizing: content-box;
+  align-self: stretch;
+  height: auto;
+  padding: 0 11px;
+  margin: 0 12px 0 -16px;
+}
+button.btn-primary, a.btn-primary, button.swal-btn-primary {
+  background: var(--btn-primary-grad);
+  color: #fff;
+  border: 0;
+}
+button.btn-primary > svg:first-child, a.btn-primary > svg:first-child { background: var(--btn-primary-cell); }
+button.btn-primary:hover:not(:disabled), a.btn-primary:hover, button.swal-btn-primary:hover { background: var(--btn-primary-grad-hover); }
+
+button.btn-secondary, a.btn-secondary, button.swal-btn-secondary {
+  background: var(--btn-secondary-grad);
+  color: var(--btn-secondary-ink);
+  border: 1px solid var(--btn-secondary-border);
+}
+button.btn-secondary > svg:first-child, a.btn-secondary > svg:first-child { background: var(--btn-secondary-cell); }
+button.btn-secondary:hover:not(:disabled), a.btn-secondary:hover, button.swal-btn-secondary:hover { background: var(--btn-secondary-grad-hover); }
+button.btn-primary:active:not(:disabled), button.btn-secondary:active:not(:disabled) { transform: translateY(1px); }
+.onix-texto-btn { font-family: var(--btn-font); font-weight: 500; }

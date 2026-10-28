@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Plus, History, FileDown, ChevronRight, CheckCircle2, Image as ImageIcon, Link2, CalendarDays, Mail, ListChecks } from 'lucide-react'
+import { ChevronLeft, PenLine, History, CalendarDays, Mail, ListChecks, FileDown, CheckCircle2, Circle, Link2 } from 'lucide-react'
 import { descargarArchivo } from '../../../services/onix/descargarArchivo'
 import { alertError } from '../../../services/alerts'
 import SubactividadModal from './SubactividadModal'
 import SubactividadForm from './SubactividadForm'
+import EvidenciaImagen from './EvidenciaImagen'
 import TraerLogsModal from './TraerLogsModal'
 import TraerGoogleModal from './TraerGoogleModal'
 import TraerCorreoModal from './TraerCorreoModal'
@@ -11,10 +12,10 @@ import TraerAtomModal from './TraerAtomModal'
 import { generada, plural, tituloDe } from './evidencias'
 import { MESES } from './periodo'
 
-// Detalle de una actividad en el mes: sus subactividades como filas; cada una
-// se abre en una ventana con todo lo suyo.
+// Una actividad del contrato por dentro: de dónde agregar lo que hiciste, lo que
+// ya hay con sus evidencias, y al final la IA que redacta lo pendiente.
 export default function ActividadMes({
-  actividad, numero, registros, periodo, onCambio, onActualizado,
+  actividad, numero, registros, periodo, onCambio, onActualizado, onVolver, onRedactar,
   perfilCompleto, soloLectura = false, bloqueado = false,
 }) {
   const [abiertoId, setAbiertoId] = useState(null)
@@ -25,9 +26,18 @@ export default function ActividadMes({
   const [traerAtom, setTraerAtom] = useState(false)
   const [descargando, setDescargando] = useState(false)
 
-  const generadas = registros.filter(generada).length
-  const lista = registros.length > 0 && generadas === registros.length
+  const pendientes = registros.filter((r) => !generada(r))
+  const lista = registros.length > 0 && !pendientes.length
   const abierto = registros.find((r) => r.id === abiertoId)
+  const mes = MESES[periodo.mes - 1].toLowerCase()
+
+  const fuentes = [
+    { id: 'mano', Icono: PenLine, titulo: 'Escribirlo yo', texto: 'Cuenta qué hiciste y sube tus capturas', abrir: () => setNueva(true) },
+    { id: 'hub', Icono: History, titulo: 'Mis acciones en Bravo Hub', texto: 'Lo que hiciste en la plataforma este mes', abrir: () => setTraerLogs(true) },
+    { id: 'calendar', Icono: CalendarDays, titulo: 'Google Calendar', texto: 'Reuniones y eventos de tu calendario', abrir: () => setTraerGoogle(true) },
+    { id: 'correo', Icono: Mail, titulo: 'Correos enviados', texto: 'Correos que enviaste sobre esta actividad', abrir: () => setTraerCorreo(true) },
+    { id: 'atom', Icono: ListChecks, titulo: 'Tareas de Atom', texto: 'Tareas que completaste en Atom', abrir: () => setTraerAtom(true) },
+  ]
 
   const descargar = async () => {
     setDescargando(true)
@@ -42,73 +52,104 @@ export default function ActividadMes({
   }
 
   return (
-    <section className="onix-card onix-panel" aria-labelledby={`act-${actividad.id}`}>
-      <header className="onix-panel-head">
+    <div className="onix-act">
+      <button type="button" className="onix-volver" onClick={onVolver}><ChevronLeft size={18} /> Mis actividades</button>
+
+      <header className="onix-act-cabeza">
+        <span className="onix-act-num" aria-hidden="true">{numero}</span>
         <div>
-          <span className="onix-num">Actividad {numero}</span>
-          <h3 id={`act-${actividad.id}`}>{actividad.nombre}</h3>
-          {actividad.descripcion && <p className="onix-act-desc">{actividad.descripcion}</p>}
+          <h3>{actividad.nombre}</h3>
+          {actividad.descripcion && <p>{actividad.descripcion}</p>}
         </div>
-        <button className={lista ? 'btn-primary' : 'btn-secondary'} disabled={!lista || descargando || bloqueado} onClick={descargar}
-          title={!lista ? 'Se habilita cuando todas las subactividades estén redactadas con IA' : 'Evidencia_<mes>_actividad_N.docx'}>
-          <FileDown size={16} /> {descargando ? 'Descargando...' : 'Documento de la actividad'}
-        </button>
       </header>
 
       {!soloLectura && (
-        <div className="onix-acciones">
-          <button className="btn-primary" onClick={() => setNueva(true)}><Plus size={16} /> Agregar subactividad</button>
-          <button className="btn-secondary" onClick={() => setTraerLogs(true)}><History size={16} /> Traer de mis acciones en Bravo Hub</button>
-          <button className="btn-secondary" onClick={() => setTraerGoogle(true)}><CalendarDays size={16} /> Traer de mi Google Calendar</button>
-          <button className="btn-secondary" onClick={() => setTraerCorreo(true)}><Mail size={16} /> Traer de mis correos enviados</button>
-          <button className="btn-secondary" onClick={() => setTraerAtom(true)}><ListChecks size={16} /> Traer de mis tareas de Atom</button>
-        </div>
+        <section className="onix-seccion" aria-labelledby={`agregar-${actividad.id}`}>
+          <h4 id={`agregar-${actividad.id}`}>Agrega lo que hiciste</h4>
+          <p className="onix-seccion-ayuda">Escríbelo tú o tráelo de donde ya quedó registrado. Todo se guarda en esta actividad.</p>
+          <div className="onix-fuentes">
+            {fuentes.map(({ id, Icono, titulo, texto, abrir }) => (
+              <button key={id} type="button" className="onix-fuente" onClick={abrir} disabled={bloqueado}>
+                <span className="onix-fuente-icono"><Icono size={20} /></span>
+                <span className="onix-fuente-texto">
+                  <span className="onix-fuente-titulo">{titulo}</span>
+                  <span className="onix-fuente-desc">{texto}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
-      {registros.length === 0 ? (
-        <div className="onix-vacio">
-          {soloLectura ? 'Sin subactividades este mes.' : (
-            <>
-              <strong>Aún no hay subactividades este mes.</strong>
-              <span>Agrega cada cosa puntual que hiciste para esta actividad (ej. "Micrositio CELEP"), o tráela de tus acciones en Bravo Hub.</span>
-            </>
-          )}
-        </div>
-      ) : (
-        <ul className="onix-filas" aria-label="Subactividades">
-          {registros.map((r, i) => {
-            const imgs = r.evidencias.filter((e) => e.tipo === 'imagen').length
-            const links = r.evidencias.length - imgs
-            const ok = generada(r)
-            return (
-              <li key={r.id}>
-                <button type="button" className="onix-fila" onClick={() => setAbiertoId(r.id)}>
-                  <span className={`onix-fila-estado${ok ? ' ok' : ''}`} aria-hidden="true">
-                    {ok ? <CheckCircle2 size={18} /> : i + 1}
-                  </span>
-                  <span className="onix-fila-info">
-                    <span className="onix-fila-titulo">{tituloDe(r)}</span>
-                    <span className="onix-fila-meta">
-                      <span><ImageIcon size={13} aria-hidden="true" /> {plural(imgs, 'imagen', 'imágenes')}</span>
-                      {links > 0 && <span><Link2 size={13} aria-hidden="true" /> {plural(links, 'enlace', 'enlaces')}</span>}
-                      {r.logs > 0 && <span>Desde Bravo Hub</span>}
+      <section className="onix-seccion" aria-labelledby={`hecho-${actividad.id}`}>
+        <h4 id={`hecho-${actividad.id}`}>Lo que hiciste en {mes} {registros.length > 0 && <span className="onix-lista-total">{registros.length}</span>}</h4>
+        {registros.length === 0 ? (
+          <p className="onix-vacio-texto">
+            {soloLectura ? 'Sin registros este mes.' : 'Todavía no hay nada en esta actividad. Empieza con una de las opciones de arriba.'}
+          </p>
+        ) : (
+          <ul className="onix-cosas">
+            {registros.map((r) => {
+              const ok = generada(r)
+              const imagenes = r.evidencias.filter((e) => e.tipo === 'imagen')
+              const otras = r.evidencias.filter((e) => e.tipo !== 'imagen')
+              return (
+                <li key={r.id} className="onix-cosa">
+                  <button type="button" className="onix-cosa-abrir" onClick={() => setAbiertoId(r.id)}>
+                    <span className={`onix-cosa-estado${ok ? ' ok' : ''}`} aria-hidden="true">
+                      {ok ? <CheckCircle2 size={20} /> : <Circle size={20} />}
                     </span>
-                  </span>
-                  <span className={`badge ${ok ? 'badge-synced' : 'badge-pending'}`}>{ok ? 'Redactada' : 'Sin redactar'}</span>
-                  <ChevronRight size={18} aria-hidden="true" className="onix-fila-flecha" />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                    <span className="onix-cosa-info">
+                      <span className="onix-cosa-titulo">{tituloDe(r)}</span>
+                      <span className="onix-cosa-meta">
+                        {ok ? 'Párrafo listo' : 'Falta redactar'}
+                        {r.evidencias.length ? `, ${plural(r.evidencias.length, 'evidencia', 'evidencias')}` : ', sin evidencias'}
+                        {r.logs > 0 && ', desde Bravo Hub'}
+                      </span>
+                    </span>
+                    <span className="onix-cosa-ver">{soloLectura ? 'Ver' : 'Ver y editar'}</span>
+                  </button>
+                  {r.evidencias.length > 0 && (
+                    <div className="onix-cosa-evidencias">
+                      {imagenes.slice(0, 4).map((e) => (
+                        <span key={e.id} className="onix-thumb"><EvidenciaImagen id={e.id} alt={e.descripcion} /></span>
+                      ))}
+                      {imagenes.length > 4 && <span className="onix-thumb onix-thumb-mas">+{imagenes.length - 4}</span>}
+                      {otras.map((e) => (
+                        e.tipo === 'link'
+                          ? <a key={e.id} className="onix-enlace-chip" href={e.contenido} target="_blank" rel="noreferrer"><Link2 size={14} /> {e.descripcion || e.contenido}</a>
+                          : <span key={e.id} className="onix-enlace-chip">{e.descripcion || e.contenido}</span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
 
       {registros.length > 0 && (
-        <p className="onix-informe-meta">
-          {lista
-            ? 'Todas redactadas: descarga el documento de la actividad o todo el mes en .zip.'
-            : `${generadas} de ${plural(registros.length, 'subactividad redactada', 'subactividades redactadas')}. Abre cada una, revisa sus evidencias y pulsa "Redactar con IA".`}
-        </p>
+        <section className="onix-redactar" aria-labelledby={`ia-${actividad.id}`}>
+          <div className="onix-redactar-texto">
+            <h4 id={`ia-${actividad.id}`}>{lista ? 'Esta actividad está lista' : 'Redactar con IA'}</h4>
+            <p>
+              {lista
+                ? 'Cada cosa ya tiene su párrafo. Puedes descargar el Word de evidencias de esta actividad o volver a tus actividades.'
+                : 'La IA escribe el párrafo del informe de cada cosa que hiciste, a partir de tu descripción y tus evidencias, y arma el Word de esta actividad. Después puedes revisarlo y corregirlo.'}
+            </p>
+          </div>
+          {lista ? (
+            <button className="btn-secondary" disabled={descargando || bloqueado} onClick={descargar}>
+              <FileDown size={16} /> {descargando ? 'Descargando...' : 'Descargar Word'}
+            </button>
+          ) : !soloLectura && (
+            <button className="btn-primary" disabled={bloqueado || !perfilCompleto} onClick={() => onRedactar(pendientes)}
+              title={!perfilCompleto ? 'Completa tu perfil en Configuración' : undefined}>
+              <PenLine size={16} /> Redactar {pendientes.length === 1 ? 'la pendiente' : `las ${pendientes.length} pendientes`}
+            </button>
+          )}
+        </section>
       )}
 
       {abierto && (
@@ -122,8 +163,8 @@ export default function ActividadMes({
           <div className="modal-box onix-sub-modal" role="dialog" aria-modal="true" aria-labelledby={`nueva-${actividad.id}`}>
             <div className="modal-header">
               <div>
-                <span className="onix-num">Actividad {numero} · {actividad.nombre}</span>
-                <h3 id={`nueva-${actividad.id}`}>Nueva subactividad</h3>
+                <span className="onix-num">{actividad.nombre}</span>
+                <h3 id={`nueva-${actividad.id}`}>Agregar lo que hiciste</h3>
               </div>
               <button type="button" className="modal-close" onClick={() => setNueva(false)} aria-label="Cerrar">×</button>
             </div>
@@ -137,7 +178,6 @@ export default function ActividadMes({
         <TraerGoogleModal actividad={actividad} periodo={periodo} registros={registros} onClose={() => setTraerGoogle(false)}
           onAgregado={() => { setTraerGoogle(false); onCambio() }} />
       )}
-
       {traerAtom && (
         <TraerAtomModal actividad={actividad} periodo={periodo} registros={registros} onClose={() => setTraerAtom(false)}
           onAgregado={() => { setTraerAtom(false); onCambio() }} />
@@ -150,6 +190,6 @@ export default function ActividadMes({
         <TraerLogsModal actividad={actividad} periodo={periodo} registros={registros} onClose={() => setTraerLogs(false)}
           onAgregado={() => { setTraerLogs(false); onCambio() }} />
       )}
-    </section>
+    </div>
   )
 }

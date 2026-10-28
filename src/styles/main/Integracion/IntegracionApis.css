@@ -12,7 +12,7 @@
 .api-status-summary.is-loading { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 .api-status-summary-count {
   font-variant-numeric: tabular-nums; font-weight: 700;
-  padding-left: 10px; margin-left: 2px; border-left: 1px solid currentColor; opacity: 0.8;
+  margin-left: 4px; opacity: 0.8;
 }
 
 /* Grilla de tarjetas */
@@ -24,16 +24,12 @@
   position: relative; display: flex; flex-direction: column; gap: 12px;
   background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 12px;
   padding: 18px 18px 14px; overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: box-shadow .15s, transform .15s;
+  transition: border-color .15s;
 }
-.api-status-card:hover { box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); transform: translateY(-1px); }
-/* franja de color arriba según el estado */
-.api-status-card::before {
-  content: ''; position: absolute; inset: 0 0 auto 0; height: 3px; background: #cbd5e1;
-}
-.api-status-card.is-ok::before    { background: #22c55e; }
-.api-status-card.is-error::before { background: #ef4444; }
+/* Sin franja de color de un solo lado (regla de journey-front/CLAUDE.md): el estado lo dice la etiqueta.
+   Una API caída se marca con el borde completo en rojo. */
+.api-status-card:hover { border-color: #c7d2e8; }
+.api-status-card.is-error { border-color: #fecaca; }
 
 .api-status-card-header { display: flex; align-items: flex-start; gap: 12px; }
 .api-status-icon {

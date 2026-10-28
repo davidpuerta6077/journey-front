@@ -45,15 +45,15 @@ export default function GoogleCuenta() {
   }
 
   return (
-    <div className="onix-card onix-google">
-      <CalendarDays size={28} aria-hidden="true" className="onix-google-icono" />
+    <div className="onix-redactar onix-google">
+      <span className="onix-fuente-icono" aria-hidden="true"><CalendarDays size={20} /></span>
       <div className="onix-google-texto">
         {estado === null ? 'Cargando...' : !estado.configurado ? (
           <span>La conexión con Google aún no está configurada en el servidor. Pídela al administrador de Bravo Hub.</span>
         ) : estado.conectado ? (
           <>
             <strong>Conectado como {estado.email}</strong>
-            <span>En "Mi mes", cada actividad tiene los botones "Traer de mi Google Calendar" y "Traer de mis correos enviados". Si los correos piden permiso, desconecta y vuelve a conectar.</span>
+            <span>Dentro de cada actividad, en "Agrega lo que hiciste", usa "Google Calendar" o "Correos enviados". Si los correos piden permiso, desconecta y vuelve a conectar.</span>
           </>
         ) : (
           <>

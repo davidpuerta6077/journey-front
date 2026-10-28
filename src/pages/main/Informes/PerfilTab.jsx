@@ -35,7 +35,7 @@ export default function PerfilTab({ perfil, onSaved }) {
   }
 
   return (
-    <form className="onix-card modal-form" onSubmit={guardar}>
+    <form className="onix-panel-form modal-form" onSubmit={guardar}>
       {!perfil && (
         <p className="onix-aviso">Completa tu perfil para poder generar informes. Estos datos aparecen en el Word.</p>
       )}

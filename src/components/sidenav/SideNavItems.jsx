@@ -2,7 +2,8 @@ import {
   RefreshCw, BookOpen, FileText,
   Activity, Upload, Shield, Globe, BarChart2, Settings,
   Search, ClipboardList, FlaskConical, History,
-  Users, GraduationCap, UserX, Bell, LayoutGrid, ListChecks, LayoutTemplate, Database, Server, Mountain
+  Users, GraduationCap, UserX, Bell, LayoutGrid, ListChecks, LayoutTemplate, Database, Server, Mountain,
+  ShieldCheck, KeyRound
 } from 'lucide-react'
 import BeaverIcon from './BeaverIcon'
 
@@ -23,7 +24,6 @@ import iconZabbix from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/zabb
 import iconPm2 from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/pm2.svg'
 import iconRags from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/rags.svg'
 import iconInformesOnix from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/informe_onix.svg'
-import iconCodex from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/codex.svg'
 import iconEncuestas from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/encuestas.svg'
 import iconAdministrador from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/administrador.svg'
 import iconUsuarios from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/usuarios.svg'
@@ -62,7 +62,7 @@ export const menuItems = [
   // Desarrollos integrados
   { label: 'Onix-IA', icon: iconInformesOnix, beta: true, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
   { label: 'Asistencia', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
-  { label: 'C0deX', icon: iconCodex, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
+  { label: 'C0deX', icon: LayoutTemplate, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
 
   { type: 'divider' },
 
@@ -92,11 +92,13 @@ export const menuItems = [
 
   { label: 'Centro de soporte', icon: iconCentroSoporte, moduleCode: 'support_center', submoduleCode: 'access', href: 'https://soporte.pascualbravovirtual.edu.co/scp/login.php' },
 
+  // navIcon: ícono para la barra superior de la sección (SectionNav, fondo blanco), donde
+  // los SVG de marca "para fondo oscuro" del sidebar no se ven
   { label: 'Administrador', icon: iconAdministrador, moduleCode: 'admin', children: [
-      { label: 'Usuarios',      icon: iconUsuarios, path: '/admin/usuarios',      submoduleCode: 'admin_users' },
-      { label: 'Roles',         icon: iconRoles,    path: '/admin/roles',         submoduleCode: 'admin_roles' },
-      { label: 'Módulos',       icon: iconModulos,  path: '/admin/modulos',       submoduleCode: 'admin_modules' },
-      { label: 'Permisos',      icon: iconPermisos, path: '/admin/permisos',      submoduleCode: 'admin_permissions' },
+      { label: 'Usuarios',      icon: iconUsuarios, navIcon: Users,       path: '/admin/usuarios',      submoduleCode: 'admin_users' },
+      { label: 'Roles',         icon: iconRoles,    navIcon: ShieldCheck, path: '/admin/roles',         submoduleCode: 'admin_roles' },
+      { label: 'Módulos',       icon: iconModulos,  navIcon: LayoutGrid,  path: '/admin/modulos',       submoduleCode: 'admin_modules' },
+      { label: 'Permisos',      icon: iconPermisos, navIcon: KeyRound,    path: '/admin/permisos',      submoduleCode: 'admin_permissions' },
       { label: 'Ver Logs',      icon: History, path: '/admin/logs',         submoduleCode: 'admin_logs' },
       { label: 'Integración',   icon: Globe, children: [
           { label: 'Estado de APIs', icon: Server, path: '/admin/integracion/apis', submoduleCode: 'integration_apis' },

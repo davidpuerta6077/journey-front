@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Paginacion from '../../../components/Paginacion'
-import { ChevronDown, ChevronUp, RefreshCw, Search, UserX } from 'lucide-react'
+import { ChevronDown, ChevronUp, RefreshCw, Search, UserX, GraduationCap, BookOpen, Users } from 'lucide-react'
 import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
 import { getCached, setCached } from '../../../services/swrCache'
@@ -265,13 +265,13 @@ export default function SyncNovedades() {
 
       <div className="novedades-tabs" role="tablist" aria-label="Origen de la novedad">
         <button type="button" role="tab" aria-selected={tab === 'nexo'} className={tab === 'nexo' ? 'active' : ''} onClick={() => setTab('nexo')}>
-          Novedades de Matrículas
+          <GraduationCap size={15} aria-hidden="true" /> Novedades de Matrículas
         </button>
         <button type="button" role="tab" aria-selected={tab === 'sicau'} className={tab === 'sicau' ? 'active' : ''} onClick={() => setTab('sicau')}>
-          Novedades de cursos
+          <BookOpen size={15} aria-hidden="true" /> Novedades de cursos
         </button>
         <button type="button" role="tab" aria-selected={tab === 'usuarios'} className={tab === 'usuarios' ? 'active' : ''} onClick={() => setTab('usuarios')}>
-          Novedades de Usuarios
+          <Users size={15} aria-hidden="true" /> Novedades de Usuarios
         </button>
       </div>
 

@@ -30,11 +30,11 @@
 .onix-actividad-abrir h4 { margin: 0; color: var(--text-primary); }
 .onix-actividad-abrir p { margin: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; }
 .onix-actividad-abrir:focus-visible { outline: 2px solid var(--hub-primary, var(--primary)); outline-offset: 4px; border-radius: 6px; }
-.onix-num { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.onix-num { font-size: 0.8rem; color: var(--text-muted); }
 .onix-link { display: inline-flex; align-items: center; gap: 2px; font-size: 0.82rem; color: var(--hub-primary, var(--primary)); }
 
 .onix-aviso {
-  background: var(--bg-surface-alt); border: 1px solid var(--border-soft); border-left: 3px solid var(--hub-primary, var(--primary));
+  background: var(--bg-surface-alt); border: 1px solid var(--border-soft);
   border-radius: 8px; padding: 10px 12px; margin: 0 0 12px; color: var(--text-secondary);
 }
 .onix-vacio { color: var(--text-muted); padding: 24px 0; text-align: center; }
@@ -58,7 +58,7 @@
 
 .onix-informe textarea { width: 100%; min-height: 160px; resize: vertical; font: inherit; }
 .onix-informe-meta { font-size: 0.78rem; color: var(--text-muted); }
-.onix-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.onix-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
 
 .onix-area-color { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: middle; margin-right: 6px; }
 
@@ -127,15 +127,22 @@
 
 /* Mi mes: barra del mes, progreso y dos paneles (actividades | detalle) */
 .onix-mes-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+/* Bloque resumen del mes: navegación, acciones y progreso juntos en una sola superficie */
+.onix-resumen {
+  display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; padding: 16px 20px;
+  background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 12px;
+}
+.onix-resumen .onix-mes-barra { margin-bottom: 0; }
+.onix-resumen .onix-progreso { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; }
 .onix-mes-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .onix-mes-barra .onix-filtros { display: flex; gap: 8px; flex-wrap: wrap; }
-.onix-mes-nav h3 { margin: 0; min-width: 150px; text-align: center; font-size: 1.15rem; }
+.onix-mes-nav h3 { margin: 0; min-width: 170px; text-align: center; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
 .onix-progreso {
   display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; padding: 12px 16px;
   background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 10px;
 }
 .onix-progreso-texto { display: flex; gap: 6px 12px; flex-wrap: wrap; align-items: baseline; font-size: 0.88rem; color: var(--text-secondary); }
-.onix-progreso-texto strong { color: var(--text-primary); }
+.onix-progreso-texto strong { color: var(--text-primary); font-size: 0.95rem; font-variant-numeric: tabular-nums; }
 .onix-progreso-barra { height: 8px; border-radius: 999px; background: var(--bg-surface-alt); overflow: hidden; }
 .onix-progreso-barra span { display: block; height: 100%; background: #16a34a; border-radius: inherit; transition: width 0.3s; }
 
@@ -148,12 +155,20 @@
 }
 .onix-act-item:hover, .onix-fila:hover { border-color: var(--hub-primary, var(--primary)); }
 .onix-act-item:focus-visible, .onix-fila:focus-visible { outline: 2px solid var(--hub-primary, var(--primary)); outline-offset: 2px; }
-.onix-act-item.activa { border-color: var(--hub-primary, var(--primary)); box-shadow: inset 3px 0 0 var(--hub-primary, var(--primary)); }
+/* Seleccionada: borde completo en degradado de marca + sombra suave (estilo del Home), sin barra lateral */
+.onix-act-item.activa {
+  border-color: transparent;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+  box-shadow: 0 6px 18px -8px rgba(91, 124, 250, 0.45);
+}
 .onix-fila-estado {
   flex: none; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
   font-size: 0.8rem; font-weight: 600; background: var(--bg-surface-alt); color: var(--text-muted); border: 1px solid var(--border-soft);
 }
 .onix-fila-estado.ok { background: #dcfce7; color: #15803d; border-color: transparent; }
+/* Estado: el check conserva su verde semántico en vez del degradado global de íconos */
+.onix-fila-estado.ok svg.lucide { stroke: currentColor; }
 .onix-fila-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .onix-fila-titulo { font-weight: 600; overflow-wrap: break-word; }
 .onix-fila-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.78rem; color: var(--text-muted); }
@@ -163,7 +178,22 @@
 
 .onix-panel { display: flex; flex-direction: column; gap: 14px; }
 .onix-panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-.onix-panel-head h3 { margin: 2px 0 4px; }
+.onix-panel-head h3 { margin: 0 0 4px; font-size: 1.25rem; }
+
+/* Menú "Importar de…" (ActividadMes) */
+.onix-importar { position: relative; display: flex; }
+.onix-importar .btn-secondary { display: inline-flex; align-items: center; gap: 6px; }
+.onix-importar-menu {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 50; min-width: 240px;
+  list-style: none; margin: 0; padding: 6px;
+  background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 10px; box-shadow: var(--shadow);
+}
+.onix-importar-menu button {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  background: none; border: 0; border-radius: 6px; cursor: pointer; text-align: left;
+  font-size: 0.88rem; color: var(--text-primary);
+}
+.onix-importar-menu button:hover, .onix-importar-menu button:focus-visible { background: var(--bg-surface-hover); outline: none; }
 .onix-filas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .onix-panel .onix-vacio { display: flex; flex-direction: column; gap: 4px; padding: 24px 16px; border: 1.5px dashed var(--border-soft); border-radius: 10px; }
 
@@ -228,7 +258,7 @@
 
 .onix-explica {
   font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; padding: 10px 12px;
-  background: var(--bg-surface-alt); border-left: 3px solid var(--hub-primary, var(--primary)); border-radius: 8px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-soft); border-radius: 8px;
 }
 .onix-explica ul { margin: 6px 0; padding-left: 18px; }
 
@@ -241,3 +271,248 @@
 /* Aviso mientras la IA redacta */
 .onix-redactando { padding: 24px 16px; margin: 12px 0; border: 1px dashed var(--border-soft); border-radius: 10px; color: var(--text-muted); text-align: center; gap: 8px; }
 .onix-redactando strong { color: var(--text-primary); }
+
+/* ─── Mi mes, versión sencilla: menos cajas, acciones como texto, una sola acción principal ─── */
+.onix-panel { --onix-link: #3d5bd9; }
+.onix-resumen { --onix-link: #3d5bd9; }
+:root[data-theme="dark"] .onix-panel, :root[data-theme="dark"] .onix-resumen { --onix-link: #9dbaf9; }
+
+/* Acción secundaria: texto con ícono, sin caja; se tiñe al pasar el mouse */
+.onix-texto-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px;
+  background: none; border: 0; border-radius: 8px; cursor: pointer;
+  font: inherit; font-size: 0.88rem; font-weight: 500; color: var(--onix-link, var(--text-secondary));
+  transition: background 0.15s;
+}
+.onix-texto-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--onix-link, #3d5bd9) 10%, transparent); }
+.onix-texto-btn:focus-visible { outline: 2px solid var(--onix-link, #3d5bd9); outline-offset: 2px; }
+.onix-texto-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.onix-mes-flecha {
+  width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0; border-radius: 50%; cursor: pointer; color: var(--text-secondary);
+}
+.onix-mes-flecha:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.onix-mes-flecha:focus-visible { outline: 2px solid var(--onix-link, #3d5bd9); }
+.onix-mes-nav h3 { min-width: 0; padding: 0 4px; }
+.onix-progreso-barra { height: 6px; }
+
+/* Lista de actividades: sin cajas; la elegida es la única con superficie */
+.onix-act-item { background: none; border-color: transparent; }
+.onix-act-item:hover { background: var(--bg-surface-hover); border-color: transparent; }
+
+/* Encabezado de la lista de subactividades con sus acciones a la derecha */
+.onix-lista-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.onix-lista-titulo { font-size: 0.88rem; font-weight: 600; color: var(--text-secondary); }
+.onix-lista-total { margin-left: 4px; font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.onix-lista-head .onix-acciones { gap: 2px; }
+
+/* Subactividades: una sola lista con divisores entre filas, no una caja por fila */
+.onix-filas { gap: 0; border: 1px solid var(--border-soft); border-radius: 10px; overflow: hidden; }
+.onix-filas .onix-fila { border: 0; border-radius: 0; background: none; padding: 14px 16px; }
+.onix-filas li + li .onix-fila { border-top: 1px solid var(--border-softer, var(--border-soft)); }
+.onix-filas .onix-fila:hover { background: var(--bg-surface-hover); }
+.onix-filas .onix-fila:focus-visible { outline-offset: -2px; }
+.onix-fila-flecha { opacity: 0; transition: opacity 0.15s; }
+.onix-fila:hover .onix-fila-flecha, .onix-fila:focus-visible .onix-fila-flecha { opacity: 1; }
+
+/* Estado: ícono o número solo, sin círculo de fondo */
+.onix-fila-estado { width: 22px; height: 22px; background: none; border: 0; }
+.onix-fila-estado.ok { background: none; color: #16a34a; }
+
+/* ─── Mi mes: actividades primero, luego una actividad por dentro (MesActividades, ActividadMes) ─── */
+.onix-mes { --onix-link: #3d5bd9; }
+:root[data-theme="dark"] .onix-mes { --onix-link: #9dbaf9; }
+
+.onix-mes-cabeza { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.onix-mes-cabeza .onix-mes-nav { margin-left: -8px; }
+.onix-mes-cabeza .onix-mes-nav h3 { min-width: 0; padding: 0 2px; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.01em; text-align: left; }
+.onix-mes-resumen { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.onix-mes-resumen p { margin: 0; font-size: 0.95rem; color: var(--text-secondary); }
+
+.onix-seccion { display: flex; flex-direction: column; gap: 12px; }
+.onix-seccion > h4 { margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.onix-seccion-ayuda { margin: -6px 0 4px; font-size: 0.9rem; color: var(--text-secondary); }
+
+/* Número de la obligación del contrato: misma esquina cortada que los botones */
+.onix-act-num {
+  flex: none; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--btn-font); font-size: 1.05rem; color: #2d4375; background: #eef2fa;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+}
+:root[data-theme="dark"] .onix-act-num { color: #9dbaf9; background: #223047; }
+
+/* Lista de actividades */
+.onix-actividades {
+  list-style: none; margin: 0; padding: 0; overflow: hidden;
+  background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 12px;
+}
+.onix-actividades li + li { border-top: 1px solid var(--border-softer, var(--border-soft)); }
+.onix-actividad-fila {
+  width: 100%; display: flex; align-items: center; gap: 18px; padding: 20px 22px;
+  background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  transition: background 0.15s;
+}
+.onix-actividad-fila:hover { background: var(--bg-surface-hover); }
+.onix-actividad-fila:focus-visible { outline: 2px solid var(--onix-link); outline-offset: -2px; }
+.onix-actividad-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.onix-actividad-nombre { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.onix-actividad-desc { font-size: 0.88rem; color: var(--text-muted); }
+.onix-actividad-avance { flex: none; width: 210px; display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.onix-actividad-estado { font-size: 0.85rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.onix-actividad-estado.ok { color: #15803d; }
+.onix-actividad-estado.vacio { color: var(--text-muted); }
+.onix-barra { display: block; width: 100%; height: 4px; background: var(--border-soft); }
+.onix-barra span { display: block; height: 100%; background: #2d4375; transition: width 0.3s; }
+:root[data-theme="dark"] .onix-barra span { background: #9dbaf9; }
+.onix-actividad-fila .onix-fila-flecha { opacity: 1; color: var(--text-muted); }
+
+/* Una actividad por dentro */
+.onix-act { display: flex; flex-direction: column; gap: 32px; }
+.onix-volver {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin-bottom: -16px;
+  padding: 6px 10px 6px 4px; background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 0.9rem; color: var(--text-secondary);
+}
+.onix-volver:hover { color: var(--text-primary); background: var(--bg-surface-hover); }
+.onix-volver:focus-visible { outline: 2px solid var(--onix-link); }
+.onix-act-cabeza { display: flex; align-items: flex-start; gap: 16px; }
+.onix-act-cabeza .onix-act-num { width: 48px; height: 48px; font-size: 1.25rem; }
+.onix-act-cabeza h3 { margin: 0; font-size: 1.6rem; font-weight: 600; letter-spacing: -0.01em; color: var(--text-primary); }
+.onix-act-cabeza p { margin: 4px 0 0; font-size: 0.95rem; color: var(--text-secondary); }
+
+/* De dónde agregar lo que hiciste */
+.onix-fuentes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 1280px) { .onix-fuentes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .onix-fuentes { grid-template-columns: minmax(0, 1fr); } }
+.onix-fuente {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; text-align: left; cursor: pointer;
+  background: var(--bg-surface); border: 1px solid var(--border-soft); font: inherit; color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.onix-fuente:hover:not(:disabled) { border-color: #9db0e8; background: color-mix(in srgb, #5b7cfa 4%, var(--bg-surface)); }
+.onix-fuente:focus-visible { outline: 2px solid var(--onix-link); outline-offset: 2px; }
+.onix-fuente:disabled { opacity: 0.5; cursor: not-allowed; }
+.onix-fuente-icono {
+  flex: none; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(to right top, #5b7cfa1f, #9b6cff2e);
+}
+.onix-fuente-texto { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.onix-fuente-titulo { font-family: var(--btn-font); font-size: 0.95rem; color: var(--text-primary); }
+.onix-fuente-desc { font-size: 0.8rem; line-height: 1.35; color: var(--text-muted); }
+
+/* Lo que hiciste, con sus evidencias */
+.onix-cosas {
+  list-style: none; margin: 0; padding: 0; overflow: hidden;
+  background: var(--bg-surface); border: 1px solid var(--border-soft); border-radius: 12px;
+}
+.onix-cosa + .onix-cosa { border-top: 1px solid var(--border-softer, var(--border-soft)); }
+.onix-cosa-abrir {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+  background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit;
+  transition: background 0.15s;
+}
+.onix-cosa-abrir:hover { background: var(--bg-surface-hover); }
+.onix-cosa-abrir:focus-visible { outline: 2px solid var(--onix-link); outline-offset: -2px; }
+.onix-cosa-estado { flex: none; display: flex; color: var(--text-muted); }
+.onix-cosa-estado.ok { color: #16a34a; }
+.onix-cosa-estado svg.lucide { stroke: currentColor; }
+.onix-cosa-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.onix-cosa-titulo { font-size: 1rem; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere; }
+.onix-cosa-meta { font-size: 0.82rem; color: var(--text-muted); }
+.onix-cosa-ver { flex: none; font-family: var(--btn-font); font-size: 0.85rem; color: var(--text-muted); }
+.onix-cosa-abrir:hover .onix-cosa-ver { color: var(--onix-link); }
+.onix-cosa-evidencias { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 20px 16px 54px; }
+.onix-thumb {
+  width: 76px; height: 56px; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-softer, var(--border-soft));
+  font-size: 0.68rem; color: var(--text-muted); text-align: center;
+}
+.onix-thumb a { display: block; width: 100%; height: 100%; }
+.onix-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.onix-thumb-mas { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+.onix-enlace-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 280px; padding: 6px 10px;
+  background: var(--bg-surface-alt); border: 1px solid var(--border-softer, var(--border-soft));
+  font-size: 0.8rem; color: var(--onix-link); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.onix-vacio-texto {
+  margin: 0; padding: 20px; font-size: 0.9rem; color: var(--text-muted);
+  border: 1px dashed var(--border-soft); border-radius: 12px;
+}
+
+/* Redactar con IA: explica qué hace antes de pedir el clic */
+.onix-redactar {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+  padding: 22px 24px; background: #f3f6fc; border: 1px solid #dfe6f5;
+}
+:root[data-theme="dark"] .onix-redactar { background: #1b2636; border-color: #2a3a55; }
+.onix-redactar-texto { flex: 1 1 360px; }
+.onix-redactar-texto h4 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 600; color: var(--text-primary); }
+.onix-redactar-texto p { margin: 0; max-width: 62ch; font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary); }
+
+@media (max-width: 600px) {
+  .onix-actividad-fila { flex-wrap: wrap; padding: 16px; gap: 12px; }
+  .onix-actividad-info { flex-basis: calc(100% - 92px); }
+  .onix-actividad-avance { width: 100%; align-items: flex-start; order: 3; }
+  .onix-cosa-abrir { padding: 14px 16px; }
+  .onix-cosa-ver { display: none; }
+  .onix-cosa-evidencias { padding: 0 16px 14px 50px; }
+  .onix-mes-cabeza .onix-mes-nav h3 { font-size: 1.4rem; }
+}
+
+/* ─── Configuración y Todos los informes con el mismo lenguaje ─── */
+.onix-mes.onix-config { gap: 44px; }
+.onix-panel-form { background: var(--bg-surface); border: 1px solid var(--border-soft); padding: 20px 22px; }
+.onix-actividad-config { cursor: default; }
+.onix-actividad-config:hover { background: none; }
+.onix-fila-acciones { flex: none; display: flex; gap: 2px; }
+.onix-texto-peligro { color: #dc2626; }
+.onix-texto-peligro:hover:not(:disabled) { background: color-mix(in srgb, #dc2626 9%, transparent); }
+.onix-agregar { align-self: flex-start; }
+.onix-volver.onix-volver-solo { margin-bottom: 12px; }
+.onix-persona-cabeza { margin-bottom: 28px; }
+.onix-google { flex-wrap: wrap; }
+
+/* Onix va con esquinas rectas en todo (paneles, campos, ventanas, etiquetas), como los botones */
+.onix-root *:not(.loader) { border-radius: 0 !important; }
+
+@media (max-width: 600px) {
+  .onix-actividad-config .onix-fila-acciones { width: 100%; padding-left: 52px; }
+}
+
+/* ─── Títulos en azul oscuro de marca; mes con tipografía de fecha; ancho completo y simétrico ─── */
+.onix-root { --onix-titulo: #2d4375; }
+:root[data-theme="dark"] .onix-root { --onix-titulo: #b9cdf7; }
+.onix-root .sync-page-header h2 { color: var(--onix-titulo); font-weight: 600; letter-spacing: -0.01em; }
+.onix-root .onix-seccion > h4,
+.onix-root .onix-redactar-texto h4,
+.onix-root .onix-actividad-nombre { color: var(--onix-titulo); }
+
+/* El mes: Space Grotesk con cifras tabulares, más contenido; el año en un tono más suave */
+.onix-mes-cabeza .onix-mes-nav h3 {
+  font-family: var(--btn-font); font-weight: 500; font-size: 1.4rem; letter-spacing: 0;
+  font-variant-numeric: tabular-nums; color: var(--onix-titulo);
+}
+
+/* Título dentro de una actividad o persona: más pequeño, azul oscuro */
+.onix-act-cabeza { align-items: center; }
+.onix-act-cabeza h3 { font-size: 1.3rem; color: var(--onix-titulo); }
+.onix-act-cabeza p { font-size: 0.9rem; margin-top: 2px; }
+.onix-act-cabeza .onix-act-num { width: 44px; height: 44px; font-size: 1.1rem; }
+
+@media (max-width: 600px) {
+  .onix-root .sync-page-header h2 { font-size: 1.3rem; }
+  .onix-mes-cabeza .onix-mes-nav h3 { font-size: 1.2rem; }
+  .onix-act-cabeza h3 { font-size: 1.15rem; }
+  .onix-mes-resumen .btn-primary { width: 100%; }
+  /* Pestañas en una sola fila que se desliza, en vez de partirse en dos */
+  .onix-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .onix-tabs::-webkit-scrollbar { display: none; }
+  .onix-tab { flex: none; white-space: nowrap; }
+  .onix-redactar { padding: 18px; }
+  .onix-redactar .btn-primary, .onix-redactar .btn-secondary { width: 100%; }
+  .onix-panel-form { padding: 16px; }
+}
+.onix-mes-anio { color: var(--text-muted); font-weight: 400; }
