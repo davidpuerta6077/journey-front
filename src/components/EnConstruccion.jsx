@@ -8,7 +8,7 @@ export default function EnConstruccion({ titulo }) {
       color: '#888', textAlign: 'center'
     }}>
       <Construction size={52} strokeWidth={1.2} color="#ccc" />
-      <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#222', margin: 0 }}>
+      <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--titulo, #2d4375)', margin: 0 }}>
         {titulo}
       </h2>
       <p style={{ fontSize: '13px', margin: 0 }}>Esta sección está en construcción.</p>
