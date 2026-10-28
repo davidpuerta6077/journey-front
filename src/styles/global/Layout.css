@@ -996,4 +996,6 @@
    y el editor de C0deX quedan fuera porque no viven dentro de .main-content. */
 :root { --titulo: #2d4375; }
 :root[data-theme="dark"] { --titulo: #b9cdf7; }
-main.main-content :is(h1, h2) { color: var(--titulo); letter-spacing: -0.01em; }
+main.main-content :is(h1, h2) { color: var(--titulo); letter-spacing: -0.01em; font-weight: 600; }
+/* El título de Nexo con el mismo tamaño que el de las demás páginas (24px, como .sync-page-header h2) */
+main.main-content .nexo-home-header h1 { font-size: 1.5rem; }
