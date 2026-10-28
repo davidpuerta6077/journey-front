@@ -999,3 +999,9 @@
 main.main-content :is(h1, h2) { color: var(--titulo); letter-spacing: -0.01em; font-weight: 600; }
 /* El título de Nexo con el mismo tamaño que el de las demás páginas (24px, como .sync-page-header h2) */
 main.main-content .nexo-home-header h1 { font-size: 1.5rem; }
+
+/* Cifras de estadísticas (KPIs de Nexo, resumen del gráfico y contadores de Atom) en el
+   azul oscuro de marca y grosor 600, como los títulos. "Vencidas" de Atom sigue en rojo. */
+main.main-content .nexo-kpi-value,
+main.main-content .nexo-trend-summary-value,
+main.main-content .atom-count-chip:not(.atom-count-vencidas) strong { color: var(--titulo); font-weight: 600; font-variant-numeric: tabular-nums; }
