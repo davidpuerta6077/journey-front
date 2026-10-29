@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { ChevronDown, ChevronUp, RefreshCw, Search, UserX } from 'lucide-react'
 import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
@@ -28,6 +30,10 @@ const COLUMNS = [
   { key: 'role',              label: 'Rol' },
   { key: 'estado',            label: 'Estado' },
 ]
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = Object.fromEntries(COLUMNS.map(col => [col.key, r =>
+    col.key === 'role' ? (ROLE_LABEL[r.role] || r.role || '-') : (r[col.key] || '-')]))
 
 function StatusBadge({ row }) {
   if (row._syncing) return <span className="badge badge-syncing">Sincronizando...</span>
@@ -81,7 +87,7 @@ export default function SyncMatriculas() {
   const programas = [...new Set(enrollments.map(e => e.programa).filter(Boolean))]
   const estados   = [...new Set(enrollments.map(e => e.estado).filter(Boolean))]
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     let data = [...enrollments]
     if (search) {
       const q = search.toLowerCase()
@@ -106,6 +112,9 @@ export default function SyncMatriculas() {
     })
     return data
   }, [enrollments, search, filterPeriodo, filterPrograma, filterEstado, filterSync, filterRol, sortKey, sortDir])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
@@ -194,6 +203,7 @@ export default function SyncMatriculas() {
           <option value="traslado">Duplicado (cambió de curso)</option>
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -208,10 +218,12 @@ export default function SyncMatriculas() {
                   <th style={{ width: 40 }}><input type="checkbox" checked={allPageSelected} onChange={selectAll} /></th>
                   {COLUMNS.map(col => (
                     <th key={col.key} onClick={() => handleSort(col.key)} className="sortable">
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      <ColumnFilter {...colProps(col.key)}>
+                        {col.label}
+                        {sortKey === col.key
+                          ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                          : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      </ColumnFilter>
                     </th>
                   ))}
                   <th>Sync</th>

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Pencil, Trash2, Power } from 'lucide-react'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
 import { createRegla } from '../../../services/admin/createRegla'
 import { updateRegla } from '../../../services/admin/updateRegla'
@@ -242,6 +244,16 @@ function ReglaModal({ title, initial, categorias, semillas, asignaturas, onClose
   )
 }
 
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = {
+  codigo_asignatura: r => r.codigo_asignatura || 'cualquiera',
+  programa:          r => r.programa || 'cualquiera',
+  departamento:      r => r.departamento || 'cualquiera',
+  seed_shortname:    r => r.seed_shortname,
+  categoryid:        r => r.categoryid,
+  activo:            r => r.activo ? 'Activa' : 'Inactiva',
+}
+
 export default function ReglasActivas() {
   const [reglas, setReglas]   = useState([])
   const [loading, setLoading] = useState(true)
@@ -251,6 +263,7 @@ export default function ReglasActivas() {
   const [categorias, setCategorias]   = useState([])
   const [semillas, setSemillas]       = useState([])
   const [asignaturas, setAsignaturas] = useState([])
+  const { filtered, colProps } = useColumnFilters(reglas, COL_GETTERS)
 
   const loadReglas = useCallback(async () => {
     setLoading(true)
@@ -327,20 +340,20 @@ export default function ReglasActivas() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Código Asignatura</th>
-                <th>Programa</th>
-                <th>Departamento</th>
-                <th>Semilla</th>
-                <th>Categoría</th>
-                <th>Estado</th>
+                <th><ColumnFilter label="Código Asignatura" {...colProps('codigo_asignatura')} /></th>
+                <th><ColumnFilter label="Programa" {...colProps('programa')} /></th>
+                <th><ColumnFilter label="Departamento" {...colProps('departamento')} /></th>
+                <th><ColumnFilter label="Semilla" {...colProps('seed_shortname')} /></th>
+                <th><ColumnFilter label="Categoría" {...colProps('categoryid')} /></th>
+                <th><ColumnFilter label="Estado" {...colProps('activo')} /></th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {reglas.length === 0 && (
-                <tr><td colSpan={7} style={{ textAlign: 'center', color: '#94a3b8' }}>No hay reglas creadas todavía.</td></tr>
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} style={{ textAlign: 'center', color: '#94a3b8' }}>{reglas.length === 0 ? 'No hay reglas creadas todavía.' : 'Ninguna regla coincide con los filtros.'}</td></tr>
               )}
-              {reglas.map(r => (
+              {filtered.map(r => (
                 <tr key={r.id}>
                   <td data-label="Código Asignatura">{r.codigo_asignatura || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>
                   <td data-label="Programa">{r.programa || <em style={{ opacity: 0.5 }}>cualquiera</em>}</td>

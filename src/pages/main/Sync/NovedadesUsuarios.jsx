@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
 import { humanize, nombreNovedadSicau } from './novedadNombres'
@@ -34,6 +36,15 @@ function describirCambiosSicau(n) {
 }
 
 const formatFecha = (f) => f ? new Date(f).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = {
+  fecha:   r => formatFecha(r.fecha),
+  origen:  r => ORIGEN_LABEL[r.origen],
+  usuario: r => r.usuario,
+  cambio:  r => r.cambio,
+  enviado: r => r.enviado_por,
+}
 
 export default function NovedadesUsuarios() {
   const [users, setUsers]     = useState(() => getCached(CACHE_KEY) || [])
@@ -85,13 +96,16 @@ export default function NovedadesUsuarios() {
     return [...nexoRows, ...sicauReportadas]
   }, [users, sicauRows])
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return rows.filter(r =>
       (!filterOrigen || r.origen === filterOrigen) &&
       (!q || [r.usuario, r.documento].some(v => String(v || '').toLowerCase().includes(q)))
     )
   }, [rows, search, filterOrigen])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
@@ -119,6 +133,7 @@ export default function NovedadesUsuarios() {
           <option value="nexo">Detectada por Nexo</option>
           <option value="sicau">Reportada por SICAU</option>
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -132,11 +147,11 @@ export default function NovedadesUsuarios() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Fecha</th>
-                  <th>Origen</th>
-                  <th>Usuario</th>
-                  <th>Cambio</th>
-                  <th>Enviado por</th>
+                  <th><ColumnFilter label="Fecha" {...colProps('fecha')} /></th>
+                  <th><ColumnFilter label="Origen" {...colProps('origen')} /></th>
+                  <th><ColumnFilter label="Usuario" {...colProps('usuario')} /></th>
+                  <th><ColumnFilter label="Cambio" {...colProps('cambio')} /></th>
+                  <th><ColumnFilter label="Enviado por" {...colProps('enviado')} /></th>
                 </tr>
               </thead>
               <tbody>

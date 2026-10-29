@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment } from 'react'
 import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, BookOpen } from 'lucide-react'
 import { fetchEnrollmentsList } from '../../../services/matriculas/fetchEnrollmentsList'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
@@ -71,6 +73,16 @@ const EMPTY_FORM = {
   userid: '', studentLabel: '', role: 'student',
   codigo_asignatura: '', nombre_asignatura: '', grupo: '', periodo: '', programa: '',
   estado: 'Matriculado', codigo_journey: ''
+}
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = {
+  estudiante:     e => e.nombre_estudiante || e.documento || '-',
+  asignatura:     e => e.nombre_asignatura || '-',
+  codigo_journey: e => e.codigo_journey || '-',
+  programa:       e => e.programa || '-',
+  periodo_grupo:  e => `${e.periodo || '-'} / Grupo ${e.grupo || '-'}`,
+  created_at:     e => e.created_at ? String(e.created_at).split('T')[0] : '-',
 }
 
 function StatusBadge({ row, syncResult }) {
@@ -376,7 +388,7 @@ export default function ModulosMatriculas() {
 
   useEffect(() => { loadEnrollments() }, [loadEnrollments])
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     // Las desmatriculadas (borrado lógico: estado='Desmatriculado') no se muestran aquí
     // — siguen existiendo para historial y re-sincronización en Sync Novedades.
     let data = enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'desmatriculado')
@@ -403,6 +415,9 @@ export default function ModulosMatriculas() {
     })
     return data
   }, [enrollments, search, filterPeriodo, filterPrograma, filterRol, filterEstado, syncResults, sortKey, sortDir])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
@@ -587,6 +602,7 @@ export default function ModulosMatriculas() {
           <option value="traslado">Duplicado (cambió de curso)</option>
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -600,30 +616,38 @@ export default function ModulosMatriculas() {
                 <tr>
                   <th><input type="checkbox" checked={allPageSelected} onChange={selectAll} /></th>
                   <th onClick={() => handleSort('nombre_estudiante')} className="sortable">
-                    Estudiante / Usuario
-                    {sortKey === 'nombre_estudiante'
-                      ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                      : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    <ColumnFilter {...colProps('estudiante')}>
+                      Estudiante / Usuario
+                      {sortKey === 'nombre_estudiante'
+                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    </ColumnFilter>
                   </th>
-                  <th>Asignatura</th>
+                  <th><ColumnFilter label="Asignatura" {...colProps('asignatura')} /></th>
                   <th onClick={() => handleSort('codigo_journey')} className="sortable">
-                    Código Curso
-                    {sortKey === 'codigo_journey'
-                      ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                      : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    <ColumnFilter {...colProps('codigo_journey')}>
+                      Código Curso
+                      {sortKey === 'codigo_journey'
+                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    </ColumnFilter>
                   </th>
                   <th onClick={() => handleSort('programa')} className="sortable">
-                    Programa
-                    {sortKey === 'programa'
-                      ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                      : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    <ColumnFilter {...colProps('programa')}>
+                      Programa
+                      {sortKey === 'programa'
+                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    </ColumnFilter>
                   </th>
-                  <th>Periodo / Grupo</th>
+                  <th><ColumnFilter label="Periodo / Grupo" {...colProps('periodo_grupo')} /></th>
                   <th onClick={() => handleSort('created_at')} className="sortable">
-                    Fecha Matrícula
-                    {sortKey === 'created_at'
-                      ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                      : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    <ColumnFilter {...colProps('created_at')}>
+                      Fecha Matrícula
+                      {sortKey === 'created_at'
+                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                    </ColumnFilter>
                   </th>
                   <th>Estado</th>
                   <th>Acciones</th>

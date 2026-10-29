@@ -66,6 +66,24 @@
 .toggle-btn:hover { background: var(--bg-surface-hover); }
 
 /* ─── BÚSQUEDA (navbar) ─── */
+/* Centro del navbar: buscador y, a su derecha, el logo institucional (Pascual Bravo) */
+.navbar-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.navbar-institucional {
+  height: 30px;
+  width: auto;
+  flex-shrink: 0;
+  display: block;
+}
+@media (max-width: 1100px) {
+  .navbar-institucional { display: none; }
+}
 .navbar-search {
   flex: 1 1 auto;
   max-width: 520px;
