@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, RefreshCw, Search } from 'lucide-react'
 import axios from 'axios'
 import config from '../../../config'
@@ -21,6 +23,9 @@ const COLUMNS = [
   { key: 'departamento', label: 'Departamento' },
   { key: 'programa',     label: 'Programa' },
 ]
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = Object.fromEntries(COLUMNS.map(col => [col.key, r => r[col.key] || '-']))
 
 function StatusBadge({ row }) {
   const estado = row.estado_sync || (row.sincronizado ? 'sincronizado' : 'pendiente')
@@ -90,7 +95,7 @@ export default function SyncCursos() {
   const periodos = [...new Set(courses.map(c => c.periodo).filter(Boolean))]
   const deptos   = [...new Set(courses.map(c => c.departamento).filter(Boolean))]
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     let data = [...courses]
     if (search) {
       const q = search.toLowerCase()
@@ -108,6 +113,9 @@ export default function SyncCursos() {
     })
     return data
   }, [courses, search, filterPeriodo, filterDepto, filterSync, sortKey, sortDir])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
@@ -213,6 +221,7 @@ export default function SyncCursos() {
           <option value="novedad">Novedad</option>
           <option value="pendiente">Pendiente</option>
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -227,10 +236,12 @@ export default function SyncCursos() {
                   <th style={{ width: 40 }}><input type="checkbox" checked={allPageSelected} onChange={selectAll} /></th>
                   {COLUMNS.map(col => (
                     <th key={col.key} onClick={() => handleSort(col.key)} className="sortable">
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      <ColumnFilter {...colProps(col.key)}>
+                        {col.label}
+                        {sortKey === col.key
+                          ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                          : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      </ColumnFilter>
                     </th>
                   ))}
                   <th>Sync</th>

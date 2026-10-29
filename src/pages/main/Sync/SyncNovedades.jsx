@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { ChevronDown, ChevronUp, RefreshCw, Search, UserX, GraduationCap, BookOpen, Users } from 'lucide-react'
 import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
@@ -106,6 +108,12 @@ const COLUMNS = [
   { key: 'fecha_cambio_estado', label: 'Fecha' },
 ]
 
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = Object.fromEntries(COLUMNS.map(col => [col.key, r =>
+    col.key === 'fecha_cambio_estado' ? (r.fecha_cambio_estado ? String(r.fecha_cambio_estado).split('T')[0] : '-')
+    : col.key === 'estado' ? (esCambioDeGrupo(r) ? 'Desmatriculado' : (r.estado || '-'))
+    : (r[col.key] || '-')]))
+
 function NovedadBadge({ enr }) {
   const tipo = enr._tipoNovedad
   return <span className={`badge novedad-badge ${claseNovedad(tipo)}`} title={enr._duplicadoCon ? `También matriculado en: ${enr._duplicadoCon.join(', ')}` : ''}>{tipo}</span>
@@ -191,7 +199,7 @@ export default function SyncNovedades() {
   const periodos = [...new Set(novedades.map(e => e.periodo).filter(Boolean))]
   const tipos    = [...new Set(novedades.map(e => e._tipoNovedad).filter(Boolean))]
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     let data = [...novedades]
     if (search) {
       const q = search.toLowerCase()
@@ -212,6 +220,9 @@ export default function SyncNovedades() {
     })
     return data
   }, [novedades, search, filterPeriodo, filterTipo, filterSync, sortKey, sortDir])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
@@ -308,6 +319,7 @@ export default function SyncNovedades() {
           <option value="error">Error</option>
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -322,10 +334,12 @@ export default function SyncNovedades() {
                   <th style={{ width: 40 }}><input type="checkbox" checked={allPageSelected} onChange={selectAll} /></th>
                   {COLUMNS.map(col => (
                     <th key={col.key} onClick={() => handleSort(col.key)} className="sortable">
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      <ColumnFilter {...colProps(col.key)}>
+                        {col.label}
+                        {sortKey === col.key
+                          ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                          : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      </ColumnFilter>
                     </th>
                   ))}
                   <th>Novedad</th>

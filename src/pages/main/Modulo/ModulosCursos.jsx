@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { ChevronDown, ChevronUp, Search, RefreshCw, BookPlus, UploadCloud, FlagOff } from 'lucide-react'
 import { fetchCourses } from '../../../services/cursos/fetchCourses'
 import { createCourseManual } from '../../../services/cursos/createCourseManual'
@@ -29,6 +31,9 @@ const COLUMNS = [
   { key: 'periodo',      label: 'Periodo' },
   { key: 'moodle_id',    label: 'Moodle ID' },
 ]
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = Object.fromEntries(COLUMNS.map(col => [col.key, r => r[col.key] || '-']))
 
 const EMPTY_FORM = {
   seed_shortname: '', categoryid: '', fullname: '', shortname: '', idnumber: '',
@@ -263,7 +268,7 @@ export default function ModulosCursos() {
     setFinalizingId(null)
   }
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     let data = [...courses]
     if (search) {
       const q = search.toLowerCase()
@@ -280,6 +285,9 @@ export default function ModulosCursos() {
     })
     return data
   }, [courses, search, filterPeriodo, filterDepto, sortKey, sortDir])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
@@ -331,6 +339,7 @@ export default function ModulosCursos() {
           <option value="">Todos los departamentos</option>
           {deptos.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -344,10 +353,12 @@ export default function ModulosCursos() {
                 <tr>
                   {COLUMNS.map(col => (
                     <th key={col.key} onClick={() => handleSort(col.key)} className="sortable">
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      <ColumnFilter {...colProps(col.key)}>
+                        {col.label}
+                        {sortKey === col.key
+                          ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                          : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      </ColumnFilter>
                     </th>
                   ))}
                   <th>Estado</th>

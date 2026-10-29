@@ -16,6 +16,8 @@ import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
 import logoPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/bravo_hub_positivo.svg'
 import logoNegativo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/bravo_hub_negativo.svg'
+import logoPascualPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/logo_pascual_positivo.svg'
+import logoPascualNegativo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/logo_pascual_negativo.svg'
 
 // Debe coincidir con el breakpoint móvil del sidebar en Layout.css
 const MOBILE_QUERY = '(max-width: 768px)'
@@ -253,6 +255,8 @@ const Layout = () => {
             />
           </span>
         </div>
+        {/* Buscador + logo institucional, juntos en el centro del navbar */}
+        <div className="navbar-center">
         <div className="navbar-search" ref={searchRef}>
           <form className="navbar-search-form" onSubmit={handleSearchSubmit}>
             <Search size={16} className="navbar-search-icon" />
@@ -276,6 +280,12 @@ const Layout = () => {
               ))}
             </div>
           )}
+        </div>
+          <img
+            className="navbar-institucional"
+            src={theme === 'dark' ? logoPascualNegativo : logoPascualPositivo}
+            alt="Institución Universitaria Pascual Bravo"
+          />
         </div>
         <div className="navbar-right">
           <div className="notif-menu" ref={notifRef}>

@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search } from 'lucide-react'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { syncUsers } from '../../../services/usuarios/syncUsers'
@@ -23,6 +25,10 @@ const COLUMNS = [
   { key: 'documento',  label: 'Documento' },
   { key: 'created_at', label: 'Fecha Creación' },
 ]
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = Object.fromEntries(COLUMNS.map(col => [col.key, r =>
+    col.key === 'created_at' ? (r.created_at ? String(r.created_at).split('T')[0] : '-') : (r[col.key] || '-')]))
 
 function StatusBadge({ row }) {
   if (row._syncing)               return <span className="badge badge-syncing">Sincronizando...</span>
@@ -184,7 +190,7 @@ export default function SyncUsuariosP() {
 
   useEffect(() => { loadUsers() }, [loadUsers])
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     let data = [...users]
     if (search) {
       const q = search.toLowerCase()
@@ -205,6 +211,9 @@ export default function SyncUsuariosP() {
     })
     return data
   }, [users, search, filterJornada, filterEstado, sortKey, sortDir])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.ceil(filtered.length / perPage)
   const paginated  = filtered.slice((page - 1) * perPage, page * perPage)
@@ -349,6 +358,7 @@ export default function SyncUsuariosP() {
           <option value="novedad">Novedad</option>
           <option value="cambio_correo">Cambio de correo</option>
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -363,10 +373,12 @@ export default function SyncUsuariosP() {
                   <th><input type="checkbox" checked={allPageSelected} onChange={selectAll} /></th>
                   {COLUMNS.map(col => (
                     <th key={col.key} onClick={() => handleSort(col.key)} className="sortable">
-                      {col.label}
-                      {sortKey === col.key
-                        ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
-                        : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      <ColumnFilter {...colProps(col.key)}>
+                        {col.label}
+                        {sortKey === col.key
+                          ? sortDir === 'asc' ? <ChevronUp size={13} /> : <ChevronDown size={13} />
+                          : <span style={{ opacity: 0.3 }}><ChevronDown size={13} /></span>}
+                      </ColumnFilter>
                     </th>
                   ))}
                   <th>Estado</th>

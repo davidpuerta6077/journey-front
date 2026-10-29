@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, RefreshCw } from 'lucide-react'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
@@ -42,6 +44,21 @@ function CopyButton({ value, title }) {
   )
 }
 
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const CAT_GETTERS = {
+  id:          c => c.id,
+  name:        c => c.name,
+  idnumber:    c => c.idnumber || '-',
+  parent:      c => c.parent || '-',
+  coursecount: c => c.coursecount ?? '-',
+}
+const SEMILLA_GETTERS = {
+  id:        s => s.id,
+  shortname: s => s.shortname,
+  fullname:  s => s.fullname,
+  categoria: s => s.categoryname || s.categoryid || '-',
+}
+
 export default function ReglasPlantillas() {
   const [categorias, setCategorias]           = useState([])
   const [semillas, setSemillas]               = useState([])
@@ -49,6 +66,8 @@ export default function ReglasPlantillas() {
   const [loading, setLoading]                 = useState(true)
   const [loadingSemillas, setLoadingSemillas]  = useState(false)
   const [error, setError]                     = useState('')
+  const catFiltro = useColumnFilters(categorias, CAT_GETTERS)
+  const semFiltro = useColumnFilters(semillas, SEMILLA_GETTERS)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -109,13 +128,20 @@ export default function ReglasPlantillas() {
           <div className="table-wrapper">
             <table className="data-table">
               <thead>
-                <tr><th>ID</th><th>Nombre</th><th>Idnumber</th><th>Padre</th><th>Cursos</th><th></th></tr>
+                <tr>
+                  <th><ColumnFilter label="ID" {...catFiltro.colProps('id')} /></th>
+                  <th><ColumnFilter label="Nombre" {...catFiltro.colProps('name')} /></th>
+                  <th><ColumnFilter label="Idnumber" {...catFiltro.colProps('idnumber')} /></th>
+                  <th><ColumnFilter label="Padre" {...catFiltro.colProps('parent')} /></th>
+                  <th><ColumnFilter label="Cursos" {...catFiltro.colProps('coursecount')} /></th>
+                  <th></th>
+                </tr>
               </thead>
               <tbody>
-                {categorias.length === 0 && (
+                {catFiltro.filtered.length === 0 && (
                   <tr><td colSpan={6} style={{ textAlign: 'center', color: '#94a3b8' }}>No se encontraron categorías.</td></tr>
                 )}
-                {categorias.map(cat => (
+                {catFiltro.filtered.map(cat => (
                   <tr key={cat.id}>
                     <td data-label="ID"><code>{cat.id}</code></td>
                     <td data-label="Nombre">{cat.name}</td>
@@ -145,16 +171,22 @@ export default function ReglasPlantillas() {
           <div className="table-wrapper">
             <table className="data-table">
               <thead>
-                <tr><th>ID</th><th>Shortname</th><th>Nombre completo</th><th>Categoría</th><th></th></tr>
+                <tr>
+                  <th><ColumnFilter label="ID" {...semFiltro.colProps('id')} /></th>
+                  <th><ColumnFilter label="Shortname" {...semFiltro.colProps('shortname')} /></th>
+                  <th><ColumnFilter label="Nombre completo" {...semFiltro.colProps('fullname')} /></th>
+                  <th><ColumnFilter label="Categoría" {...semFiltro.colProps('categoria')} /></th>
+                  <th></th>
+                </tr>
               </thead>
               <tbody>
                 {loadingSemillas && (
                   <tr><td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>Consultando Moodle...</td></tr>
                 )}
-                {!loadingSemillas && semillas.length === 0 && (
+                {!loadingSemillas && semFiltro.filtered.length === 0 && (
                   <tr><td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>No se encontraron cursos semilla en esta categoría.</td></tr>
                 )}
-                {!loadingSemillas && semillas.map(s => (
+                {!loadingSemillas && semFiltro.filtered.map(s => (
                   <tr key={s.id}>
                     <td data-label="ID"><code>{s.id}</code></td>
                     <td data-label="Shortname"><code>{s.shortname}</code></td>

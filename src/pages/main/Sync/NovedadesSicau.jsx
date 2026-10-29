@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
 import { humanize, nombreNovedadSicau, claseNovedad, NIVEL_LABEL } from './novedadNombres'
 
@@ -18,6 +20,17 @@ function describirCambio(n) {
 }
 
 const formatFecha = (f) => new Date(f).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })
+
+// Texto de cada columna tal como se ve en la celda (para el filtro por columna).
+const COL_GETTERS = {
+  fecha:      n => formatFecha(n.fecha),
+  tipo:       n => nombreNovedadSicau(n),
+  curso:      n => n.nivel === 'usuario' ? 'Cuenta de usuario' : (n.nombre_asignatura || n.codigo_asignatura || '—'),
+  estudiante: n => n.nivel === 'curso' ? 'Todo el curso' : (n.nombre_estudiante || n.cedula || '—'),
+  cambio:     n => describirCambio(n),
+  resultado:  n => n.resultado || (n.nivel === 'curso' ? '—' : 'Según el estado de la matrícula'),
+  enviado:    n => n.usuario_sicau || '—',
+}
 
 export default function NovedadesSicau() {
   const [rows, setRows]             = useState([])
@@ -39,7 +52,7 @@ export default function NovedadesSicau() {
   const tiposPresentes  = useMemo(() => [...new Set(rows.map(nombreNovedadSicau))], [rows])
   const nivelesPresentes = useMemo(() => [...new Set(rows.map(r => r.nivel))], [rows])
 
-  const filtered = useMemo(() => {
+  const baseFiltered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return rows.filter(r =>
       (!filterTipo || nombreNovedadSicau(r) === filterTipo) &&
@@ -48,6 +61,9 @@ export default function NovedadesSicau() {
         .some(v => String(v || '').toLowerCase().includes(q)))
     )
   }, [rows, search, filterTipo, filterNivel])
+
+  // Filtros por columna (estilo Excel) sobre lo que ya dejó pasar la barra de filtros.
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltered, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const paginated = filtered.slice((page - 1) * perPage, page * perPage)
@@ -77,6 +93,7 @@ export default function NovedadesSicau() {
           <option value="">Todos los tipos de novedad</option>
           {tiposPresentes.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -90,13 +107,13 @@ export default function NovedadesSicau() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Curso</th>
-                  <th>Estudiante</th>
-                  <th>Cambio reportado</th>
-                  <th>Resultado en Nexo</th>
-                  <th>Enviado por</th>
+                  <th><ColumnFilter label="Fecha" {...colProps('fecha')} /></th>
+                  <th><ColumnFilter label="Tipo" {...colProps('tipo')} /></th>
+                  <th><ColumnFilter label="Curso" {...colProps('curso')} /></th>
+                  <th><ColumnFilter label="Estudiante" {...colProps('estudiante')} /></th>
+                  <th><ColumnFilter label="Cambio reportado" {...colProps('cambio')} /></th>
+                  <th><ColumnFilter label="Resultado en Nexo" {...colProps('resultado')} /></th>
+                  <th><ColumnFilter label="Enviado por" {...colProps('enviado')} /></th>
                 </tr>
               </thead>
               <tbody>
