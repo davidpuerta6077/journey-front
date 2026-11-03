@@ -42,6 +42,7 @@ import InformesPage from './pages/main/Informes/InformesPage'
 import CodexPaginas from './pages/main/Codex/CodexPaginas'
 import CodexEditor from './pages/main/Codex/CodexEditor'
 import ReporteDetalle from './pages/main/Reportes/ReporteDetalle'
+import NuevoInforme from './pages/main/Reportes/NuevoInforme'
 import Estadisticas from './pages/main/Estadisticas/Estadisticas'
 import Configuracion from './pages/main/Configuracion/Configuracion'
 
@@ -216,6 +217,11 @@ function App() {
           <Route path="admin/reportes" element={
             <PrivateRoute submoduleCode="reports">
               <Reportes />
+            </PrivateRoute>
+          } />
+          <Route path="admin/reportes/constructor" element={
+            <PrivateRoute submoduleCode="reports">
+              <NuevoInforme />
             </PrivateRoute>
           } />
           <Route path="admin/reportes/:id" element={

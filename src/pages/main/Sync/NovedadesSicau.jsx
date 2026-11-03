@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
 import { humanize, nombreNovedadSicau, claseNovedad, NIVEL_LABEL } from './novedadNombres'
 
@@ -31,6 +33,8 @@ const COL_GETTERS = {
   resultado:  n => n.resultado || (n.nivel === 'curso' ? '—' : 'Según el estado de la matrícula'),
   enviado:    n => n.usuario_sicau || '—',
 }
+// Columnas para exportar (mismo texto de la celda, con el título del encabezado).
+const EXPORT_COLUMNS = Object.entries({ fecha: 'Fecha', tipo: 'Tipo', curso: 'Curso', estudiante: 'Estudiante', cambio: 'Cambio reportado', resultado: 'Resultado en Nexo', enviado: 'Enviado por' }).map(([k, label]) => ({ label, get: COL_GETTERS[k] }))
 
 export default function NovedadesSicau() {
   const [rows, setRows]             = useState([])
@@ -38,7 +42,15 @@ export default function NovedadesSicau() {
   const [error, setError]           = useState(null)
   const [search, setSearch]         = useState('')
   const [filterTipo, setFilterTipo]   = useState('')
-  const [filterNivel, setFilterNivel] = useState('')
+  // ?nivel=matricula llega desde la notificación agrupada de SICAU.
+  const [searchParams] = useSearchParams()
+  const nivelParam = searchParams.get('nivel')
+  const [filterNivel, setFilterNivel] = useState(nivelParam || '')
+  const [prevNivelParam, setPrevNivelParam] = useState(nivelParam)
+  if (nivelParam !== prevNivelParam) {
+    setPrevNivelParam(nivelParam)
+    setFilterNivel(nivelParam || '')
+  }
   const [page, setPage]             = useState(1)
   const [perPage, setPerPage]       = useState(10)
 
@@ -94,6 +106,7 @@ export default function NovedadesSicau() {
           {tiposPresentes.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
+        <ExportMenu title="Novedades SICAU" columns={EXPORT_COLUMNS} rows={filtered} allRows={rows} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

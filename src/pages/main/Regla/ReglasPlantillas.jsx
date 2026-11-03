@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Copy, Check, RefreshCw } from 'lucide-react'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { fetchMoodleCategorias } from '../../../services/admin/fetchMoodleCategorias'
 import { fetchMoodleSemillas } from '../../../services/admin/fetchMoodleSemillas'
 import "../../../styles/main/Sync/SyncUsuariosP.css"
@@ -58,6 +59,9 @@ const SEMILLA_GETTERS = {
   fullname:  s => s.fullname,
   categoria: s => s.categoryname || s.categoryid || '-',
 }
+// Columnas para exportar (mismo texto de la celda, con el título del encabezado).
+const CAT_EXPORT = Object.entries({ id: 'ID', name: 'Nombre', idnumber: 'Idnumber', parent: 'Padre', coursecount: 'Cursos' }).map(([k, label]) => ({ label, get: CAT_GETTERS[k] }))
+const SEMILLA_EXPORT = Object.entries({ id: 'ID', shortname: 'Shortname', fullname: 'Nombre completo', categoria: 'Categoría' }).map(([k, label]) => ({ label, get: SEMILLA_GETTERS[k] }))
 
 export default function ReglasPlantillas() {
   const [categorias, setCategorias]           = useState([])
@@ -124,6 +128,7 @@ export default function ReglasPlantillas() {
         <>
           <div className="sync-page-header" style={{ marginTop: 8 }}>
             <h3>Categorías de Moodle</h3>
+            <ExportMenu title="Categorías de Moodle" columns={CAT_EXPORT} rows={catFiltro.filtered} allRows={categorias} />
           </div>
           <div className="table-wrapper">
             <table className="data-table">
@@ -167,6 +172,7 @@ export default function ReglasPlantillas() {
                 ))}
               </select>
             </div>
+            <ExportMenu title="Cursos semilla" columns={SEMILLA_EXPORT} rows={semFiltro.filtered} allRows={semillas} />
           </div>
           <div className="table-wrapper">
             <table className="data-table">

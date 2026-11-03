@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { ChevronDown, ChevronUp, Search, RefreshCw, BookPlus, UploadCloud, FlagOff } from 'lucide-react'
 import { fetchCourses } from '../../../services/cursos/fetchCourses'
 import { createCourseManual } from '../../../services/cursos/createCourseManual'
@@ -340,6 +341,7 @@ export default function ModulosCursos() {
           {deptos.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
+        <ExportMenu title="Módulo Cursos" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={courses} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

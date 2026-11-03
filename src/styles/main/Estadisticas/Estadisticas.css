@@ -1,0 +1,88 @@
+/* ─── Administrador > Estadísticas (Estadisticas.jsx). Reusa las tarjetas del
+   inicio de Nexo (.nexo-card, .nexo-kpi-*, .nexo-panel, .nexo-range-tabs). ─── */
+.est-page { max-width: none; }
+.est-page .nexo-range-tabs { flex-wrap: wrap; }
+
+/* Menú de aplicaciones */
+.est-apps { display: flex; gap: 8px; flex-wrap: wrap; }
+.est-apps button {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; font: inherit; font-size: 0.88rem; font-weight: 500;
+  color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border-soft); cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.est-apps button:hover { background: var(--bg-surface-hover); color: var(--text-primary); }
+.est-apps button:focus-visible { outline: 2px solid #5b7cfa; outline-offset: 2px; }
+.est-apps button.activa {
+  color: var(--hub-titulo, var(--text-primary)); font-weight: 600; border-color: transparent;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+}
+
+.est-contenido { display: flex; flex-direction: column; gap: 18px; transition: opacity .2s; }
+.est-actualizando { opacity: .55; }
+.nexo-kpi-delta.est-baja { color: #d64545; }
+
+/* Gráficos: la línea ocupa todo el ancho; el resto, de a dos */
+.est-graficos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.est-ancho { grid-column: 1 / -1; }
+.est-graficos .inf-grafico { padding: 22px 24px; }
+.est-graficos .inf-grafico figcaption strong { font-size: 0.95rem; font-weight: 600; color: var(--text-primary); }
+.est-linea { height: 260px; }
+.est-linea-leyenda { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 0.82rem; color: var(--text-secondary); }
+.est-linea-leyenda li { display: flex; align-items: center; gap: 6px; }
+.est-linea-leyenda strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.est-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.est-vacio { margin: 18px 0; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-muted); font-size: 0.86rem; }
+
+/* Medidor */
+.est-medidor { position: relative; max-width: 300px; margin: 6px auto 0; }
+.est-medidor svg { width: 100%; display: block; }
+.est-medidor-pista { stroke: color-mix(in srgb, var(--text-muted, #9ca3af) 18%, transparent); }
+.est-medidor-valor { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.est-medidor-valor strong { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--hub-titulo, var(--text-primary)); font-variant-numeric: tabular-nums; }
+.est-medidor-valor span { font-size: 0.8rem; color: var(--text-muted); text-align: center; }
+
+/* Mapa de calor */
+.est-calor { display: grid; grid-template-columns: 36px repeat(24, minmax(0, 1fr)); gap: 3px; }
+.est-calor-fila { display: contents; }
+.est-calor-hora { font-size: 0.68rem; color: var(--text-muted); text-align: left; }
+.est-calor-dia { font-size: 0.75rem; color: var(--text-secondary); align-self: center; }
+.est-calor-celda {
+  aspect-ratio: 1.6; min-height: 14px;
+  background: color-mix(in srgb, #5b7cfa calc(var(--i) * 100%), color-mix(in srgb, var(--text-muted, #9ca3af) 10%, transparent));
+}
+.est-calor-resumen { margin: 12px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 0.82rem; color: var(--text-secondary); }
+.est-calor-resumen strong { color: var(--text-primary); }
+.est-calor-escala { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-muted); }
+.est-calor-escala i { width: 80px; height: 8px; background: linear-gradient(to right, color-mix(in srgb, #5b7cfa 12%, transparent), #5b7cfa); }
+
+/* Columnas y mosaico */
+.est-columnas { height: 260px; }
+.est-mosaico { height: 320px; }
+
+/* Listas (ranking y últimos movimientos) */
+.est-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.est-lista li { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.est-lista li + li { border-top: 1px solid var(--border-softer, var(--border-soft)); }
+.est-lista-pos {
+  flex: none; width: 26px; height: 26px; display: grid; place-items: center; font-size: 0.78rem; font-weight: 700;
+  color: #5b73c4; background: color-mix(in srgb, #5b73c4 12%, transparent);
+}
+.est-lista-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.est-lista-texto strong { font-size: 0.88rem; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.est-lista-texto span { font-size: 0.76rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.est-lista-valor { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+@media (max-width: 1000px) {
+  .est-graficos { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .est-apps { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .est-apps::-webkit-scrollbar { display: none; }
+  .est-apps button { flex: none; }
+  .est-linea { height: 220px; }
+  .est-calor { grid-template-columns: 30px repeat(24, minmax(0, 1fr)); gap: 1px; }
+  .est-calor-celda { min-height: 10px; aspect-ratio: auto; }
+  .est-calor-hora { font-size: 0.55rem; }
+  .est-mosaico { height: 260px; }
+}

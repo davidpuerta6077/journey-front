@@ -3,6 +3,7 @@ import { Search } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { fetchUsers } from '../../../services/usuarios/fetchUsers'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
 import { humanize, nombreNovedadSicau } from './novedadNombres'
@@ -45,6 +46,8 @@ const COL_GETTERS = {
   cambio:  r => r.cambio,
   enviado: r => r.enviado_por,
 }
+// Columnas para exportar (mismo texto de la celda, con el título del encabezado).
+const EXPORT_COLUMNS = Object.entries({ fecha: 'Fecha', origen: 'Origen', usuario: 'Usuario', cambio: 'Cambio', enviado: 'Enviado por' }).map(([k, label]) => ({ label, get: COL_GETTERS[k] }))
 
 export default function NovedadesUsuarios() {
   const [users, setUsers]     = useState(() => getCached(CACHE_KEY) || [])
@@ -134,6 +137,7 @@ export default function NovedadesUsuarios() {
           <option value="sicau">Reportada por SICAU</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
+        <ExportMenu title="Novedades de usuarios" columns={EXPORT_COLUMNS} rows={filtered} allRows={rows} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

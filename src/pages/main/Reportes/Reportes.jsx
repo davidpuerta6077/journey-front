@@ -120,7 +120,10 @@ export default function Reportes() {
     <div className="reportes-page">
       <div className="reportes-header">
         <h1>Reportes</h1>
-        <button className="btn-primary" onClick={abrirForm}>Nuevo reporte</button>
+        <div className="reportes-acciones">
+          <button className="btn-primary" onClick={() => navigate('/admin/reportes/constructor')}>Nuevo informe</button>
+          <button className="btn-secondary" onClick={abrirForm}>Reporte predefinido</button>
+        </div>
       </div>
 
       {error && <div className="reportes-error">{error}</div>}
@@ -162,7 +165,7 @@ export default function Reportes() {
           <label>Tipo
             <select value={tipoCode} onChange={(e) => onTipoChange(e.target.value)}>
               <option value="">— Seleccionar —</option>
-              {tipos.map((t) => <option key={t.tipo} value={t.tipo}>{t.label}</option>)}
+              {tipos.filter((t) => !t.oculto).map((t) => <option key={t.tipo} value={t.tipo}>{t.label}</option>)}
             </select>
           </label>
 

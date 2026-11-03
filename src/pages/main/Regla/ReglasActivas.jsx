@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Pencil, Trash2, Power } from 'lucide-react'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { fetchReglas } from '../../../services/admin/fetchReglas'
 import { createRegla } from '../../../services/admin/createRegla'
 import { updateRegla } from '../../../services/admin/updateRegla'
@@ -253,6 +254,8 @@ const COL_GETTERS = {
   categoryid:        r => r.categoryid,
   activo:            r => r.activo ? 'Activa' : 'Inactiva',
 }
+// Columnas para exportar (mismo texto de la celda, con el título del encabezado).
+const EXPORT_COLUMNS = Object.entries({ codigo_asignatura: 'Código Asignatura', programa: 'Programa', departamento: 'Departamento', seed_shortname: 'Semilla', categoryid: 'Categoría', activo: 'Estado' }).map(([k, label]) => ({ label, get: COL_GETTERS[k] }))
 
 export default function ReglasActivas() {
   const [reglas, setReglas]   = useState([])
@@ -325,7 +328,10 @@ export default function ReglasActivas() {
     <div className="sync-page">
       <div className="sync-page-header">
         <h2>Reglas de Sincronización</h2>
-        <button className="btn-primary" onClick={() => setShowCreate(true)}>Crear Regla</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <ExportMenu title="Reglas de Sincronización" columns={EXPORT_COLUMNS} rows={filtered} allRows={reglas} />
+          <button className="btn-primary" onClick={() => setShowCreate(true)}>Crear Regla</button>
+        </div>
       </div>
       <p className="permisos-intro">
         Define, por código de asignatura, programa y/o departamento, qué curso semilla de Moodle y

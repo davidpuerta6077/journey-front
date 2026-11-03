@@ -45,6 +45,7 @@
 .atom-count-chip strong { font-size: 1.1rem; line-height: 1.1; color: var(--hub-text, #1e293b); }
 .atom-count-chip span { font-size: .7rem; color: var(--text-secondary, #64748b); }
 .atom-count-chip.atom-count-vencidas strong { color: #dc2626; } /* rojo, no el salmón de --danger */
+.atom-count-chip.atom-count-completadas strong { color: #15803d; }
 
 .atom-quickviews {
   display: flex; gap: 8px; flex-wrap: wrap;
@@ -106,6 +107,7 @@
 
 .atom-vencida { color: #dc2626; font-weight: 600; }
 :root[data-theme="dark"] .atom-count-chip.atom-count-vencidas strong, :root[data-theme="dark"] .atom-vencida { color: #ef4444; }
+:root[data-theme="dark"] .atom-count-chip.atom-count-completadas strong { color: #22c55e; }
 
 .atom-empty { text-align: center; color: var(--text-secondary, #64748b); padding: 24px; }
 
