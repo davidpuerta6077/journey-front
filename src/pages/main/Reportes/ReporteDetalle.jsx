@@ -6,6 +6,7 @@ import { fetchTiposReporte } from '../../../services/reportes/fetchTiposReporte'
 import { runReporte } from '../../../services/reportes/runReporte'
 import { exportarExcel } from './exportarExcel'
 import ReporteDashboard from './ReporteDashboard'
+import Constructor from './Constructor'
 import '../../../styles/main/Reportes/Reportes.css'
 import '../../../styles/main/Reportes/ReporteDetalle.css'
 
@@ -26,7 +27,8 @@ export default function ReporteDetalle() {
       const [d, tipos] = await Promise.all([fetchReporte(id), fetchTiposReporte()])
       setDef(d)
       setTipoLabel((tipos.find((t) => t.tipo === d.tipo) || {}).label || d.tipo)
-      setResultado(await runReporte(id))
+      // El constructor se ejecuta solo, desde su propia pantalla.
+      if (d.tipo !== 'constructor') setResultado(await runReporte(id))
     } catch (e) {
       setError(e.message)
     } finally {
@@ -35,6 +37,8 @@ export default function ReporteDetalle() {
   }, [id])
 
   useEffect(() => { cargar() }, [cargar])
+
+  if (def?.tipo === 'constructor') return <Constructor key={def.id} reporte={def} />
 
   return (
     <div className="reporte-detalle-page">

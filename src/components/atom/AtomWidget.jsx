@@ -127,7 +127,7 @@ export default function AtomWidget() {
             <div className="atom-counts">
               <div className="atom-count-chip"><strong>{counts.pendientes}</strong><span>Pendientes</span></div>
               <div className="atom-count-chip atom-count-vencidas"><strong>{counts.vencidas}</strong><span>Vencidas</span></div>
-              <div className="atom-count-chip"><strong>{counts.completadas}</strong><span>Completadas</span></div>
+              <div className="atom-count-chip atom-count-completadas"><strong>{counts.completadas}</strong><span>Completadas</span></div>
             </div>
             <button className="btn-primary" onClick={() => setModalData({ nuevo: true })}>
               <Plus size={15} /> Nueva tarea

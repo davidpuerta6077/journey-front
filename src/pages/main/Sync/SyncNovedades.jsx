@@ -2,12 +2,13 @@ import { useState, useEffect, useMemo, useCallback, Fragment } from 'react'
 import Paginacion from '../../../components/Paginacion'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { ChevronDown, ChevronUp, RefreshCw, Search, UserX, GraduationCap, BookOpen, Users } from 'lucide-react'
 import { fetchEnrollments } from '../../../services/matriculas/fetchEnrollments'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
 import { getCached, setCached } from '../../../services/swrCache'
 import "../../../styles/main/Sync/SyncMatriculas.css"
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import NovedadesSicau from './NovedadesSicau'
 import NovedadesUsuarios from './NovedadesUsuarios'
 import { fetchSicauNovedades } from '../../../services/matriculas/fetchSicauNovedades'
@@ -147,7 +148,16 @@ export default function SyncNovedades() {
   const [selected, setSelected]             = useState({})
   const [page, setPage]                     = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const [tab, setTab] = useState('nexo')
+  // ?tab=sicau abre directo esa pestaña (link de la notificación de SICAU en la
+  // campanita); si ya estaba en esta página y cambia la URL, también la sigue.
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [tab, setTab] = useState(tabParam || 'nexo')
+  const [prevTabParam, setPrevTabParam] = useState(tabParam)
+  if (tabParam !== prevTabParam) {
+    setPrevTabParam(tabParam)
+    if (tabParam) setTab(tabParam)
+  }
   const loadEnrollments = useCallback(async () => {
     try {
       const data = await fetchEnrollments()
@@ -320,6 +330,7 @@ export default function SyncNovedades() {
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
+        <ExportMenu title="Novedades" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={novedades} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

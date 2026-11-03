@@ -86,7 +86,7 @@ export default function FormulariosList() {
     <div className="sync-page onix-root">
       <div className="sync-page-header">
         <div>
-          <h2>Asistencia</h2>
+          <h2>Acudex</h2>
           <p className="onix-sub">Formularios para registrar la asistencia a eventos, con enlace y código QR para compartir.</p>
         </div>
         <button className="btn-primary" onClick={() => navigate('/formularios/nuevo')}>

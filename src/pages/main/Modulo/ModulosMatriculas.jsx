@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import Paginacion from '../../../components/Paginacion'
 import ColumnFilter from '../../../components/ColumnFilter'
 import useColumnFilters from '../../../components/useColumnFilters'
+import ExportMenu from '../../../components/ExportMenu'
 import { ChevronDown, ChevronUp, Pencil, Trash2, RefreshCw, Search, UserPlus, BookOpen } from 'lucide-react'
 import { fetchEnrollmentsList } from '../../../services/matriculas/fetchEnrollmentsList'
 import { syncEnrollments } from '../../../services/matriculas/syncEnrollments'
@@ -84,6 +85,8 @@ const COL_GETTERS = {
   periodo_grupo:  e => `${e.periodo || '-'} / Grupo ${e.grupo || '-'}`,
   created_at:     e => e.created_at ? String(e.created_at).split('T')[0] : '-',
 }
+// Columnas para exportar (mismo texto de la celda, con el título del encabezado).
+const EXPORT_COLUMNS = Object.entries({ estudiante: 'Estudiante / Usuario', asignatura: 'Asignatura', codigo_journey: 'Código Curso', programa: 'Programa', periodo_grupo: 'Periodo / Grupo', created_at: 'Fecha Matrícula' }).map(([k, label]) => ({ label, get: COL_GETTERS[k] }))
 
 function StatusBadge({ row, syncResult }) {
   if (row._syncing) return <span className="badge badge-syncing">Sincronizando...</span>
@@ -603,6 +606,7 @@ export default function ModulosMatriculas() {
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
+        <ExportMenu title="Módulo Matrículas" columns={EXPORT_COLUMNS} rows={filtered} allRows={enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'desmatriculado')} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
