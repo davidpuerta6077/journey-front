@@ -1,9 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Upload, Link2, Search, Users, Unlock, CheckCircle2 } from 'lucide-react'
+import { Upload, Link2, Search, Users, Unlock, CheckCircle2, Download, CalendarDays, GraduationCap } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
 import ExportMenu from '../../../components/ExportMenu'
+import ColumnFilter from '../../../components/ColumnFilter'
+import useColumnFilters from '../../../components/useColumnFilters'
 import { listarCursosAsignia } from '../../../services/asignia/listarCursosAsignia'
 import { cargarProgramacion } from '../../../services/asignia/cargarProgramacion'
+import { cargarProfesores } from '../../../services/asignia/cargarProfesores'
+import { listarProfesores } from '../../../services/asignia/listarProfesores'
 import { listarPostulaciones } from '../../../services/asignia/listarPostulaciones'
 import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion'
 import { liberarCurso } from '../../../services/asignia/liberarCurso'
@@ -14,6 +18,27 @@ import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Asignia/Asignia.css'
 
 const ENLACE_PROFESORES = `${window.location.origin}/asignia/profesor`
+const FORMATO_PROGRAMACION = '/asignia/formato-programacion-asignia.xlsx'
+const FORMATO_PROFESORES = '/asignia/formato-profesores-asignia.xlsx'
+
+// Horas que suman para la carga del profesor: cursos asignados o aceptados.
+const CUENTA_HORAS = ['asignado', 'aceptado']
+const claveProfesor = (documento, nombre) => documento || (nombre ? `n:${nombre.toLowerCase()}` : '')
+const horasNum = (h) => Number(String(h || '').replace(',', '.')) || 0
+const fmtHoras = (n) => (Number.isInteger(n) ? n : n.toFixed(1))
+
+// { claveProfesor: { horas, cursos } } del periodo cargado.
+function cargaPorProfesor(cursos) {
+  const m = {}
+  for (const c of cursos) {
+    const k = claveProfesor(c.profesor_documento, c.profesor_nombre)
+    if (!k || !CUENTA_HORAS.includes(c.verificacion)) continue
+    m[k] = m[k] || { horas: 0, cursos: 0 }
+    m[k].horas += horasNum(c.horas_semana)
+    m[k].cursos += 1
+  }
+  return m
+}
 
 const COLUMNAS_EXPORT = [
   { label: 'Sede', get: c => c.sede },
@@ -23,20 +48,54 @@ const COLUMNAS_EXPORT = [
   { label: 'Curso', get: c => c.curso },
   { label: 'Grupo', get: c => c.grupo },
   { label: 'Jornada', get: c => c.jornada },
+  { label: 'H. semana', get: c => c.horas_semana },
   { label: 'Días y horario', get: c => horarioTexto(c.horario) },
   { label: 'Profesor', get: c => c.profesor_nombre },
   { label: 'Documento', get: c => c.profesor_documento },
   { label: 'Correo institucional', get: c => c.profesor_correo },
+  { label: 'Horas acumuladas del profesor', get: c => c.horas_profesor ?? '' },
   { label: 'Verificación', get: c => ESTADOS[c.verificacion]?.label },
   { label: 'Motivo de rechazo', get: c => c.motivo_rechazo || '' },
 ]
+
+// Filtros por columna (estilo Excel), mismo texto que se ve en la celda.
+const COL_GETTERS = {
+  sede: c => c.sede || '—',
+  programa: c => c.programa || '—',
+  codigo: c => c.codigo,
+  curso: c => c.curso,
+  grupo: c => c.grupo || '—',
+  jornada: c => c.jornada || '—',
+  horario: c => [...new Set((c.horario || []).map(h => h.dia))].join(', ') || '—',
+  profesor: c => c.profesor_nombre || '—',
+  horas: c => (c.horas_profesor === null ? '—' : `${c.horas_profesor} h`),
+  verificacion: c => ESTADOS[c.verificacion]?.label || c.verificacion,
+}
+
+const COLUMNAS_PROF_EXPORT = [
+  { label: 'Documento', get: p => p.documento },
+  { label: 'Profesor', get: p => p.nombre },
+  { label: 'Correo institucional', get: p => p.correo },
+  { label: 'Vinculación', get: p => p.vinculacion },
+  { label: 'Cursos en el periodo', get: p => p.cursos },
+  { label: 'Horas acumuladas', get: p => p.horas },
+]
+const COL_GETTERS_PROF = {
+  documento: p => p.documento,
+  nombre: p => p.nombre,
+  correo: p => p.correo || '—',
+  vinculacion: p => p.vinculacion || '—',
+  cursos: p => String(p.cursos),
+  horas: p => `${p.horas} h`,
+}
 
 function EstadoBadge({ estado }) {
   const e = ESTADOS[estado] || { label: estado, clase: '' }
   return <span className={`badge asignia-badge ${e.clase}`}>{e.label}</span>
 }
 
-function CargaModal({ onClose, onCargado }) {
+function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
+  const esProf = tipo === 'profesores'
   const [archivo, setArchivo] = useState(null)
   const [periodo, setPeriodo] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -45,7 +104,7 @@ function CargaModal({ onClose, onCargado }) {
   const cargar = async () => {
     setEnviando(true)
     try {
-      const r = await cargarProgramacion(archivo, periodo.trim())
+      const r = esProf ? await cargarProfesores(archivo) : await cargarProgramacion(archivo, periodo.trim())
       setResumen(r)
       onCargado(r.periodo)
     } catch (e) {
@@ -58,10 +117,22 @@ function CargaModal({ onClose, onCargado }) {
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !enviando && onClose()}>
       <div className="modal-box asignia-modal" role="dialog" aria-modal="true" aria-labelledby="asignia-carga-titulo">
         <div className="modal-header">
-          <h3 id="asignia-carga-titulo">{resumen ? 'Programación cargada' : 'Cargar programación académica'}</h3>
+          <h3 id="asignia-carga-titulo">{esProf
+            ? (resumen ? 'Profesores cargados' : 'Cargar base de profesores')
+            : (resumen ? 'Programación cargada' : 'Cargar programación académica')}</h3>
           <button className="modal-close" onClick={onClose} disabled={enviando} aria-label="Cerrar">✕</button>
         </div>
-        {resumen ? (
+        {resumen && esProf ? (
+          <div className="modal-form">
+            <p className="asignia-ayuda">Hoja "{resumen.hoja}": {resumen.total} profesores leídos.</p>
+            <dl className="asignia-resumen-carga">
+              <div><dt>Nuevos</dt><dd>{resumen.nuevos}</dd></div>
+              <div><dt>Actualizados</dt><dd>{resumen.actualizados}</dd></div>
+              <div><dt>Omitidos</dt><dd>{resumen.omitidas}</dd></div>
+            </dl>
+            {resumen.omitidas > 0 && <p className="asignia-ayuda">Se omiten las filas sin documento, nombre o correo.</p>}
+          </div>
+        ) : resumen ? (
           <div className="modal-form">
             <p className="asignia-ayuda">Periodo <strong>{resumen.periodo}</strong>, hoja "{resumen.hoja}": {resumen.total} cursos leídos.</p>
             <dl className="asignia-resumen-carga">
@@ -79,19 +150,32 @@ function CargaModal({ onClose, onCargado }) {
           </div>
         ) : (
           <div className="modal-form">
-            <p className="asignia-ayuda">
-              Sube el Excel (.xlsx) de programación. Se lee la pestaña "PROGRAMACIÓN" (o la primera que tenga columnas Código y Curso).
-              Si vuelves a cargar el mismo periodo, se actualizan los cursos y se conserva lo que los profesores ya aceptaron o rechazaron.
-            </p>
+            {esProf ? (
+              <p className="asignia-ayuda">
+                Sube el Excel (.xlsx) con los profesores de la institución. Se lee la pestaña "BD Profesores" (o la primera con columnas
+                Identificación/Documento y Profesor) y el correo institucional. Así pueden entrar y postularse también los profesores que
+                no tienen cursos en la programación. Si un profesor ya existe, se actualizan sus datos.
+              </p>
+            ) : (
+              <p className="asignia-ayuda">
+                Sube el Excel (.xlsx) de programación. Se lee la pestaña "PROGRAMACIÓN" (o la primera que tenga columnas Código y Curso).
+                Si vuelves a cargar el mismo periodo, se actualizan los cursos y se conserva lo que los profesores ya aceptaron o rechazaron.
+              </p>
+            )}
+            <a className="asignia-enlace-formato" href={esProf ? FORMATO_PROFESORES : FORMATO_PROGRAMACION} download>
+              <Download size={15} /> Descargar formato guía
+            </a>
             <div className="modal-field">
               <label htmlFor="asignia-archivo">Archivo</label>
               <input id="asignia-archivo" type="file" accept=".xlsx" onChange={(e) => setArchivo(e.target.files?.[0] || null)} />
             </div>
-            <div className="modal-field">
-              <label htmlFor="asignia-periodo">Periodo (opcional)</label>
-              <input id="asignia-periodo" type="text" maxLength={20} placeholder="Ej. 2027-1. Si lo dejas vacío se toma del archivo"
-                value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
-            </div>
+            {!esProf && (
+              <div className="modal-field">
+                <label htmlFor="asignia-periodo">Periodo (opcional)</label>
+                <input id="asignia-periodo" type="text" maxLength={20} placeholder="Ej. 2027-1. Si lo dejas vacío se toma del archivo"
+                  value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
+              </div>
+            )}
           </div>
         )}
         <div className="modal-actions">
@@ -186,25 +270,108 @@ function PostulacionesModal({ cursoId, onClose, onCambio }) {
   )
 }
 
+function ProfesoresTab({ profesores, carga, periodo }) {
+  const [busqueda, setBusqueda] = useState('')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(10)
+
+  // Base de profesores con su carga (cursos y horas) del periodo mostrado.
+  const filas = useMemo(() => profesores.map(p => {
+    const c = carga[claveProfesor(p.documento, p.nombre)] || { horas: 0, cursos: 0 }
+    return { ...p, cursos: c.cursos, horas: fmtHoras(c.horas) }
+  }), [profesores, carga])
+
+  const base = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    return q ? filas.filter(p => [p.documento, p.nombre, p.correo, p.vinculacion].some(v => (v || '').toLowerCase().includes(q))) : filas
+  }, [filas, busqueda])
+  const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(base, COL_GETTERS_PROF, () => setPage(1))
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
+  const visibles = filtered.slice((page - 1) * perPage, page * perPage)
+
+  if (!profesores.length) {
+    return (
+      <div className="asignia-vacio">
+        <p>Aún no hay base de profesores. Usa "Cargar profesores" para subir el Excel (pestaña "BD Profesores"; "Formato guía" trae un ejemplo).</p>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="filters-bar">
+        <div className="filter-input-wrapper">
+          <Search size={15} className="filter-icon" />
+          <input className="filter-input" placeholder="Buscar documento, nombre, correo o vinculación..."
+            value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPage(1) }} aria-label="Buscar profesor" />
+        </div>
+        {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
+        <ExportMenu title="Asignia profesores" columns={COLUMNAS_PROF_EXPORT} rows={filtered} allRows={filas} />
+        <span className="results-count">{filtered.length} profesor{filtered.length !== 1 ? 'es' : ''}</span>
+      </div>
+      <div className="table-wrapper">
+        <table className="data-table asignia-tabla">
+          <thead>
+            <tr>
+              <th><ColumnFilter label="Documento" {...colProps('documento')} /></th>
+              <th><ColumnFilter label="Profesor" {...colProps('nombre')} /></th>
+              <th><ColumnFilter label="Correo institucional" {...colProps('correo')} /></th>
+              <th><ColumnFilter label="Vinculación" {...colProps('vinculacion')} /></th>
+              <th><ColumnFilter label={`Cursos ${periodo || ''}`} {...colProps('cursos')} /></th>
+              <th><ColumnFilter label="Horas acumuladas" {...colProps('horas')} /></th>
+            </tr>
+          </thead>
+          <tbody>
+            {visibles.length === 0 ? (
+              <tr><td colSpan={6} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
+            ) : visibles.map(p => (
+              <tr key={p.id}>
+                <td data-label="Documento">{p.documento}</td>
+                <td data-label="Profesor">{p.nombre}</td>
+                <td data-label="Correo institucional">{p.correo || '—'}</td>
+                <td data-label="Vinculación">{p.vinculacion || '—'}</td>
+                <td data-label="Cursos">{p.cursos}</td>
+                <td data-label="Horas acumuladas"><strong>{p.horas} h</strong></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
+    </>
+  )
+}
+
 export default function AsigniaAdmin() {
+  const [tab, setTab] = useState('programacion')
   const [data, setData] = useState(null) // null = cargando
+  const [profesores, setProfesores] = useState([])
   const [periodo, setPeriodo] = useState('')
   const [estado, setEstado] = useState('')
   const [sede, setSede] = useState('')
   const [jornada, setJornada] = useState('')
   const [busqueda, setBusqueda] = useState('')
   const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(25)
-  const [cargaAbierta, setCargaAbierta] = useState(false)
+  const [perPage, setPerPage] = useState(10)
+  const [cargaAbierta, setCargaAbierta] = useState(null) // 'programacion' | 'profesores'
   const [postCurso, setPostCurso] = useState(null)
 
   const cargar = useCallback((p) => listarCursosAsignia(p)
     .then((r) => { setData(r); setPeriodo(r.periodo || '') })
     .catch((e) => { setData({ periodo: null, periodos: [], cursos: [] }); alertError(e.message) }), [])
 
-  useEffect(() => { cargar() }, [cargar])
+  const cargarProfes = useCallback(() => listarProfesores()
+    .then(setProfesores)
+    .catch((e) => alertError(e.message)), [])
 
-  const cursos = useMemo(() => data?.cursos || [], [data])
+  useEffect(() => { cargar(); cargarProfes() }, [cargar, cargarProfes])
+
+  const carga = useMemo(() => cargaPorProfesor(data?.cursos || []), [data])
+  // Cada curso con las horas acumuladas de su profesor en el periodo.
+  const cursos = useMemo(() => (data?.cursos || []).map(c => {
+    const k = claveProfesor(c.profesor_documento, c.profesor_nombre)
+    return { ...c, horas_profesor: k ? fmtHoras(carga[k]?.horas || 0) : null }
+  }), [data, carga])
   const conteo = useMemo(() => {
     const c = {}
     cursos.forEach(x => { c[x.verificacion] = (c[x.verificacion] || 0) + 1 })
@@ -213,21 +380,23 @@ export default function AsigniaAdmin() {
   const sedes = useMemo(() => [...new Set(cursos.map(c => c.sede).filter(Boolean))].sort(), [cursos])
   const jornadas = useMemo(() => [...new Set(cursos.map(c => c.jornada).filter(Boolean))].sort(), [cursos])
 
-  const filtrados = useMemo(() => {
+  const baseFiltrada = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
     return cursos.filter(c =>
       (!estado || c.verificacion === estado) &&
       (!sede || c.sede === sede) &&
       (!jornada || c.jornada === jornada) &&
-      (!q || [c.codigo, c.curso, c.programa, c.grupo, c.profesor_nombre, c.profesor_documento, c.profesor_correo]
+      (!q || [c.codigo, c.curso, c.programa, c.grupo, c.sede, c.profesor_nombre, c.profesor_documento, c.profesor_correo]
         .some(v => (v || '').toLowerCase().includes(q))))
   }, [cursos, estado, sede, jornada, busqueda])
-
+  const { filtered: filtrados, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltrada, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.max(1, Math.ceil(filtrados.length / perPage))
   const visibles = filtrados.slice((page - 1) * perPage, page * perPage)
 
-  const cambiarPeriodo = (p) => { setData(null); setPage(1); cargar(p) }
+  const hayFiltros = anyFilter || estado || sede || jornada || busqueda
+  const limpiarTodo = () => { clearFilters(); setEstado(''); setSede(''); setJornada(''); setBusqueda(''); setPage(1) }
+  const cambiarPeriodo = (p) => { setData(null); setPage(1); setSede(''); setJornada(''); cargar(p) }
 
   const copiarEnlace = async () => {
     try {
@@ -252,6 +421,8 @@ export default function AsigniaAdmin() {
     } catch (e) { alertError(e.message) }
   }
 
+  const esProf = tab === 'profesores'
+
   return (
     <div className="sync-page estilo-hub asignia-page">
       <div className="sync-page-header">
@@ -261,15 +432,29 @@ export default function AsigniaAdmin() {
         </div>
         <div className="asignia-header-acciones">
           <button className="btn-secondary" onClick={copiarEnlace} title={ENLACE_PROFESORES}><Link2 size={15} /> Copiar enlace para profesores</button>
-          <button className="btn-primary" onClick={() => setCargaAbierta(true)}><Upload size={15} /> Cargar programación</button>
+          <a className="btn-secondary" href={esProf ? FORMATO_PROFESORES : FORMATO_PROGRAMACION} download><Download size={15} /> Formato guía</a>
+          <button className="btn-primary" onClick={() => setCargaAbierta(tab)}>
+            <Upload size={15} /> {esProf ? 'Cargar profesores' : 'Cargar programación'}
+          </button>
         </div>
       </div>
 
-      {data === null ? (
+      <nav className="section-nav" aria-label="Secciones de Asignia">
+        <button type="button" className={`section-nav-tab${!esProf ? ' active' : ''}`} aria-current={!esProf ? 'page' : undefined} onClick={() => setTab('programacion')}>
+          <CalendarDays size={16} /> Programación
+        </button>
+        <button type="button" className={`section-nav-tab${esProf ? ' active' : ''}`} aria-current={esProf ? 'page' : undefined} onClick={() => setTab('profesores')}>
+          <GraduationCap size={16} /> Profesores ({profesores.length})
+        </button>
+      </nav>
+
+      {esProf ? (
+        <ProfesoresTab profesores={profesores} carga={carga} periodo={data?.periodo} />
+      ) : data === null ? (
         <div className="loading-box"><span className="loader"></span>Cargando...</div>
       ) : !data.periodo ? (
         <div className="asignia-vacio">
-          <p>Aún no hay programación cargada. Usa "Cargar programación" para subir el Excel del semestre.</p>
+          <p>Aún no hay programación cargada. Usa "Cargar programación" para subir el Excel del semestre ("Formato guía" trae un ejemplo).</p>
         </div>
       ) : (
         <>
@@ -287,7 +472,7 @@ export default function AsigniaAdmin() {
           <div className="filters-bar">
             <div className="filter-input-wrapper">
               <Search size={15} className="filter-icon" />
-              <input className="filter-input" placeholder="Buscar curso, código, programa, profesor, documento o correo..."
+              <input className="filter-input" placeholder="Buscar curso, código, grupo, programa, sede, profesor, documento o correo..."
                 value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPage(1) }} aria-label="Buscar" />
             </div>
             <select className="filter-select" value={periodo} onChange={(e) => cambiarPeriodo(e.target.value)} aria-label="Periodo">
@@ -301,6 +486,7 @@ export default function AsigniaAdmin() {
               <option value="">Todas las jornadas</option>
               {jornadas.map(j => <option key={j} value={j}>{j}</option>)}
             </select>
+            {hayFiltros && <button className="btn-secondary" onClick={limpiarTodo}>Limpiar filtros</button>}
             <ExportMenu title={`Asignia ${data.periodo}`} columns={COLUMNAS_EXPORT} rows={filtrados} allRows={cursos} />
             <span className="results-count">{filtrados.length} curso{filtrados.length !== 1 ? 's' : ''}</span>
           </div>
@@ -309,51 +495,83 @@ export default function AsigniaAdmin() {
             <table className="data-table asignia-tabla">
               <thead>
                 <tr>
-                  <th>Programa</th><th>Código</th><th>Curso</th><th>Jornada</th><th>Días y horario</th>
-                  <th>Profesor</th><th>Verificación</th><th>Acciones</th>
+                  <th><ColumnFilter label="Sede" {...colProps('sede')} /></th>
+                  <th><ColumnFilter label="Programa" {...colProps('programa')} /></th>
+                  <th><ColumnFilter label="Código" {...colProps('codigo')} /></th>
+                  <th><ColumnFilter label="Curso" {...colProps('curso')} /></th>
+                  <th><ColumnFilter label="Grupo" {...colProps('grupo')} /></th>
+                  <th><ColumnFilter label="Jornada" {...colProps('jornada')} /></th>
+                  <th><ColumnFilter label="Horario" {...colProps('horario')} /></th>
+                  <th><ColumnFilter label="Profesor" {...colProps('profesor')} /></th>
+                  <th><ColumnFilter label="Horas" {...colProps('horas')} /></th>
+                  <th><ColumnFilter label="Verificación" {...colProps('verificacion')} /></th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {visibles.length === 0 ? (
-                  <tr><td colSpan={8} className="asignia-sin-filas">No hay cursos con estos filtros.</td></tr>
+                  <tr><td colSpan={11} className="asignia-sin-filas">No hay cursos con estos filtros.</td></tr>
                 ) : visibles.map(c => (
                   <tr key={c.id}>
+                    <td data-label="Sede">{c.sede || '—'}</td>
                     <td data-label="Programa">
-                      <div>{c.programa || '—'}</div>
-                      <div className="asignia-dato">Plan {c.plan || '—'} · {c.sede}</div>
+                      <div className="asignia-celda">
+                        <span>{c.programa || '—'}</span>
+                        {c.plan && <span className="asignia-dato">Plan {c.plan}</span>}
+                      </div>
                     </td>
                     <td data-label="Código">{c.codigo}</td>
                     <td data-label="Curso">
-                      <div>{c.curso}</div>
-                      <div className="asignia-dato">Grupo {c.grupo || '—'}{c.agrupamiento ? ` · Agrup. ${c.agrupamiento}` : ''}</div>
+                      <div className="asignia-celda">
+                        <span>{c.curso}</span>
+                        {(c.agrupamiento || c.horas_semana) && (
+                          <span className="asignia-dato">{[c.horas_semana && `${c.horas_semana} h/sem`, c.agrupamiento && `Agrup. ${c.agrupamiento}`].filter(Boolean).join(' · ')}</span>
+                        )}
+                      </div>
                     </td>
+                    <td data-label="Grupo">{c.grupo || '—'}</td>
                     <td data-label="Jornada">{c.jornada || '—'}</td>
                     <td data-label="Días y horario">
-                      {c.horario?.length ? c.horario.map((h, i) => (
-                        <div key={i} className="asignia-horario">{h.dia} {h.hora}{h.aula ? ` · ${h.aula}` : ''}</div>
-                      )) : '—'}
+                      {c.horario?.length ? (
+                        <div className="asignia-celda">
+                          {c.horario.map((h, i) => (
+                            <span key={i} className="asignia-horario" title={`${h.dia} ${h.hora}${h.aula ? ` · ${h.aula}` : ''}`}>
+                              <strong>{h.dia.slice(0, 3)}</strong> {h.hora.replace(/:00/g, '').replace(' - ', '–')}{h.aula ? <span className="asignia-dato"> · {h.aula}</span> : null}
+                            </span>
+                          ))}
+                        </div>
+                      ) : '—'}
                     </td>
                     <td data-label="Profesor">
                       {c.profesor_nombre ? (
-                        <>
-                          <div>{c.profesor_nombre}</div>
-                          <div className="asignia-dato">{c.profesor_documento || 'Sin documento'} · {c.profesor_correo || 'sin correo'}</div>
-                        </>
+                        <div className="asignia-celda">
+                          <span>{c.profesor_nombre}</span>
+                          <span className="asignia-dato">{c.profesor_documento || 'Sin documento'}</span>
+                          <span className="asignia-dato asignia-correo" title={c.profesor_correo}>{c.profesor_correo || 'Sin correo'}</span>
+                        </div>
                       ) : '—'}
                     </td>
+                    <td data-label="Horas profesor" title="Suma de horas semanales de los cursos asignados o aceptados del profesor en el periodo">
+                      {c.horas_profesor === null ? '—' : <strong>{c.horas_profesor} h</strong>}
+                    </td>
                     <td data-label="Verificación">
-                      <EstadoBadge estado={c.verificacion} />
-                      {c.verificacion === 'rechazado' && c.motivo_rechazo && <div className="asignia-dato">"{c.motivo_rechazo}"</div>}
+                      <div className="asignia-celda">
+                        <EstadoBadge estado={c.verificacion} />
+                        {c.verificacion === 'rechazado' && c.motivo_rechazo && <span className="asignia-dato">"{c.motivo_rechazo}"</span>}
+                      </div>
                     </td>
                     <td data-label="Acciones">
                       <div className="asignia-acciones">
                         {(c.postulaciones_pendientes > 0 || c.verificacion === 'postulado') && (
-                          <button className="onix-texto-btn" onClick={() => setPostCurso(c.id)}>
-                            <Users size={15} /> Postulaciones ({c.postulaciones_pendientes})
+                          <button className="btn-icon asignia-accion" onClick={() => setPostCurso(c.id)}
+                            title={`Ver postulaciones (${c.postulaciones_pendientes} pendientes)`} aria-label={`Ver postulaciones (${c.postulaciones_pendientes} pendientes)`}>
+                            <Users size={15} /><span className="asignia-accion-num">{c.postulaciones_pendientes}</span>
                           </button>
                         )}
                         {c.verificacion !== 'vacio' && (
-                          <button className="onix-texto-btn onix-texto-peligro" onClick={() => liberar(c)}><Unlock size={15} /> Liberar</button>
+                          <button className="btn-icon asignia-accion asignia-btn-peligro" onClick={() => liberar(c)} title="Liberar curso" aria-label="Liberar curso">
+                            <Unlock size={15} />
+                          </button>
                         )}
                       </div>
                     </td>
@@ -367,7 +585,8 @@ export default function AsigniaAdmin() {
       )}
 
       {cargaAbierta && (
-        <CargaModal onClose={() => setCargaAbierta(false)} onCargado={(p) => cargar(p)} />
+        <CargaModal tipo={cargaAbierta} onClose={() => setCargaAbierta(null)}
+          onCargado={(p) => (cargaAbierta === 'profesores' ? cargarProfes() : cargar(p))} />
       )}
       {postCurso && (
         <PostulacionesModal cursoId={postCurso} onClose={() => setPostCurso(null)} onCambio={() => cargar(periodo)} />

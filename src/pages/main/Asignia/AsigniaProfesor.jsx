@@ -11,9 +11,39 @@ import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Asignia/Asignia.css'
 
 const ESTADO_POSTULACION = {
-  pendiente: { label: 'En revisión', clase: 'badge-novedad' },
+  pendiente: { label: 'En revisión', clase: 'badge-syncing' },
   aprobada: { label: 'Aprobada', clase: 'badge-synced' },
   descartada: { label: 'No seleccionada', clase: 'badge-pending' },
+}
+
+// Horas semanales de una lista de cursos (columna "H. Semana" de la programación).
+const horasDe = (lista) => lista.reduce((t, c) => t + (Number(String(c.horas_semana || '').replace(',', '.')) || 0), 0)
+const fmtH = (n) => `${Number.isInteger(n) ? n : n.toFixed(1)} h`
+
+// Resumen de la carga horaria del profesor en el periodo.
+function ResumenHoras({ datos }) {
+  const aceptadas = horasDe(datos.asignados.filter(c => c.verificacion === 'aceptado'))
+  const porResponder = horasDe(datos.asignados.filter(c => c.verificacion === 'asignado'))
+  const postuladas = horasDe(datos.postulaciones.filter(p => p.postulacion_estado === 'pendiente'))
+  const rechazadas = horasDe(datos.asignados.filter(c => c.verificacion === 'rechazado'))
+  const items = [
+    { label: 'Horas aceptadas', valor: aceptadas, tono: 'ok', ayuda: 'Cursos que ya aceptaste o que te aprobaron' },
+    { label: 'Por responder', valor: porResponder, ayuda: 'Cursos asignados que aún no aceptas ni rechazas' },
+    { label: 'En revisión', valor: postuladas, tono: 'revision', ayuda: 'Cursos a los que te postulaste y el líder está revisando' },
+    { label: 'Rechazadas', valor: rechazadas, tono: 'error', ayuda: 'Cursos asignados que rechazaste' },
+    { label: 'Total posible', valor: aceptadas + porResponder + postuladas, tono: 'total', ayuda: 'Si aceptas lo pendiente y te aprueban las postulaciones' },
+  ]
+  return (
+    <div className="asignia-horas" role="group" aria-label="Tus horas semanales">
+      {items.map(i => (
+        <div key={i.label} className={`asignia-horas-item${i.tono ? ` asignia-horas-${i.tono}` : ''}`} title={i.ayuda}>
+          <span className="asignia-estado-num">{fmtH(i.valor)}</span>
+          <span>{i.label}</span>
+          <span className="asignia-dato">{i.ayuda}</span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function Badge({ e }) {
@@ -22,7 +52,7 @@ function Badge({ e }) {
 
 function Horario({ horario }) {
   if (!horario?.length) return '—'
-  return horario.map((h, i) => <div key={i} className="asignia-horario">{h.dia} {h.hora}{h.aula ? ` · ${h.aula}` : ''}</div>)
+  return <div className="asignia-celda">{horario.map((h, i) => <span key={i} className="asignia-horario">{h.dia} {h.hora}{h.aula ? ` · ${h.aula}` : ''}</span>)}</div>
 }
 
 // Celdas comunes de un curso en las tablas del profesor.
@@ -30,17 +60,24 @@ function CeldasCurso({ c }) {
   return (
     <>
       <td data-label="Curso">
-        <div>{c.codigo} · {c.curso}</div>
-        <div className="asignia-dato">Grupo {c.grupo || '—'}{c.creditos ? ` · ${c.creditos} créditos` : ''}{c.horas_semana ? ` · ${c.horas_semana} h/semana` : ''}</div>
+        <div className="asignia-celda">
+          <span>{c.codigo} · {c.curso}</span>
+          {(c.creditos || c.horas_semana) && <span className="asignia-dato">{[c.creditos && `${c.creditos} créditos`, c.horas_semana && `${c.horas_semana} h/semana`].filter(Boolean).join(' · ')}</span>}
+        </div>
       </td>
+      <td data-label="Grupo">{c.grupo || '—'}</td>
       <td data-label="Programa">
-        <div>{c.programa || '—'}</div>
-        <div className="asignia-dato">Plan {c.plan || '—'}{c.nivel ? ` · Nivel ${c.nivel}` : ''}</div>
+        <div className="asignia-celda">
+          <span>{c.programa || '—'}</span>
+          <span className="asignia-dato">Plan {c.plan || '—'}{c.nivel ? ` · Nivel ${c.nivel}` : ''}</span>
+        </div>
       </td>
       <td data-label="Sede">{c.sede || '—'}</td>
       <td data-label="Jornada">
-        <div>{c.jornada || '—'}</div>
-        {c.espacio && <div className="asignia-dato">{c.espacio}</div>}
+        <div className="asignia-celda">
+          <span>{c.jornada || '—'}</span>
+          {c.espacio && <span className="asignia-dato">{c.espacio}</span>}
+        </div>
       </td>
       <td data-label="Días y horario"><Horario horario={c.horario} /></td>
     </>
@@ -169,7 +206,7 @@ function MisCursos({ ident, datos, onCambio }) {
             </p>
             <div className="asignia-header-acciones">
               <button className="btn-secondary asignia-btn-peligro" disabled={!sel.length} onClick={() => setModal('rechazar')}><XCircle size={15} /> Rechazar ({sel.length})</button>
-              <button className="btn-primary" disabled={!sel.length} onClick={() => setModal('aceptar')}><CheckCircle2 size={15} /> Aceptar asignación ({sel.length})</button>
+              <button className="btn-primary" disabled={!sel.length} onClick={() => setModal('aceptar')}><CheckCircle2 size={15} /> Aceptar asignación ({sel.length}{sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
             </div>
           </div>
           <div className="table-wrapper">
@@ -180,7 +217,7 @@ function MisCursos({ ident, datos, onCambio }) {
                     <input type="checkbox" aria-label="Seleccionar todos los pendientes" checked={todos} disabled={!pendientes.length}
                       onChange={() => setSel(todos ? [] : pendientes.map(c => c.id))} />
                   </th>
-                  <th>Curso</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th>
+                  <th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,8 +229,10 @@ function MisCursos({ ident, datos, onCambio }) {
                     </td>
                     <CeldasCurso c={c} />
                     <td data-label="Estado">
-                      <Badge e={ESTADOS[c.verificacion]} />
-                      {c.verificacion === 'rechazado' && c.motivo_rechazo && <div className="asignia-dato">"{c.motivo_rechazo}"</div>}
+                      <div className="asignia-celda">
+                        <Badge e={ESTADOS[c.verificacion]} />
+                        {c.verificacion === 'rechazado' && c.motivo_rechazo && <span className="asignia-dato">"{c.motivo_rechazo}"</span>}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -208,7 +247,7 @@ function MisCursos({ ident, datos, onCambio }) {
           <h3>Mis postulaciones</h3>
           <div className="table-wrapper">
             <table className="data-table asignia-tabla">
-              <thead><tr><th>Curso</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Postulación</th></tr></thead>
+              <thead><tr><th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Postulación</th></tr></thead>
               <tbody>
                 {datos.postulaciones.map(p => (
                   <tr key={p.postulacion_id}>
@@ -224,7 +263,7 @@ function MisCursos({ ident, datos, onCambio }) {
 
       {modal === 'aceptar' && (
         <ConfirmarModal titulo="Aceptar asignación" confirmar="Sí, acepto" cursos={seleccionados}
-          texto={`Vas a aceptar ${seleccionados.length} curso(s). Después de aceptar no podrás cambiar la respuesta desde aquí.`}
+          texto={`Vas a aceptar ${seleccionados.length} curso(s), ${fmtH(horasDe(seleccionados))} semanales. Quedarías con ${fmtH(horasDe(datos.asignados.filter(c => c.verificacion === 'aceptado')) + horasDe(seleccionados))} aceptadas. Después de aceptar no podrás cambiar la respuesta desde aquí.`}
           onConfirmar={responder} onClose={() => setModal(null)} />
       )}
       {modal === 'rechazar' && (
@@ -295,7 +334,7 @@ function Disponibles({ ident, nombre, onCambio }) {
       {ok && <div className="asignia-ok" role="status">{ok}</div>}
       <div className="asignia-barra">
         <p className="asignia-ayuda">Cursos sin profesor. Marca los que te interesan y envía tu postulación; el líder del programa decide la asignación.</p>
-        <button className="btn-primary" disabled={!sel.length} onClick={() => setModal(true)}><Send size={15} /> Postularme ({sel.length})</button>
+        <button className="btn-primary" disabled={!sel.length} onClick={() => setModal(true)}><Send size={15} /> Postularme ({sel.length}{sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
       </div>
       <div className="filters-bar">
         <div className="filter-input-wrapper">
@@ -315,11 +354,11 @@ function Disponibles({ ident, nombre, onCambio }) {
       <div className="table-wrapper">
         <table className="data-table asignia-tabla">
           <thead>
-            <tr><th className="asignia-col-check"><span className="sr-only">Seleccionar</span></th><th>Curso</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th></tr>
+            <tr><th className="asignia-col-check"><span className="sr-only">Seleccionar</span></th><th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th></tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
-              <tr><td colSpan={7} className="asignia-sin-filas">No hay cursos disponibles con estos filtros.</td></tr>
+              <tr><td colSpan={8} className="asignia-sin-filas">No hay cursos disponibles con estos filtros.</td></tr>
             ) : filtrados.map(c => (
               <tr key={c.id}>
                 <td data-label="Seleccionar" className="asignia-col-check">
@@ -338,7 +377,7 @@ function Disponibles({ ident, nombre, onCambio }) {
 
       {modal && (
         <ConfirmarModal titulo="Enviar postulación" confirmar="Sí, postularme" cursos={seleccionados}
-          texto={`Te vas a postular a ${seleccionados.length} curso(s). Pueden postularse varios profesores al mismo curso; el líder elige.`}
+          texto={`Te vas a postular a ${seleccionados.length} curso(s), ${fmtH(horasDe(seleccionados))} semanales. Pueden postularse varios profesores al mismo curso; el líder elige.`}
           onConfirmar={postular} onClose={() => setModal(false)} puedeConfirmar={Boolean(nombre || nombreEscrito.trim())}>
           {!nombre && (
             <div className="modal-field">
@@ -380,6 +419,7 @@ export default function AsigniaProfesor() {
 
         {datos.periodo && (
           <>
+            <ResumenHoras datos={datos} />
             <nav className="section-nav" aria-label="Secciones">
               <button type="button" className={`section-nav-tab${tab === 'mis' ? ' active' : ''}`} aria-current={tab === 'mis' ? 'page' : undefined} onClick={() => setTab('mis')}>
                 <BookOpen size={16} /> Mis cursos
