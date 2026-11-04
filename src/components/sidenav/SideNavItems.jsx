@@ -3,7 +3,7 @@ import {
   Activity, Upload, Shield, Globe, BarChart2, Settings,
   Search, ClipboardList, FlaskConical, History,
   Users, GraduationCap, UserX, Bell, LayoutGrid, ListChecks, LayoutTemplate, Database, Server, Mountain,
-  ShieldCheck, KeyRound
+  ShieldCheck, KeyRound, CalendarCheck
 } from 'lucide-react'
 import BeaverIcon from './BeaverIcon'
 
@@ -63,6 +63,7 @@ export const menuItems = [
   { label: 'Onix-IA', icon: iconInformesOnix, beta: true, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
   { label: 'Acudex', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
   { label: 'C0deX', icon: LayoutTemplate, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
+  { label: 'Asignia', icon: CalendarCheck, path: '/asignia', moduleCode: 'asignia', submoduleCode: 'asignia_manage' },
 
   { type: 'divider' },
 

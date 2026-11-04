@@ -23,6 +23,7 @@ const MODULE_DESCRIPTIONS = {
   onix_reports:    'Generación de informes con inteligencia artificial.',
   codex:           'Constructor y configurador de cursos Moodle.',
   surveys:         'Creación y gestión de encuestas institucionales.',
+  asignia:         'Carga de la programación académica y verificación de cursos por profesores.',
 }
 
 // Nexo Sync tiene muchos submódulos: se agrupan por categoría para no
