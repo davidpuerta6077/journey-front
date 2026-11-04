@@ -1,0 +1,95 @@
+/* ─── ASIGNIA (programación académica) ───
+   Admin (AsigniaAdmin.jsx) y pantalla pública del profesor (AsigniaProfesor.jsx).
+   Estilo de marca vía .estilo-hub: esquinas rectas, bordes completos, sin sombras. */
+
+.asignia-sub { color: var(--text-muted); font-size: 0.85rem; margin: 2px 0 0; }
+.asignia-ayuda { color: var(--text-secondary); font-size: 0.88rem; margin: 0; line-height: 1.5; }
+.asignia-dato { color: var(--text-muted); font-size: 0.78rem; margin-top: 2px; }
+.asignia-horario { white-space: nowrap; font-size: 0.85rem; }
+.asignia-badge { white-space: nowrap; }
+.asignia-header-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.asignia-vacio {
+  padding: 28px 20px; text-align: center; color: var(--text-muted);
+  border: 1px solid var(--border-soft); background: var(--bg-surface);
+}
+.asignia-sin-filas { text-align: center; color: var(--text-muted); padding: 24px !important; }
+
+/* Contadores por estado (filtran la tabla) */
+.asignia-estados { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.asignia-estado {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 10px 14px; cursor: pointer; font: inherit; font-size: 0.85rem; color: var(--text-secondary);
+  background: var(--bg-surface); border: 1px solid var(--border-soft);
+}
+.asignia-estado:hover { background: var(--bg-surface-hover); }
+.asignia-estado:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.asignia-estado.activo {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+  color: var(--text-primary);
+}
+.asignia-estado-num { font-size: 1.35rem; font-weight: 600; color: var(--hub-titulo, #2d4375); line-height: 1.1; }
+
+.asignia-tabla td { vertical-align: top; }
+@media (min-width: 769px) {
+  .asignia-page .asignia-tabla td:first-child { min-width: 220px; }
+  .asignia-tabla td[data-label="Curso"] { min-width: 200px; }
+}
+.asignia-acciones { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.asignia-col-check { width: 36px; text-align: center; }
+.asignia-col-check input { width: 16px; height: 16px; cursor: pointer; }
+.asignia-col-check input:disabled { cursor: not-allowed; opacity: 0.35; }
+
+/* Modales */
+.asignia-modal { width: 560px; max-width: 94vw; max-height: 90vh; overflow-y: auto; }
+.asignia-modal-ancho { width: 1000px; }
+.asignia-modal-ancho .data-table td { white-space: nowrap; }
+.asignia-acciones .onix-texto-btn { white-space: nowrap; }
+.asignia-modal textarea, .asignia-modal input[type="text"], .asignia-ingreso input {
+  font: inherit; font-size: 0.88rem; padding: 8px 12px; color: var(--text-primary);
+  border: 1px solid var(--border-soft); background: var(--bg-surface-alt); resize: vertical;
+}
+.asignia-modal input[type="file"] { font-size: 0.88rem; color: var(--text-secondary); }
+.asignia-resumen-carga { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.asignia-resumen-carga div { border: 1px solid var(--border-soft); padding: 10px 12px; }
+.asignia-resumen-carga dt { font-size: 0.78rem; color: var(--text-muted); }
+.asignia-resumen-carga dd { margin: 2px 0 0; font-size: 1.3rem; font-weight: 600; color: var(--hub-titulo, #2d4375); }
+.asignia-aviso {
+  margin: 0; padding: 10px 12px; font-size: 0.85rem;
+  color: #854d0e; background: #fef9c3; border: 1px solid #fde68a;
+}
+.asignia-lista-confirmar { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow-y: auto; border: 1px solid var(--border-soft); }
+.asignia-lista-confirmar li { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; font-size: 0.88rem; color: var(--text-primary); }
+.asignia-lista-confirmar li + li { border-top: 1px solid var(--border-softer, #f1f5f9); }
+.asignia-lista-confirmar span { font-size: 0.78rem; color: var(--text-muted); }
+.asignia-btn-fila { min-height: 32px !important; font-size: 0.82rem !important; white-space: nowrap; }
+button.asignia-btn-peligro { color: #b91c1c; }
+
+/* Pantalla pública del profesor (sin menú ni sesión) */
+.asignia-publica { min-height: 100vh; background: var(--bg-page); padding: 32px 16px; }
+.asignia-publica-contenido { max-width: 1180px; margin: 0 auto; }
+.asignia-ingreso {
+  max-width: 440px; margin: 6vh auto 0; padding: 28px;
+  background: var(--bg-surface); border: 1px solid var(--border-soft);
+}
+.asignia-ingreso h1 { margin: 0 0 6px; font-size: 1.5rem; }
+.asignia-ingreso form { margin-top: 20px; }
+.asignia-ingreso label { font-weight: 500; }
+.asignia-btn-ancho { width: 100%; justify-content: center; }
+.asignia-barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.asignia-barra .asignia-ayuda { flex: 1; min-width: 240px; }
+.asignia-ok { margin-bottom: 14px; padding: 10px 14px; font-size: 0.88rem; color: #15803d; background: #dcfce7; border: 1px solid #bbf7d0; }
+.asignia-publica .public-form-error { margin-bottom: 14px; }
+.asignia-seccion { margin-top: 28px; }
+.asignia-seccion h3 { margin: 0 0 10px; font-size: 1.05rem; color: var(--hub-titulo, #2d4375); }
+
+@media (max-width: 900px) {
+  .asignia-estados { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .asignia-resumen-carga { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .asignia-col-check { width: auto; text-align: left; }
+  .asignia-horario { white-space: normal; }
+}

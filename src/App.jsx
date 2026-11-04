@@ -6,6 +6,7 @@ import './styles/global/Layout.css'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import FormularioPublico from './pages/main/Formularios/FormularioPublico'
+import AsigniaProfesor from './pages/main/Asignia/AsigniaProfesor'
 
 // ─── NEXO SYNC ─────────────────────────────────────────────────────────────
 import HomeNexo from './pages/main/HomeNexo'
@@ -41,6 +42,7 @@ import FormularioInscritos from './pages/main/Formularios/FormularioInscritos'
 import InformesPage from './pages/main/Informes/InformesPage'
 import CodexPaginas from './pages/main/Codex/CodexPaginas'
 import CodexEditor from './pages/main/Codex/CodexEditor'
+import AsigniaAdmin from './pages/main/Asignia/AsigniaAdmin'
 import ReporteDetalle from './pages/main/Reportes/ReporteDetalle'
 import NuevoInforme from './pages/main/Reportes/NuevoInforme'
 import Estadisticas from './pages/main/Estadisticas/Estadisticas'
@@ -58,6 +60,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/no-autorizado" element={<NoAutorizado />} />
         <Route path="/f/:publicToken" element={<FormularioPublico />} />
+        {/* Asignia: pantalla pública del profesor (se identifica con documento + correo) */}
+        <Route path="/asignia/profesor" element={<AsigniaProfesor />} />
 
         {/* Editor CodeX a pantalla completa (fuera del layout con menú) */}
         <Route path="/codex/:id" element={
@@ -180,6 +184,13 @@ function App() {
           <Route path="codex" element={
             <PrivateRoute submoduleCode="codex_use">
               <CodexPaginas />
+            </PrivateRoute>
+          } />
+
+          {/* ─── ASIGNIA ─── */}
+          <Route path="asignia" element={
+            <PrivateRoute submoduleCode="asignia_manage">
+              <AsigniaAdmin />
             </PrivateRoute>
           } />
 
