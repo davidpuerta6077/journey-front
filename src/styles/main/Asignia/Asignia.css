@@ -8,6 +8,12 @@
 .asignia-horario { white-space: nowrap; font-size: 0.85rem; }
 .asignia-badge { white-space: nowrap; }
 .asignia-header-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.asignia-header-acciones a.btn-secondary { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.asignia-enlace-formato {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  font-size: 0.88rem; font-weight: 500; color: var(--primary, #5b7cfa); text-decoration: none;
+}
+.asignia-enlace-formato:hover { text-decoration: underline; }
 
 .asignia-vacio {
   padding: 28px 20px; text-align: center; color: var(--text-muted);
@@ -33,11 +39,41 @@
 .asignia-estado-num { font-size: 1.35rem; font-weight: 600; color: var(--hub-titulo, #2d4375); line-height: 1.1; }
 
 .asignia-tabla td { vertical-align: top; }
+/* Varias líneas dentro de una celda (dato principal + datos secundarios). */
+.asignia-celda { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.asignia-celda .asignia-dato { margin-top: 0; }
+.asignia-correo { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+
+/* Escritorio: tabla compacta para que las 11 columnas quepan sin tanto scroll. */
 @media (min-width: 769px) {
-  .asignia-page .asignia-tabla td:first-child { min-width: 220px; }
-  .asignia-tabla td[data-label="Curso"] { min-width: 200px; }
+  .asignia-page table.asignia-tabla th { padding: 10px 8px; font-size: 0.72rem; letter-spacing: 0.03em; }
+  .asignia-page table.asignia-tabla td { padding: 10px 8px; font-size: 0.82rem; line-height: 1.35; }
+  .asignia-tabla td[data-label="Programa"] { min-width: 130px; max-width: 170px; }
+  .asignia-tabla td[data-label="Curso"] { min-width: 140px; max-width: 190px; }
+  .asignia-tabla td[data-label="Profesor"] { min-width: 140px; max-width: 180px; }
+  .asignia-tabla td[data-label="Código"],
+  .asignia-tabla td[data-label="Grupo"],
+  .asignia-tabla td[data-label="Sede"],
+  .asignia-tabla td[data-label="Jornada"],
+  .asignia-tabla td[data-label="Horas profesor"],
+  .asignia-tabla td[data-label="Horas acumuladas"],
+  .asignia-tabla td[data-label="Verificación"] { white-space: nowrap; }
+  .asignia-tabla td[data-label="Grupo"], .asignia-tabla td[data-label="Horas profesor"] { text-align: center; }
 }
-.asignia-acciones { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+
+/* Celular: cada fila es tarjeta (Tables.css); el contenido de varias líneas va
+   alineado a la derecha como las demás celdas. */
+@media (max-width: 768px) {
+  .asignia-celda { align-items: flex-end; text-align: right; }
+  .asignia-correo { white-space: normal; overflow-wrap: anywhere; max-width: none; }
+  .asignia-acciones { justify-content: flex-end; }
+  .asignia-header-acciones { width: 100%; }
+  .asignia-header-acciones > * { flex: 1 1 auto; justify-content: center; }
+}
+.asignia-acciones { display: flex; align-items: center; gap: 6px; }
+.asignia-accion { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; }
+.asignia-accion-num { font-size: 0.78rem; font-weight: 600; }
+button.asignia-accion.asignia-btn-peligro:hover { background: #fef2f2; border-color: #fecaca; }
 .asignia-col-check { width: 36px; text-align: center; }
 .asignia-col-check input { width: 16px; height: 16px; cursor: pointer; }
 .asignia-col-check input:disabled { cursor: not-allowed; opacity: 0.35; }
@@ -93,3 +129,37 @@ button.asignia-btn-peligro { color: #b91c1c; }
   .asignia-col-check { width: auto; text-align: left; }
   .asignia-horario { white-space: normal; }
 }
+
+/* Portátiles (≤1440px): un poco más compacto para evitar el scroll horizontal. */
+@media (min-width: 769px) and (max-width: 1440px) {
+  .asignia-page table.asignia-tabla th { padding: 9px 6px; font-size: 0.68rem; letter-spacing: 0.02em; }
+  .asignia-page table.asignia-tabla td { padding: 9px 6px; font-size: 0.78rem; }
+  .asignia-tabla td[data-label="Programa"] { min-width: 100px; max-width: 140px; }
+  .asignia-tabla td[data-label="Curso"] { min-width: 110px; max-width: 150px; }
+  .asignia-tabla td[data-label="Profesor"] { min-width: 120px; max-width: 160px; }
+  .asignia-tabla .asignia-dato { font-size: 0.72rem; }
+  .asignia-correo { max-width: 120px; }
+  .asignia-tabla .badge { padding: 2px 8px; font-size: 0.72rem; }
+}
+.asignia-accion.asignia-btn-peligro svg.lucide { stroke: #b91c1c; }
+
+/* Resumen de horas del profesor (pantalla pública) */
+.asignia-horas { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.asignia-horas-item {
+  display: flex; flex-direction: column; gap: 2px; padding: 12px 14px;
+  font-size: 0.85rem; color: var(--text-secondary);
+  background: var(--bg-surface); border: 1px solid var(--border-soft);
+}
+/* Mismos colores que los badges de la plataforma (synced / syncing / error). */
+.asignia-horas-ok { background: #f0fdf4; border-color: #bbf7d0; }
+.asignia-horas-ok .asignia-estado-num, .asignia-horas-ok > span:nth-child(2) { color: #15803d; }
+.asignia-horas-revision { background: #eff6ff; border-color: #bfdbfe; }
+.asignia-horas-revision .asignia-estado-num, .asignia-horas-revision > span:nth-child(2) { color: #1d4ed8; }
+.asignia-horas-error { background: #fef2f2; border-color: #fecaca; }
+.asignia-horas-error .asignia-estado-num, .asignia-horas-error > span:nth-child(2) { color: #b91c1c; }
+.asignia-horas-total {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+}
+@media (max-width: 1000px) { .asignia-horas { grid-template-columns: repeat(2, minmax(0, 1fr)); } .asignia-horas-total { grid-column: 1 / -1; } }
