@@ -37,6 +37,28 @@
   color: var(--text-primary);
 }
 .asignia-estado-num { font-size: 1.35rem; font-weight: 600; color: var(--hub-titulo, #2d4375); line-height: 1.1; }
+/* Color leve solo en los estados que comunican algo: aceptado (bien), rechazado
+   (problema), postulado (espera decisión del líder). Vacío/asignado quedan neutros. */
+.asignia-estado-aceptado  { --est-bg: #f0fdf4; --est-borde: #bbf7d0; --est-texto: #15803d; }
+.asignia-estado-rechazado { --est-bg: #fef2f2; --est-borde: #fecaca; --est-texto: #b91c1c; }
+.asignia-estado-postulado { --est-bg: #fffbeb; --est-borde: #fde68a; --est-texto: #b45309; }
+:root[data-theme="dark"] .asignia-estado-aceptado  { --est-bg: rgba(34, 197, 94, 0.12);  --est-borde: rgba(34, 197, 94, 0.35);  --est-texto: #4ade80; }
+:root[data-theme="dark"] .asignia-estado-rechazado { --est-bg: rgba(239, 68, 68, 0.12);  --est-borde: rgba(239, 68, 68, 0.35);  --est-texto: #f87171; }
+:root[data-theme="dark"] .asignia-estado-postulado { --est-bg: rgba(245, 158, 11, 0.12); --est-borde: rgba(245, 158, 11, 0.35); --est-texto: #fbbf24; }
+.asignia-estado-aceptado, .asignia-estado-rechazado, .asignia-estado-postulado {
+  background: var(--est-bg); border-color: var(--est-borde);
+}
+.asignia-estado-aceptado .asignia-estado-num, .asignia-estado-rechazado .asignia-estado-num,
+.asignia-estado-postulado .asignia-estado-num, .asignia-estado-aceptado > span:nth-child(2),
+.asignia-estado-rechazado > span:nth-child(2), .asignia-estado-postulado > span:nth-child(2) { color: var(--est-texto); }
+.asignia-estado-aceptado:hover, .asignia-estado-rechazado:hover, .asignia-estado-postulado:hover { filter: brightness(0.97); }
+/* Seleccionado: conserva el fondo de color y lleva el borde degradado de marca. */
+.asignia-estado-aceptado.activo, .asignia-estado-rechazado.activo, .asignia-estado-postulado.activo {
+  border-color: transparent;
+  background: linear-gradient(var(--est-bg), var(--est-bg)) padding-box,
+              linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+}
 
 .asignia-tabla td { vertical-align: top; }
 /* Varias líneas dentro de una celda (dato principal + datos secundarios). */
@@ -72,6 +94,7 @@
 }
 .asignia-acciones { display: flex; align-items: center; gap: 6px; }
 .asignia-accion { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; }
+.asignia-accion-estado { cursor: default; opacity: 0.55; }
 .asignia-accion-num { font-size: 0.78rem; font-weight: 600; }
 button.asignia-accion.asignia-btn-peligro:hover { background: #fef2f2; border-color: #fecaca; }
 .asignia-col-check { width: 36px; text-align: center; }
@@ -80,10 +103,54 @@ button.asignia-accion.asignia-btn-peligro:hover { background: #fef2f2; border-co
 
 /* Modales */
 .asignia-modal { width: 560px; max-width: 94vw; max-height: 90vh; overflow-y: auto; }
-.asignia-modal-ancho { width: 1000px; }
-.asignia-modal-ancho .data-table td { white-space: nowrap; }
+.asignia-modal-post { width: 760px; }
+/* Tooltip de los botones de acción: sale a la izquierda para no cortarse
+   con el overflow de .table-wrapper (la columna de acciones es la última). */
+.asignia-tip { position: relative; }
+.asignia-tip[data-tip]::after {
+  content: attr(data-tip); position: absolute; right: calc(100% + 8px); top: 50%; transform: translateY(-50%);
+  width: max-content; max-width: 240px; padding: 6px 10px; z-index: 20;
+  background: #1f2a44; color: #fff; font-size: 0.78rem; font-weight: 400; line-height: 1.35;
+  text-align: left; white-space: normal; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity 0.15s;
+}
+.asignia-tip[data-tip]:hover::after, .asignia-tip[data-tip]:focus-visible::after { opacity: 1; visibility: visible; }
+.asignia-ficha { border: 1px solid var(--border-soft); background: var(--bg-surface-alt); padding: 14px 16px; }
+.asignia-ficha-titulo { margin: 0 0 12px; font-size: 1.05rem; color: var(--hub-titulo, #2d4375); }
+.asignia-ficha-datos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px; margin: 0; }
+.asignia-ficha-datos dt { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.asignia-ficha-datos dd { margin: 2px 0 0; font-size: 0.9rem; color: var(--text-primary); overflow-wrap: anywhere; }
+.asignia-ficha-ancho { grid-column: span 2; }
+.asignia-ficha-completo { grid-column: 1 / -1; }
+.asignia-ficha-horario { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.asignia-ficha-horario li { border: 1px solid var(--border-soft); background: var(--bg-surface); padding: 4px 10px; font-size: 0.85rem; }
+@media (max-width: 600px) {
+  .asignia-ficha-datos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.asignia-post-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.asignia-post-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; border: 1px solid var(--border-soft);
+}
+.asignia-post-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 280px; }
+.asignia-post-nombre { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--text-primary); }
+.asignia-post-datos { font-size: 0.82rem; color: var(--text-muted); overflow-wrap: anywhere; }
+.asignia-post-acciones { display: flex; gap: 8px; flex-shrink: 0; }
 .asignia-acciones .onix-texto-btn { white-space: nowrap; }
-.asignia-modal textarea, .asignia-modal input[type="text"], .asignia-ingreso input {
+/* Formularios de curso/profesor */
+.asignia-form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.asignia-form-grid .modal-field { min-width: 0; }
+.asignia-form-ancho { grid-column: span 2; }
+.asignia-btn-solo { align-self: flex-start; }
+.asignia-horario-edit { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.asignia-horario-fila { display: grid; grid-template-columns: 140px minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; width: 100%; align-items: center; }
+.asignia-modal select { font: inherit; font-size: 0.88rem; padding: 8px 10px; color: var(--text-primary); border: 1px solid var(--border-soft); background: var(--bg-surface-alt); }
+.asignia-modal input:disabled { opacity: 0.6; cursor: not-allowed; }
+@media (max-width: 700px) {
+  .asignia-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .asignia-horario-fila { grid-template-columns: 1fr 1fr; }
+}
+.asignia-modal textarea, .asignia-modal input[type="text"], .asignia-modal input[type="email"], .asignia-ingreso input {
   font: inherit; font-size: 0.88rem; padding: 8px 12px; color: var(--text-primary);
   border: 1px solid var(--border-soft); background: var(--bg-surface-alt); resize: vertical;
 }

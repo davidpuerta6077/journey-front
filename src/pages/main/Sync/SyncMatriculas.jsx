@@ -205,7 +205,7 @@ export default function SyncMatriculas() {
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
-        <ExportMenu title="Matrículas Plataforma" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={enrollments} />
+        <ExportMenu title="Matrículas Plataforma" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={enrollments} selectedRows={enrollments.filter(r => selected[r.id])} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

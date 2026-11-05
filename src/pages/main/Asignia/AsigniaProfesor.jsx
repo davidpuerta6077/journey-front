@@ -14,6 +14,7 @@ const ESTADO_POSTULACION = {
   pendiente: { label: 'En revisión', clase: 'badge-syncing' },
   aprobada: { label: 'Aprobada', clase: 'badge-synced' },
   descartada: { label: 'No seleccionada', clase: 'badge-pending' },
+  rechazada: { label: 'No seleccionada', clase: 'badge-pending' },
 }
 
 // Horas semanales de una lista de cursos (columna "H. Semana" de la programación).

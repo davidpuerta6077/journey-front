@@ -620,7 +620,7 @@ export default function ModulosUsuarios() {
           <option value="pendiente">Pendiente</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
-        <ExportMenu title="Módulo Usuarios" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={users} />
+        <ExportMenu title="Módulo Usuarios" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={users} selectedRows={users.filter(r => selected[r.id])} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

@@ -26,9 +26,11 @@ export default function PrivateRoute({ children, submoduleCode }) {
     );
   }
 
+  // submoduleCode: un código o una lista (basta con tener uno, p. ej. Asignia).
   if (submoduleCode) {
+    const codes = [].concat(submoduleCode);
     const hasAccess = permissions?.modules?.some((m) =>
-      m.submodules.some((s) => s.submodule_code === submoduleCode)
+      m.submodules.some((s) => codes.includes(s.submodule_code))
     );
     if (!hasAccess) return <Navigate to="/no-autorizado" replace />;
   }

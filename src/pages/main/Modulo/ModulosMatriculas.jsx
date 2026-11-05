@@ -606,7 +606,7 @@ export default function ModulosMatriculas() {
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
-        <ExportMenu title="Módulo Matrículas" columns={EXPORT_COLUMNS} rows={filtered} allRows={enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'desmatriculado')} />
+        <ExportMenu title="Módulo Matrículas" columns={EXPORT_COLUMNS} rows={filtered} allRows={enrollments.filter(e => (e.estado || '').trim().toLowerCase() !== 'desmatriculado')} selectedRows={enrollments.filter(r => selected[r.id])} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

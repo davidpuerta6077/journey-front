@@ -330,7 +330,7 @@ export default function SyncNovedades() {
           <option value="desmatriculando">Desmatriculando...</option>
         </select>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
-        <ExportMenu title="Novedades" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={novedades} />
+        <ExportMenu title="Novedades" columns={COLUMNS.map(c => ({ label: c.label, get: COL_GETTERS[c.key] }))} rows={filtered} allRows={novedades} selectedRows={novedades.filter(r => selected[r.id])} />
         <span className="results-count">{filtered.length} resultado{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 

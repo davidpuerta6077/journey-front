@@ -10,10 +10,11 @@ const FORMATS = [
   { key: 'html', label: 'HTML' },
 ]
 
-// Botón "Exportar" de las tablas de Nexo: deja elegir entre las filas filtradas
-// (`rows`, lo que pasó la barra de filtros + filtros por columna) o todas
-// (`allRows`) y el formato. `columns` = [{ label, get: row => texto }].
-export default function ExportMenu({ title, columns, rows, allRows }) {
+// Botón "Exportar" de las tablas de Nexo: deja elegir entre las filas
+// seleccionadas con checkbox (`selectedRows`, opcional), las filtradas (`rows`,
+// lo que pasó la barra de filtros + filtros por columna) o todas (`allRows`) y
+// el formato. `columns` = [{ label, get: row => texto }].
+export default function ExportMenu({ title, columns, rows, allRows, selectedRows = [] }) {
   const [open, setOpen] = useState(false)
   const [scope, setScope] = useState('filtered')
   const [pos, setPos] = useState({ top: 0, left: 0 })
@@ -23,6 +24,8 @@ export default function ExportMenu({ title, columns, rows, allRows }) {
   const openMenu = () => {
     const rect = btnRef.current.getBoundingClientRect()
     setPos({ top: rect.bottom + 4, left: Math.max(8, Math.min(rect.right - 250, window.innerWidth - 262)) })
+    // Si hay filas marcadas, lo natural es exportar esas.
+    setScope(selectedRows.length ? 'selected' : 'filtered')
     setOpen(true)
   }
 
@@ -42,7 +45,8 @@ export default function ExportMenu({ title, columns, rows, allRows }) {
   }, [open])
 
   const doExport = (format) => {
-    exportTable(format, { title, columns, rows: scope === 'all' ? allRows : rows })
+    const data = scope === 'all' ? allRows : scope === 'selected' ? selectedRows : rows
+    exportTable(format, { title, columns, rows: data })
     setOpen(false)
   }
 
@@ -53,6 +57,12 @@ export default function ExportMenu({ title, columns, rows, allRows }) {
       </button>
       {open && (
         <div className="col-filter-menu" style={{ top: pos.top, left: pos.left }}>
+          {selectedRows.length > 0 && (
+            <label className="col-filter-opt">
+              <input type="radio" name="export-scope" checked={scope === 'selected'} onChange={() => setScope('selected')} />
+              <span>Seleccionados ({selectedRows.length})</span>
+            </label>
+          )}
           <label className="col-filter-opt">
             <input type="radio" name="export-scope" checked={scope === 'filtered'} onChange={() => setScope('filtered')} />
             <span>Filtrados ({rows.length})</span>
