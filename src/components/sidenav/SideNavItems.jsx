@@ -47,6 +47,7 @@ export const menuItems = [
       ]},
       { label: 'Carga Masiva', icon: Upload, children: [
           { label: 'Usuarios', icon: Users, path: '/carga/usuarios', submoduleCode: 'bulk_upload_users' },
+          { label: 'Cursos', icon: BookOpen, path: '/carga/cursos', submoduleCode: 'bulk_upload_courses' },
           { label: 'Matrículas', icon: GraduationCap, path: '/carga/matriculas', submoduleCode: 'bulk_upload_enrollments' },
           { label: 'Cancelaciones', icon: UserX, path: '/carga/cancelaciones', submoduleCode: 'bulk_upload_unenrollments' },
       ]},
@@ -63,7 +64,8 @@ export const menuItems = [
   { label: 'Onix-IA', icon: iconInformesOnix, beta: true, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
   { label: 'Acudex', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
   { label: 'C0deX', icon: LayoutTemplate, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
-  { label: 'Asignia', icon: CalendarCheck, path: '/asignia', moduleCode: 'asignia', submoduleCode: 'asignia_manage' },
+  // Sin submoduleCode: basta cualquiera de los permisos de Asignia (view/load/manage).
+  { label: 'Asignia', icon: CalendarCheck, path: '/asignia', moduleCode: 'asignia' },
 
   { type: 'divider' },
 

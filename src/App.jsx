@@ -22,6 +22,7 @@ import ModulosMatriculas from './pages/main/Modulo/ModulosMatriculas'
 import CargaUsuarios from './pages/main/CargaMasiva/CargaUsuarios'
 import CargaMatriculas from './pages/main/CargaMasiva/CargaMatriculas'
 import CargaCancelaciones from './pages/main/CargaMasiva/CargaCancelaciones'
+import CargaCursos from './pages/main/CargaMasiva/CargaCursos'
 
 import ReglasActivas from './pages/main/Regla/ReglasActivas'
 import ReglasPlantillas from './pages/main/Regla/ReglasPlantillas'
@@ -123,6 +124,11 @@ function App() {
               <CargaUsuarios />
             </PrivateRoute>
           } />
+          <Route path="carga/cursos" element={
+            <PrivateRoute submoduleCode="bulk_upload_courses">
+              <CargaCursos />
+            </PrivateRoute>
+          } />
           <Route path="carga/matriculas" element={
             <PrivateRoute submoduleCode="bulk_upload_enrollments">
               <CargaMatriculas />
@@ -189,7 +195,7 @@ function App() {
 
           {/* ─── ASIGNIA ─── */}
           <Route path="asignia" element={
-            <PrivateRoute submoduleCode="asignia_manage">
+            <PrivateRoute submoduleCode={['asignia_view', 'asignia_load', 'asignia_manage']}>
               <AsigniaAdmin />
             </PrivateRoute>
           } />

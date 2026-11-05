@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Upload, Link2, Search, Users, Unlock, CheckCircle2, Download, CalendarDays, GraduationCap } from 'lucide-react'
+import { Upload, Link2, Search, Users, Lock, LockOpen, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X } from 'lucide-react'
 import Paginacion from '../../../components/Paginacion'
 import ExportMenu from '../../../components/ExportMenu'
 import ColumnFilter from '../../../components/ColumnFilter'
@@ -8,10 +8,18 @@ import { listarCursosAsignia } from '../../../services/asignia/listarCursosAsign
 import { cargarProgramacion } from '../../../services/asignia/cargarProgramacion'
 import { cargarProfesores } from '../../../services/asignia/cargarProfesores'
 import { listarProfesores } from '../../../services/asignia/listarProfesores'
+import { crearProfesor } from '../../../services/asignia/crearProfesor'
+import { actualizarProfesor } from '../../../services/asignia/actualizarProfesor'
+import { borrarProfesor } from '../../../services/asignia/borrarProfesor'
+import { crearCurso } from '../../../services/asignia/crearCurso'
+import { actualizarCurso } from '../../../services/asignia/actualizarCurso'
+import { borrarCurso } from '../../../services/asignia/borrarCurso'
 import { listarPostulaciones } from '../../../services/asignia/listarPostulaciones'
 import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion'
+import { rechazarPostulacion } from '../../../services/asignia/rechazarPostulacion'
 import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
+import { usePermissions } from '../../../services/PermissionsContext'
 import { ESTADOS, horarioTexto } from './asigniaUtil'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
@@ -195,7 +203,14 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
   )
 }
 
-function PostulacionesModal({ cursoId, onClose, onCambio }) {
+const ESTADO_POST = {
+  pendiente: { label: 'Pendiente', clase: 'badge-novedad' },
+  aprobada: { label: 'Aprobada', clase: 'badge-synced' },
+  rechazada: { label: 'Rechazada', clase: 'badge-error' },
+  descartada: { label: 'Descartada', clase: 'badge-pending' },
+}
+
+function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
   const [data, setData] = useState(null)
 
   const cargar = useCallback(() => listarPostulaciones(cursoId)
@@ -220,9 +235,27 @@ function PostulacionesModal({ cursoId, onClose, onCambio }) {
     } catch (e) { alertError(e.message) }
   }
 
+  const rechazar = async (p) => {
+    const ok = await confirmAccion({
+      title: '¿Rechazar la postulación?',
+      text: `${p.nombre} no quedará con ${data.curso.codigo} ${data.curso.curso} (grupo ${data.curso.grupo || '—'}) y no podrá volver a postularse a este curso.`,
+      icon: 'warning',
+      confirmButtonText: 'Sí, rechazar',
+    })
+    if (!ok) return
+    try {
+      await rechazarPostulacion(p.id)
+      toastExito('Postulación rechazada')
+      onCambio()
+      cargar()
+    } catch (e) { alertError(e.message) }
+  }
+
+  const abierto = puedeDecidir && data && ['vacio', 'postulado'].includes(data.curso.verificacion)
+
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-box asignia-modal asignia-modal-ancho" role="dialog" aria-modal="true" aria-labelledby="asignia-post-titulo">
+      <div className="modal-box asignia-modal asignia-modal-post" role="dialog" aria-modal="true" aria-labelledby="asignia-post-titulo">
         <div className="modal-header">
           <h3 id="asignia-post-titulo">Postulaciones</h3>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
@@ -231,34 +264,54 @@ function PostulacionesModal({ cursoId, onClose, onCambio }) {
           <div className="loading-box"><span className="loader"></span>Cargando...</div>
         ) : (
           <div className="modal-form">
-            <p className="asignia-ayuda">
-              <strong>{data.curso.codigo} {data.curso.curso}</strong> · Grupo {data.curso.grupo || '—'} · {data.curso.jornada} · {data.curso.sede}
-              <br />{horarioTexto(data.curso.horario) || 'Sin horario'}
-            </p>
+            <section className="asignia-ficha" aria-label="Curso">
+              <h4 className="asignia-ficha-titulo">{data.curso.curso}</h4>
+              <dl className="asignia-ficha-datos">
+                <div><dt>Código</dt><dd>{data.curso.codigo}</dd></div>
+                <div><dt>Grupo</dt><dd>{data.curso.grupo || '—'}</dd></div>
+                <div><dt>Jornada</dt><dd>{data.curso.jornada || '—'}</dd></div>
+                <div><dt>H. semana</dt><dd>{data.curso.horas_semana || '—'}</dd></div>
+                <div className="asignia-ficha-ancho"><dt>Programa</dt><dd>{data.curso.programa || '—'}</dd></div>
+                <div className="asignia-ficha-ancho"><dt>Sede</dt><dd>{data.curso.sede || '—'}</dd></div>
+                <div className="asignia-ficha-completo">
+                  <dt>Días y horario</dt>
+                  <dd>
+                    {(data.curso.horario || []).length === 0 ? 'Sin horario' : (
+                      <ul className="asignia-ficha-horario">
+                        {data.curso.horario.map((h, i) => (
+                          <li key={i}><strong>{h.dia}</strong> {h.hora}{h.aula ? ` · ${h.aula}` : ''}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+            <h4 className="modal-section-title">Postulaciones ({data.postulaciones.length})</h4>
             {data.postulaciones.length === 0 ? (
               <p className="asignia-ayuda">Este curso no tiene postulaciones.</p>
             ) : (
-              <div className="table-wrapper">
-                <table className="data-table">
-                  <thead><tr><th>Profesor</th><th>Documento</th><th>Correo</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
-                  <tbody>
-                    {data.postulaciones.map(p => (
-                      <tr key={p.id}>
-                        <td data-label="Profesor">{p.nombre}</td>
-                        <td data-label="Documento">{p.documento}</td>
-                        <td data-label="Correo">{p.correo}</td>
-                        <td data-label="Fecha">{new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>
-                        <td data-label="Estado"><span className={`badge ${p.estado === 'aprobada' ? 'badge-synced' : p.estado === 'descartada' ? 'badge-pending' : 'badge-novedad'}`}>{p.estado[0].toUpperCase() + p.estado.slice(1)}</span></td>
-                        <td data-label="Acción">
-                          {p.estado === 'pendiente' && ['vacio', 'postulado'].includes(data.curso.verificacion) && (
-                            <button className="btn-secondary asignia-btn-fila" onClick={() => aprobar(p)}><CheckCircle2 size={15} /> Asignar</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ul className="asignia-post-lista">
+                {data.postulaciones.map(p => (
+                  <li key={p.id} className="asignia-post-item">
+                    <div className="asignia-post-info">
+                      <div className="asignia-post-nombre">
+                        <strong>{p.nombre}</strong>
+                        <span className={`badge ${ESTADO_POST[p.estado]?.clase || ''}`}>{ESTADO_POST[p.estado]?.label || p.estado}</span>
+                      </div>
+                      <span className="asignia-post-datos">
+                        CC {p.documento} · {p.correo} · {new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+                      </span>
+                    </div>
+                    {p.estado === 'pendiente' && abierto && (
+                      <div className="asignia-post-acciones">
+                        <button className="btn-secondary asignia-btn-fila asignia-btn-peligro" onClick={() => rechazar(p)}><XCircle size={15} /> Rechazar</button>
+                        <button className="btn-secondary asignia-btn-fila" onClick={() => aprobar(p)}><CheckCircle2 size={15} /> Asignar</button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         )}
@@ -270,7 +323,209 @@ function PostulacionesModal({ cursoId, onClose, onCambio }) {
   )
 }
 
-function ProfesoresTab({ profesores, carga, periodo }) {
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+const CAMPOS_CURSO = [
+  ['sede', 'Sede'], ['programa', 'Programa'], ['plan', 'Plan'], ['nivel', 'Nivel'],
+  ['codigo', 'Código *'], ['grupo', 'Grupo'], ['curso', 'Curso *'], ['agrupamiento', 'Agrupamiento'],
+  ['jornada', 'Jornada'], ['creditos', 'Créditos'], ['horas_semana', 'H. semana'], ['espacio', 'Espacio'],
+]
+
+// Crear (curso = null) o editar un curso de la programación. El profesor se
+// puede escribir o elegir de la base de profesores.
+function CursoModal({ curso, periodoPorDefecto, profesores, onClose, onGuardado }) {
+  const [form, setForm] = useState(() => ({
+    periodo: curso?.periodo || periodoPorDefecto || '',
+    ...Object.fromEntries(CAMPOS_CURSO.map(([k]) => [k, curso?.[k] || ''])),
+    profesor_nombre: curso?.profesor_nombre || '', profesor_documento: curso?.profesor_documento || '',
+    profesor_correo: curso?.profesor_correo || '', vinculacion: curso?.vinculacion || '',
+  }))
+  const [horario, setHorario] = useState(() => (curso?.horario?.length ? curso.horario : [{ dia: '', hora: '', aula: '' }]))
+  const [guardando, setGuardando] = useState(false)
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const setH = (i, k) => (e) => setHorario(h => h.map((x, j) => (j === i ? { ...x, [k]: e.target.value } : x)))
+  const listo = form.periodo.trim() && form.codigo.trim() && form.curso.trim()
+
+  const elegirProfesor = (e) => {
+    const p = profesores.find(x => String(x.id) === e.target.value)
+    if (p) setForm(f => ({ ...f, profesor_nombre: p.nombre, profesor_documento: p.documento, profesor_correo: p.correo, vinculacion: p.vinculacion || '' }))
+  }
+  const sinProfesor = () => setForm(f => ({ ...f, profesor_nombre: '', profesor_documento: '', profesor_correo: '', vinculacion: '' }))
+
+  const guardar = async (e) => {
+    e.preventDefault()
+    setGuardando(true)
+    try {
+      const datos = { ...form, horario: horario.filter(h => h.dia || h.hora || h.aula) }
+      const r = curso ? await actualizarCurso(curso.id, datos) : await crearCurso(datos)
+      toastExito(curso ? 'Curso actualizado' : 'Curso creado')
+      onGuardado(r.periodo)
+      onClose()
+    } catch (err) { alertError(err.message) }
+    setGuardando(false)
+  }
+
+  const cambiaProfesor = curso && curso.profesor_nombre && (
+    form.profesor_nombre !== curso.profesor_nombre || form.profesor_documento.replace(/\D/g, '') !== curso.profesor_documento)
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !guardando && onClose()}>
+      <form className="modal-box asignia-modal asignia-modal-post" role="dialog" aria-modal="true" aria-labelledby="asignia-curso-titulo" onSubmit={guardar}>
+        <div className="modal-header">
+          <h3 id="asignia-curso-titulo">{curso ? 'Editar curso' : 'Nuevo curso'}</h3>
+          <button type="button" className="modal-close" onClick={onClose} disabled={guardando} aria-label="Cerrar">✕</button>
+        </div>
+        <div className="modal-form">
+          <h4 className="modal-section-title">Datos del curso</h4>
+          <div className="asignia-form-grid">
+            <div className="modal-field">
+              <label htmlFor="cur-periodo">Periodo *</label>
+              <input id="cur-periodo" type="text" maxLength={20} required disabled={Boolean(curso)} value={form.periodo} onChange={set('periodo')} placeholder="Ej. 2027-1" />
+            </div>
+            {CAMPOS_CURSO.map(([k, label]) => (
+              <div key={k} className={`modal-field${['curso', 'programa', 'espacio'].includes(k) ? ' asignia-form-ancho' : ''}`}>
+                <label htmlFor={`cur-${k}`}>{label}</label>
+                <input id={`cur-${k}`} type="text" maxLength={200} required={k === 'codigo' || k === 'curso'} value={form[k]} onChange={set(k)} />
+              </div>
+            ))}
+          </div>
+
+          <h4 className="modal-section-title">Días y horario</h4>
+          <div className="asignia-horario-edit">
+            {horario.map((h, i) => (
+              <div key={i} className="asignia-horario-fila">
+                <select aria-label={`Día de la franja ${i + 1}`} value={h.dia} onChange={setH(i, 'dia')}>
+                  <option value="">Día</option>
+                  {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+                <input type="text" aria-label={`Hora de la franja ${i + 1}`} placeholder="08:00 - 10:00" maxLength={40} value={h.hora} onChange={setH(i, 'hora')} />
+                <input type="text" aria-label={`Aula de la franja ${i + 1}`} placeholder="Aula" maxLength={60} value={h.aula} onChange={setH(i, 'aula')} />
+                <button type="button" className="btn-icon asignia-accion" aria-label={`Quitar franja ${i + 1}`}
+                  onClick={() => setHorario(hs => hs.filter((_, j) => j !== i))}><X size={15} /></button>
+              </div>
+            ))}
+            <button type="button" className="btn-secondary asignia-btn-fila" onClick={() => setHorario(hs => [...hs, { dia: '', hora: '', aula: '' }])}>
+              <Plus size={15} /> Agregar franja
+            </button>
+          </div>
+
+          <h4 className="modal-section-title">Profesor</h4>
+          {profesores.length > 0 && (
+            <div className="modal-field">
+              <label htmlFor="cur-base">Elegir de la base de profesores</label>
+              <select id="cur-base" value="" onChange={elegirProfesor}>
+                <option value="">Selecciona para llenar los datos...</option>
+                {profesores.map(p => <option key={p.id} value={p.id}>{p.nombre} · {p.documento}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="asignia-form-grid">
+            <div className="modal-field asignia-form-ancho">
+              <label htmlFor="cur-pnom">Nombre</label>
+              <input id="cur-pnom" type="text" maxLength={150} value={form.profesor_nombre} onChange={set('profesor_nombre')} placeholder="Vacío = curso sin profesor" />
+            </div>
+            <div className="modal-field">
+              <label htmlFor="cur-pdoc">Documento</label>
+              <input id="cur-pdoc" type="text" inputMode="numeric" maxLength={20} required={Boolean(form.profesor_nombre.trim())} value={form.profesor_documento} onChange={set('profesor_documento')} />
+            </div>
+            <div className="modal-field">
+              <label htmlFor="cur-pvin">Vinculación</label>
+              <input id="cur-pvin" type="text" maxLength={100} value={form.vinculacion} onChange={set('vinculacion')} />
+            </div>
+            <div className="modal-field asignia-form-ancho">
+              <label htmlFor="cur-pcor">Correo institucional</label>
+              <input id="cur-pcor" type="email" maxLength={150} required={Boolean(form.profesor_nombre.trim())} value={form.profesor_correo} onChange={set('profesor_correo')} />
+            </div>
+          </div>
+          {form.profesor_nombre && (
+            <button type="button" className="btn-secondary asignia-btn-fila asignia-btn-peligro asignia-btn-solo" onClick={sinProfesor}><X size={15} /> Dejar sin profesor</button>
+          )}
+          <p className="asignia-ayuda">
+            {curso
+              ? (cambiaProfesor
+                ? 'Cambiaste el profesor: el curso quedará "Asignado" y el nuevo profesor deberá aceptarlo. Se pierde la respuesta anterior.'
+                : 'Si no cambias el profesor, el curso conserva su estado de verificación.')
+              : 'Con profesor el curso queda "Asignado" (el profesor lo acepta o rechaza); sin profesor queda "Vacío" y abierto a postulaciones.'}
+          </p>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn-secondary" onClick={onClose} disabled={guardando}>Cancelar</button>
+          <button type="submit" className="btn-primary" disabled={!listo || guardando}>
+            <Save size={15} /> {guardando ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+// Crear (profesor = null) o editar un profesor de la base.
+function ProfesorModal({ profesor, onClose, onGuardado }) {
+  const [form, setForm] = useState({
+    documento: profesor?.documento || '', nombre: profesor?.nombre || '',
+    correo: profesor?.correo || '', vinculacion: profesor?.vinculacion || '',
+  })
+  const [guardando, setGuardando] = useState(false)
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const listo = form.documento.trim() && form.nombre.trim() && form.correo.trim()
+
+  const guardar = async (e) => {
+    e.preventDefault()
+    setGuardando(true)
+    try {
+      if (profesor) await actualizarProfesor(profesor.id, form)
+      else await crearProfesor(form)
+      toastExito(profesor ? 'Profesor actualizado' : 'Profesor creado')
+      onGuardado()
+      onClose()
+    } catch (err) { alertError(err.message) }
+    setGuardando(false)
+  }
+
+  return (
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !guardando && onClose()}>
+      <form className="modal-box asignia-modal" role="dialog" aria-modal="true" aria-labelledby="asignia-prof-titulo" onSubmit={guardar}>
+        <div className="modal-header">
+          <h3 id="asignia-prof-titulo">{profesor ? 'Editar profesor' : 'Nuevo profesor'}</h3>
+          <button type="button" className="modal-close" onClick={onClose} disabled={guardando} aria-label="Cerrar">✕</button>
+        </div>
+        <div className="modal-form">
+          <p className="asignia-ayuda">Con documento y correo el profesor puede entrar a la pantalla pública de Asignia y postularse.</p>
+          <div className="modal-row">
+            <div className="modal-field">
+              <label htmlFor="prof-doc">Documento</label>
+              <input id="prof-doc" type="text" inputMode="numeric" maxLength={20} required autoFocus
+                value={form.documento} onChange={set('documento')} placeholder="Sin puntos ni espacios" />
+            </div>
+            <div className="modal-field">
+              <label htmlFor="prof-vin">Vinculación (opcional)</label>
+              <input id="prof-vin" type="text" maxLength={100} value={form.vinculacion} onChange={set('vinculacion')} placeholder="Ej. Cátedra, Planta" />
+            </div>
+          </div>
+          <div className="modal-field">
+            <label htmlFor="prof-nom">Nombre completo</label>
+            <input id="prof-nom" type="text" maxLength={150} required value={form.nombre} onChange={set('nombre')} />
+          </div>
+          <div className="modal-field">
+            <label htmlFor="prof-cor">Correo institucional</label>
+            <input id="prof-cor" type="email" maxLength={150} required value={form.correo} onChange={set('correo')} placeholder="nombre@pascualbravo.edu.co" />
+          </div>
+          {profesor && (
+            <p className="asignia-ayuda">Cambiar documento o correo no modifica los cursos ya asignados con los datos anteriores.</p>
+          )}
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn-secondary" onClick={onClose} disabled={guardando}>Cancelar</button>
+          <button type="submit" className="btn-primary" disabled={!listo || guardando}>
+            <Save size={15} /> {guardando ? 'Guardando...' : 'Guardar'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuevo, onNuevoCerrado }) {
+  const [editando, setEditando] = useState(null) // null | 'nuevo' | profesor
   const [busqueda, setBusqueda] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -289,10 +544,30 @@ function ProfesoresTab({ profesores, carga, periodo }) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const visibles = filtered.slice((page - 1) * perPage, page * perPage)
 
+  const quitar = async (p) => {
+    const ok = await confirmAccion({
+      title: '¿Quitar al profesor?',
+      text: `${p.nombre} (${p.documento}) saldrá de la base de profesores. Sus cursos y postulaciones del periodo no cambian; si no tiene ninguno, ya no podrá entrar a la pantalla pública.`,
+      icon: 'warning',
+      confirmButtonText: 'Sí, quitar',
+    })
+    if (!ok) return
+    try {
+      await borrarProfesor(p.id)
+      toastExito('Profesor quitado')
+      onCambio()
+    } catch (e) { alertError(e.message) }
+  }
+
+  const modal = (editando || nuevo) && (
+    <ProfesorModal profesor={editando || null} onClose={() => { setEditando(null); onNuevoCerrado() }} onGuardado={onCambio} />
+  )
+
   if (!profesores.length) {
     return (
       <div className="asignia-vacio">
-        <p>Aún no hay base de profesores. Usa "Cargar profesores" para subir el Excel (pestaña "BD Profesores"; "Formato guía" trae un ejemplo).</p>
+        <p>Aún no hay base de profesores. Usa "Cargar profesores" para subir el Excel (pestaña "BD Profesores"; "Formato guía" trae un ejemplo){puedeEditar ? ' o "Nuevo profesor" para crearlos uno por uno.' : '.'}</p>
+        {modal}
       </div>
     )
   }
@@ -319,11 +594,12 @@ function ProfesoresTab({ profesores, carga, periodo }) {
               <th><ColumnFilter label="Vinculación" {...colProps('vinculacion')} /></th>
               <th><ColumnFilter label={`Cursos ${periodo || ''}`} {...colProps('cursos')} /></th>
               <th><ColumnFilter label="Horas acumuladas" {...colProps('horas')} /></th>
+              {puedeEditar && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
-              <tr><td colSpan={6} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
+              <tr><td colSpan={puedeEditar ? 7 : 6} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
             ) : visibles.map(p => (
               <tr key={p.id}>
                 <td data-label="Documento">{p.documento}</td>
@@ -332,17 +608,33 @@ function ProfesoresTab({ profesores, carga, periodo }) {
                 <td data-label="Vinculación">{p.vinculacion || '—'}</td>
                 <td data-label="Cursos">{p.cursos}</td>
                 <td data-label="Horas acumuladas"><strong>{p.horas} h</strong></td>
+                {puedeEditar && (
+                  <td data-label="Acciones">
+                    <div className="asignia-acciones">
+                      <button className="btn-icon asignia-accion asignia-tip" onClick={() => setEditando(p)}
+                        data-tip="Editar profesor" aria-label={`Editar a ${p.nombre}`}><Pencil size={15} /></button>
+                      <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => quitar(p)}
+                        data-tip="Quitar de la base de profesores" aria-label={`Quitar a ${p.nombre}`}><Trash2 size={15} /></button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <Paginacion page={page} totalPages={totalPages} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={n => { setPerPage(n); setPage(1) }} />
+      {modal}
     </>
   )
 }
 
 export default function AsigniaAdmin() {
+  // asignia_view: solo ver · asignia_load: ver + cargar · asignia_manage: todo.
+  const { permissions } = usePermissions()
+  const codigos = new Set((permissions?.modules || []).flatMap(m => m.submodules.map(s => s.submodule_code)))
+  const puedeDecidir = codigos.has('asignia_manage')
+  const puedeCargar = puedeDecidir || codigos.has('asignia_load')
   const [tab, setTab] = useState('programacion')
   const [data, setData] = useState(null) // null = cargando
   const [profesores, setProfesores] = useState([])
@@ -355,6 +647,8 @@ export default function AsigniaAdmin() {
   const [perPage, setPerPage] = useState(10)
   const [cargaAbierta, setCargaAbierta] = useState(null) // 'programacion' | 'profesores'
   const [postCurso, setPostCurso] = useState(null)
+  const [cursoEdit, setCursoEdit] = useState(null) // null | 'nuevo' | curso
+  const [profNuevo, setProfNuevo] = useState(false)
 
   const cargar = useCallback((p) => listarCursosAsignia(p)
     .then((r) => { setData(r); setPeriodo(r.periodo || '') })
@@ -410,13 +704,28 @@ export default function AsigniaAdmin() {
   const liberar = async (c) => {
     const ok = await confirmAccion({
       title: '¿Liberar el curso?',
-      text: `${c.codigo} ${c.curso} (grupo ${c.grupo || '—'}) quedará vacío${c.profesor_nombre ? `, sin ${c.profesor_nombre}` : ''}, y cualquier profesor podrá postularse. Las postulaciones pendientes se descartarán.`,
+      text: `${c.codigo} ${c.curso} (grupo ${c.grupo || '—'}) quedará vacante${c.profesor_nombre ? ` y ${c.profesor_nombre} dejará de tenerlo asignado` : ''}. Volverá a aparecer como disponible para que cualquier profesor se postule. Las postulaciones pendientes se descartarán.`,
       confirmButtonText: 'Sí, liberar',
     })
     if (!ok) return
     try {
       await liberarCurso(c.id)
       toastExito('Curso liberado')
+      cargar(periodo)
+    } catch (e) { alertError(e.message) }
+  }
+
+  const borrar = async (c) => {
+    const ok = await confirmAccion({
+      title: '¿Borrar el curso?',
+      text: `${c.codigo} ${c.curso} (grupo ${c.grupo || '—'}) saldrá de la programación ${c.periodo}${c.profesor_nombre ? `, junto con la asignación a ${c.profesor_nombre}` : ''} y sus postulaciones. Si vuelve a venir en el Excel se creará de nuevo.`,
+      icon: 'warning',
+      confirmButtonText: 'Sí, borrar',
+    })
+    if (!ok) return
+    try {
+      await borrarCurso(c.id)
+      toastExito('Curso borrado')
       cargar(periodo)
     } catch (e) { alertError(e.message) }
   }
@@ -433,9 +742,16 @@ export default function AsigniaAdmin() {
         <div className="asignia-header-acciones">
           <button className="btn-secondary" onClick={copiarEnlace} title={ENLACE_PROFESORES}><Link2 size={15} /> Copiar enlace para profesores</button>
           <a className="btn-secondary" href={esProf ? FORMATO_PROFESORES : FORMATO_PROGRAMACION} download><Download size={15} /> Formato guía</a>
-          <button className="btn-primary" onClick={() => setCargaAbierta(tab)}>
-            <Upload size={15} /> {esProf ? 'Cargar profesores' : 'Cargar programación'}
-          </button>
+          {puedeCargar && (esProf ? (
+            <button className="btn-secondary" onClick={() => setProfNuevo(true)}><UserPlus size={15} /> Nuevo profesor</button>
+          ) : (
+            <button className="btn-secondary" onClick={() => setCursoEdit('nuevo')}><Plus size={15} /> Nuevo curso</button>
+          ))}
+          {puedeCargar && (
+            <button className="btn-primary" onClick={() => setCargaAbierta(tab)}>
+              <Upload size={15} /> {esProf ? 'Cargar profesores' : 'Cargar programación'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -449,12 +765,13 @@ export default function AsigniaAdmin() {
       </nav>
 
       {esProf ? (
-        <ProfesoresTab profesores={profesores} carga={carga} periodo={data?.periodo} />
+        <ProfesoresTab profesores={profesores} carga={carga} periodo={data?.periodo} puedeEditar={puedeCargar} onCambio={cargarProfes}
+          nuevo={profNuevo} onNuevoCerrado={() => setProfNuevo(false)} />
       ) : data === null ? (
         <div className="loading-box"><span className="loader"></span>Cargando...</div>
       ) : !data.periodo ? (
         <div className="asignia-vacio">
-          <p>Aún no hay programación cargada. Usa "Cargar programación" para subir el Excel del semestre ("Formato guía" trae un ejemplo).</p>
+          <p>Aún no hay programación cargada. Usa "Cargar programación" para subir el Excel del semestre ("Formato guía" trae un ejemplo){puedeCargar ? ' o "Nuevo curso" para crearlos uno por uno.' : '.'}</p>
         </div>
       ) : (
         <>
@@ -463,7 +780,7 @@ export default function AsigniaAdmin() {
               <span className="asignia-estado-num">{cursos.length}</span><span>Todos</span>
             </button>
             {Object.entries(ESTADOS).map(([k, e]) => (
-              <button key={k} type="button" className={`asignia-estado${estado === k ? ' activo' : ''}`} aria-pressed={estado === k} onClick={() => { setEstado(estado === k ? '' : k); setPage(1) }}>
+              <button key={k} type="button" className={`asignia-estado asignia-estado-${k}${estado === k ? ' activo' : ''}`} aria-pressed={estado === k} onClick={() => { setEstado(estado === k ? '' : k); setPage(1) }}>
                 <span className="asignia-estado-num">{conteo[k] || 0}</span><span>{e.label}</span>
               </button>
             ))}
@@ -563,15 +880,37 @@ export default function AsigniaAdmin() {
                     <td data-label="Acciones">
                       <div className="asignia-acciones">
                         {(c.postulaciones_pendientes > 0 || c.verificacion === 'postulado') && (
-                          <button className="btn-icon asignia-accion" onClick={() => setPostCurso(c.id)}
-                            title={`Ver postulaciones (${c.postulaciones_pendientes} pendientes)`} aria-label={`Ver postulaciones (${c.postulaciones_pendientes} pendientes)`}>
+                          <button className="btn-icon asignia-accion asignia-tip" onClick={() => setPostCurso(c.id)}
+                            data-tip={`Ver postulaciones: ${c.postulaciones_pendientes} profesor(es) esperan respuesta`} aria-label={`Ver postulaciones (${c.postulaciones_pendientes} pendientes)`}>
                             <Users size={15} /><span className="asignia-accion-num">{c.postulaciones_pendientes}</span>
                           </button>
                         )}
-                        {c.verificacion !== 'vacio' && (
-                          <button className="btn-icon asignia-accion asignia-btn-peligro" onClick={() => liberar(c)} title="Liberar curso" aria-label="Liberar curso">
-                            <Unlock size={15} />
+                        {c.verificacion !== 'vacio' && puedeDecidir ? (
+                          <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => liberar(c)}
+                            data-tip="Curso ocupado. Clic para liberarlo: se quita al profesor y queda vacante para que otros se postulen"
+                            aria-label="Liberar curso: quitar al profesor y dejarlo vacante">
+                            <Lock size={15} />
                           </button>
+                        ) : c.verificacion !== 'vacio' ? (
+                          <span className="btn-icon asignia-accion asignia-accion-estado asignia-tip" tabIndex={0}
+                            data-tip="Curso ocupado: tiene profesor asignado"
+                            aria-label="Curso ocupado">
+                            <Lock size={15} />
+                          </span>
+                        ) : (
+                          <span className="btn-icon asignia-accion asignia-accion-estado asignia-tip" tabIndex={0}
+                            data-tip="Curso liberado (vacante): los profesores pueden postularse"
+                            aria-label="Curso liberado (vacante)">
+                            <LockOpen size={15} />
+                          </span>
+                        )}
+                        {puedeCargar && (
+                          <>
+                            <button className="btn-icon asignia-accion asignia-tip" onClick={() => setCursoEdit(c)}
+                              data-tip="Editar curso" aria-label={`Editar ${c.codigo} ${c.curso}`}><Pencil size={15} /></button>
+                            <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => borrar(c)}
+                              data-tip="Borrar curso de la programación" aria-label={`Borrar ${c.codigo} ${c.curso}`}><Trash2 size={15} /></button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -588,8 +927,12 @@ export default function AsigniaAdmin() {
         <CargaModal tipo={cargaAbierta} onClose={() => setCargaAbierta(null)}
           onCargado={(p) => (cargaAbierta === 'profesores' ? cargarProfes() : cargar(p))} />
       )}
+      {cursoEdit && (
+        <CursoModal curso={cursoEdit === 'nuevo' ? null : cursoEdit} periodoPorDefecto={periodo} profesores={profesores}
+          onClose={() => setCursoEdit(null)} onGuardado={(p) => cargar(p || periodo)} />
+      )}
       {postCurso && (
-        <PostulacionesModal cursoId={postCurso} onClose={() => setPostCurso(null)} onCambio={() => cargar(periodo)} />
+        <PostulacionesModal cursoId={postCurso} puedeDecidir={puedeDecidir} onClose={() => setPostCurso(null)} onCambio={() => cargar(periodo)} />
       )}
     </div>
   )
