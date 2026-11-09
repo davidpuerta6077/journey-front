@@ -4,10 +4,10 @@ import awsAuth from '../AwsAuthService'
 
 const BASE = config.api_domain.url_base
 
-export const rechazarPostulacion = async (id) => {
+export const rechazarPostulacion = async (id, { causal, motivo }) => {
   try {
     const token = awsAuth.getToken()
-    const res = await axios.post(`${BASE}/asignia/postulaciones/${id}/rechazar`, {}, { headers: { Authorization: `Bearer ${token}` } })
+    const res = await axios.post(`${BASE}/asignia/postulaciones/${id}/rechazar`, { causal, motivo }, { headers: { Authorization: `Bearer ${token}` } })
     return res.data?.body
   } catch (error) {
     console.error(error)

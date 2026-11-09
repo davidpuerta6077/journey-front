@@ -1,50 +1,33 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { BookOpen, Search, CheckCircle2, XCircle, Send, LogOut } from 'lucide-react'
+import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, UserRound } from 'lucide-react'
+import MiHorario from './calendario/MiHorario'
+import { TONOS, ESTADO_POST, DIAS_SEMANA as DIAS, FRANJAS, cumpleHorario } from './asigniaUtil'
 import { consultarProfesor } from '../../../services/asignia/consultarProfesor'
 import { aceptarAsignacion } from '../../../services/asignia/aceptarAsignacion'
 import { rechazarAsignacion } from '../../../services/asignia/rechazarAsignacion'
 import { listarDisponibles } from '../../../services/asignia/listarDisponibles'
 import { postularse } from '../../../services/asignia/postularse'
-import { ESTADOS } from './asigniaUtil'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Asignia/Asignia.css'
 
-const ESTADO_POSTULACION = {
-  pendiente: { label: 'En revisión', clase: 'badge-syncing' },
-  aprobada: { label: 'Aprobada', clase: 'badge-synced' },
-  descartada: { label: 'No seleccionada', clase: 'badge-pending' },
-  rechazada: { label: 'No seleccionada', clase: 'badge-pending' },
-}
+// Colores y textos de estado: los mismos de toda Asignia (asigniaUtil.js).
+const B = TONOS
+const ESTADO_POSTULACION = ESTADO_POST
 
 // Horas semanales de una lista de cursos (columna "H. Semana" de la programación).
 const horasDe = (lista) => lista.reduce((t, c) => t + (Number(String(c.horas_semana || '').replace(',', '.')) || 0), 0)
 const fmtH = (n) => `${Number.isInteger(n) ? n : n.toFixed(1)} h`
 
-// Resumen de la carga horaria del profesor en el periodo.
-function ResumenHoras({ datos }) {
-  const aceptadas = horasDe(datos.asignados.filter(c => c.verificacion === 'aceptado'))
-  const porResponder = horasDe(datos.asignados.filter(c => c.verificacion === 'asignado'))
-  const postuladas = horasDe(datos.postulaciones.filter(p => p.postulacion_estado === 'pendiente'))
-  const rechazadas = horasDe(datos.asignados.filter(c => c.verificacion === 'rechazado'))
-  const items = [
-    { label: 'Horas aceptadas', valor: aceptadas, tono: 'ok', ayuda: 'Cursos que ya aceptaste o que te aprobaron' },
-    { label: 'Por responder', valor: porResponder, ayuda: 'Cursos asignados que aún no aceptas ni rechazas' },
-    { label: 'En revisión', valor: postuladas, tono: 'revision', ayuda: 'Cursos a los que te postulaste y el líder está revisando' },
-    { label: 'Rechazadas', valor: rechazadas, tono: 'error', ayuda: 'Cursos asignados que rechazaste' },
-    { label: 'Total posible', valor: aceptadas + porResponder + postuladas, tono: 'total', ayuda: 'Si aceptas lo pendiente y te aprueban las postulaciones' },
-  ]
-  return (
-    <div className="asignia-horas" role="group" aria-label="Tus horas semanales">
-      {items.map(i => (
-        <div key={i.label} className={`asignia-horas-item${i.tono ? ` asignia-horas-${i.tono}` : ''}`} title={i.ayuda}>
-          <span className="asignia-estado-num">{fmtH(i.valor)}</span>
-          <span>{i.label}</span>
-          <span className="asignia-dato">{i.ayuda}</span>
-        </div>
-      ))}
-    </div>
-  )
+const SIN_FILTROS = { q: '', programa: '', sede: '', jornada: '', dia: '', franja: '', horas: '' }
+
+function cumpleFiltros(c, f) {
+  const q = f.q.trim().toLowerCase()
+  return (!f.programa || c.programa === f.programa)
+    && (!f.sede || c.sede === f.sede)
+    && (!f.jornada || c.jornada === f.jornada)
+    && cumpleHorario(c, f)
+    && (!q || [c.codigo, c.curso, c.programa].some(v => (v || '').toLowerCase().includes(q)))
 }
 
 function Badge({ e }) {
@@ -85,7 +68,116 @@ function CeldasCurso({ c }) {
   )
 }
 
-// Modal de aceptación: muestra los cursos que se van a afectar antes de confirmar.
+// Estado + motivo (si lo hay) en una sola celda.
+function CeldaEstado({ e, causal, motivo }) {
+  return (
+    <td data-label="Estado">
+      <div className="asignia-celda">
+        <Badge e={e} />
+        {causal && <span className="asignia-dato">Motivo: {causal}</span>}
+        {motivo && <span className="asignia-dato">"{motivo}"</span>}
+      </div>
+    </td>
+  )
+}
+
+// Tabla de cursos. Con `seleccion` agrega la columna de checkbox.
+function TablaCursos({ filas, vacio, seleccion, estado }) {
+  const cols = seleccion ? 8 : 7
+  return (
+    <div className="table-wrapper">
+      <table className="data-table asignia-tabla">
+        <thead>
+          <tr>
+            {seleccion && (
+              <th className="asignia-col-check">
+                <input type="checkbox" aria-label="Seleccionar todos" checked={seleccion.todos} disabled={!filas.length}
+                  onChange={seleccion.toggleTodos} />
+              </th>
+            )}
+            <th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.length === 0 ? (
+            <tr><td colSpan={cols} className="asignia-sin-filas">{vacio}</td></tr>
+          ) : filas.map(({ key, c, ...resto }) => (
+            <tr key={key}>
+              {seleccion && (
+                <td data-label="Seleccionar" className="asignia-col-check">
+                  <input type="checkbox" aria-label={`Seleccionar ${c.curso}`} checked={seleccion.sel.includes(c.id)} onChange={() => seleccion.toggle(c.id)} />
+                </td>
+              )}
+              <CeldasCurso c={c} />
+              {estado({ c, ...resto })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// Selección de cursos (solo cuenta lo marcado que sigue en la lista).
+function useSeleccion(lista) {
+  const [marcados, setMarcados] = useState([])
+  const sel = marcados.filter(id => lista.some(c => c.id === id))
+  const todos = lista.length > 0 && lista.every(c => sel.includes(c.id))
+  return {
+    sel,
+    todos,
+    limpiar: () => setMarcados([]),
+    toggle: (id) => setMarcados(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id])),
+    toggleTodos: () => setMarcados(todos ? [] : lista.map(c => c.id)),
+  }
+}
+
+function Filtros({ f, setF, cursos, total }) {
+  const opciones = (campo) => [...new Set(cursos.map(c => c[campo]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true }))
+  const programas = useMemo(() => opciones('programa'), [cursos]) // eslint-disable-line react-hooks/exhaustive-deps
+  const sedes = useMemo(() => opciones('sede'), [cursos]) // eslint-disable-line react-hooks/exhaustive-deps
+  const jornadas = useMemo(() => opciones('jornada'), [cursos]) // eslint-disable-line react-hooks/exhaustive-deps
+  const horas = useMemo(() => opciones('horas_semana').map(String), [cursos]) // eslint-disable-line react-hooks/exhaustive-deps
+  const set = (k) => (e) => setF(x => ({ ...x, [k]: e.target.value }))
+  const activos = Object.values(f).some(Boolean)
+
+  return (
+    <div className="filters-bar asignia-filtros">
+      <div className="filter-input-wrapper">
+        <Search size={15} className="filter-icon" />
+        <input className="filter-input" placeholder="Buscar curso, código o programa..." value={f.q} onChange={set('q')} aria-label="Buscar" />
+      </div>
+      <select className="filter-select" value={f.programa} onChange={set('programa')} aria-label="Programa académico">
+        <option value="">Todos los programas</option>
+        {programas.map(p => <option key={p} value={p}>{p}</option>)}
+      </select>
+      <select className="filter-select" value={f.dia} onChange={set('dia')} aria-label="Día de la semana">
+        <option value="">Todos los días</option>
+        {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
+      </select>
+      <select className="filter-select" value={f.franja} onChange={set('franja')} aria-label="Horario">
+        <option value="">Todo el horario</option>
+        {FRANJAS.map(fr => <option key={fr.v} value={fr.v}>{fr.label}</option>)}
+      </select>
+      <select className="filter-select" value={f.horas} onChange={set('horas')} aria-label="Horas por semana">
+        <option value="">Todas las horas</option>
+        {horas.map(h => <option key={h} value={h}>{h} h/semana</option>)}
+      </select>
+      <select className="filter-select" value={f.sede} onChange={set('sede')} aria-label="Sede">
+        <option value="">Todas las sedes</option>
+        {sedes.map(s => <option key={s} value={s}>{s}</option>)}
+      </select>
+      <select className="filter-select" value={f.jornada} onChange={set('jornada')} aria-label="Jornada">
+        <option value="">Todas las jornadas</option>
+        {jornadas.map(j => <option key={j} value={j}>{j}</option>)}
+      </select>
+      {activos && <button type="button" className="btn-secondary asignia-btn-fila" onClick={() => setF(SIN_FILTROS)}><X size={14} /> Limpiar filtros</button>}
+      <span className="results-count">{total} curso{total !== 1 ? 's' : ''}</span>
+    </div>
+  )
+}
+
+// Modal de confirmación: muestra los cursos que se van a afectar antes de confirmar.
 function ConfirmarModal({ titulo, texto, cursos, confirmar, peligro, onConfirmar, onClose, children, puedeConfirmar = true }) {
   const [enviando, setEnviando] = useState(false)
   const ejecutar = async () => {
@@ -159,112 +251,43 @@ function Ingreso({ onIngresar }) {
   )
 }
 
-function MisCursos({ ident, datos, onCambio }) {
-  const [marcados, setSel] = useState([])
+// Cursos asignados pendientes: el profesor los acepta o rechaza.
+function PorResponder({ ident, cursos, aceptadas, onHecho, onError }) {
+  const s = useSeleccion(cursos)
   const [modal, setModal] = useState(null) // 'aceptar' | 'rechazar'
   const [motivo, setMotivo] = useState('')
-  const [error, setError] = useState('')
-  const [ok, setOk] = useState('')
-
-  const pendientes = datos.asignados.filter(c => c.verificacion === 'asignado')
-  // Solo cuenta lo marcado que sigue pendiente (tras responder, la lista se recarga).
-  const sel = marcados.filter(id => pendientes.some(c => c.id === id))
-  const seleccionados = datos.asignados.filter(c => sel.includes(c.id))
-  const toggle = (id) => setSel(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
-  const todos = pendientes.length > 0 && pendientes.every(c => sel.includes(c.id))
+  const seleccionados = cursos.filter(c => s.sel.includes(c.id))
 
   const responder = async () => {
-    setError('')
-    setOk('')
     try {
       const r = modal === 'aceptar'
-        ? await aceptarAsignacion(ident, sel)
-        : await rechazarAsignacion(ident, sel, motivo.trim())
-      setOk(`${r.actualizados} curso(s) ${modal === 'aceptar' ? 'aceptado(s)' : 'rechazado(s)'}.`)
-      setSel([])
+        ? await aceptarAsignacion(ident, s.sel)
+        : await rechazarAsignacion(ident, s.sel, motivo.trim())
+      s.limpiar()
       setMotivo('')
       setModal(null)
-      onCambio()
+      onHecho(`${r.actualizados} curso(s) ${modal === 'aceptar' ? 'aceptado(s)' : 'rechazado(s)'}.`)
     } catch (e) {
       setModal(null)
-      setError(e.message)
+      onError(e.message)
     }
   }
 
   return (
     <>
-      {error && <div className="public-form-error" role="alert">{error}</div>}
-      {ok && <div className="asignia-ok" role="status">{ok}</div>}
-      {datos.asignados.length === 0 ? (
-        <p className="asignia-vacio">No tienes cursos asignados en el periodo {datos.periodo}. Revisa "Cursos disponibles" para postularte.</p>
-      ) : (
-        <>
-          <div className="asignia-barra">
-            <p className="asignia-ayuda">
-              {pendientes.length > 0
-                ? `Tienes ${pendientes.length} curso(s) pendientes de respuesta. Márcalos y acepta o rechaza la asignación.`
-                : 'Ya respondiste todas tus asignaciones.'}
-            </p>
-            <div className="asignia-header-acciones">
-              <button className="btn-secondary asignia-btn-peligro" disabled={!sel.length} onClick={() => setModal('rechazar')}><XCircle size={15} /> Rechazar ({sel.length})</button>
-              <button className="btn-primary" disabled={!sel.length} onClick={() => setModal('aceptar')}><CheckCircle2 size={15} /> Aceptar asignación ({sel.length}{sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
-            </div>
-          </div>
-          <div className="table-wrapper">
-            <table className="data-table asignia-tabla">
-              <thead>
-                <tr>
-                  <th className="asignia-col-check">
-                    <input type="checkbox" aria-label="Seleccionar todos los pendientes" checked={todos} disabled={!pendientes.length}
-                      onChange={() => setSel(todos ? [] : pendientes.map(c => c.id))} />
-                  </th>
-                  <th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.asignados.map(c => (
-                  <tr key={c.id}>
-                    <td data-label="Seleccionar" className="asignia-col-check">
-                      <input type="checkbox" aria-label={`Seleccionar ${c.curso}`} disabled={c.verificacion !== 'asignado'}
-                        checked={sel.includes(c.id)} onChange={() => toggle(c.id)} />
-                    </td>
-                    <CeldasCurso c={c} />
-                    <td data-label="Estado">
-                      <div className="asignia-celda">
-                        <Badge e={ESTADOS[c.verificacion]} />
-                        {c.verificacion === 'rechazado' && c.motivo_rechazo && <span className="asignia-dato">"{c.motivo_rechazo}"</span>}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {datos.postulaciones.length > 0 && (
-        <section className="asignia-seccion">
-          <h3>Mis postulaciones</h3>
-          <div className="table-wrapper">
-            <table className="data-table asignia-tabla">
-              <thead><tr><th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Postulación</th></tr></thead>
-              <tbody>
-                {datos.postulaciones.map(p => (
-                  <tr key={p.postulacion_id}>
-                    <CeldasCurso c={p} />
-                    <td data-label="Postulación"><Badge e={ESTADO_POSTULACION[p.postulacion_estado]} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <div className="asignia-barra">
+        <p className="asignia-ayuda">Cursos que te asignaron y aún no respondes. Márcalos y acepta o rechaza la asignación.</p>
+        <div className="asignia-header-acciones">
+          <button className="btn-secondary asignia-btn-peligro" disabled={!s.sel.length} onClick={() => setModal('rechazar')}><XCircle size={15} /> Rechazar ({s.sel.length})</button>
+          <button className="btn-primary" disabled={!s.sel.length} onClick={() => setModal('aceptar')}><CheckCircle2 size={15} /> Aceptar asignación ({s.sel.length}{s.sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
+        </div>
+      </div>
+      <TablaCursos filas={cursos.map(c => ({ key: c.id, c }))} seleccion={s} vacio="No tienes cursos pendientes de respuesta con estos filtros."
+        estado={() => <CeldaEstado e={B.responder} />} />
 
       {modal === 'aceptar' && (
         <ConfirmarModal titulo="Aceptar asignación" confirmar="Sí, acepto" cursos={seleccionados}
-          texto={`Vas a aceptar ${seleccionados.length} curso(s), ${fmtH(horasDe(seleccionados))} semanales. Quedarías con ${fmtH(horasDe(datos.asignados.filter(c => c.verificacion === 'aceptado')) + horasDe(seleccionados))} aceptadas. Después de aceptar no podrás cambiar la respuesta desde aquí.`}
+          texto={`Vas a aceptar ${seleccionados.length} curso(s), ${fmtH(horasDe(seleccionados))} semanales. Quedarías con ${fmtH(aceptadas + horasDe(seleccionados))} aceptadas. Después de aceptar no podrás cambiar la respuesta desde aquí.`}
           onConfirmar={responder} onClose={() => setModal(null)} />
       )}
       {modal === 'rechazar' && (
@@ -281,100 +304,33 @@ function MisCursos({ ident, datos, onCambio }) {
   )
 }
 
-function Disponibles({ ident, nombre, onCambio }) {
-  const [cursos, setCursos] = useState(null)
-  const [error, setError] = useState('')
-  const [ok, setOk] = useState('')
-  const [marcados, setSel] = useState([])
-  const [busqueda, setBusqueda] = useState('')
-  const [sede, setSede] = useState('')
-  const [jornada, setJornada] = useState('')
+// Cursos sin profesor a los que el profesor aún no se ha postulado.
+function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
+  const s = useSeleccion(cursos)
   const [modal, setModal] = useState(false)
   const [nombreEscrito, setNombreEscrito] = useState('')
-
-  const cargar = useCallback(() => listarDisponibles(ident)
-    .then(r => setCursos(r.cursos))
-    .catch(e => { setCursos([]); setError(e.message) }), [ident])
-
-  // Carga al montar la pestaña.
-  useEffect(() => { cargar() }, [cargar])
-
-  const lista = useMemo(() => cursos || [], [cursos])
-  const sedes = useMemo(() => [...new Set(lista.map(c => c.sede).filter(Boolean))].sort(), [lista])
-  const jornadas = useMemo(() => [...new Set(lista.map(c => c.jornada).filter(Boolean))].sort(), [lista])
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLowerCase()
-    return lista.filter(c => (!sede || c.sede === sede) && (!jornada || c.jornada === jornada) &&
-      (!q || [c.codigo, c.curso, c.programa].some(v => (v || '').toLowerCase().includes(q))))
-  }, [lista, busqueda, sede, jornada])
-  const sel = marcados.filter(id => lista.some(c => c.id === id && !c.ya_postulado))
-  const seleccionados = lista.filter(c => sel.includes(c.id))
-  const toggle = (id) => setSel(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]))
+  const seleccionados = cursos.filter(c => s.sel.includes(c.id))
 
   const postular = async () => {
-    setError('')
-    setOk('')
     try {
-      const r = await postularse(ident, sel, nombre || nombreEscrito.trim())
-      setOk(`Te postulaste a ${r.postulados} curso(s). El líder revisará tu postulación.`)
-      setSel([])
+      const r = await postularse(ident, s.sel, nombre || nombreEscrito.trim())
+      s.limpiar()
       setModal(false)
-      cargar()
-      onCambio()
+      onHecho(`Te postulaste a ${r.postulados} curso(s). El líder revisará tu postulación; síguela en "En revisión".`)
     } catch (e) {
       setModal(false)
-      setError(e.message)
+      onError(e.message)
     }
   }
 
-  if (cursos === null) return <div className="loading-box"><span className="loader"></span>Cargando cursos disponibles...</div>
-
   return (
     <>
-      {error && <div className="public-form-error" role="alert">{error}</div>}
-      {ok && <div className="asignia-ok" role="status">{ok}</div>}
       <div className="asignia-barra">
         <p className="asignia-ayuda">Cursos sin profesor. Marca los que te interesan y envía tu postulación; el líder del programa decide la asignación.</p>
-        <button className="btn-primary" disabled={!sel.length} onClick={() => setModal(true)}><Send size={15} /> Postularme ({sel.length}{sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
+        <button className="btn-primary" disabled={!s.sel.length} onClick={() => setModal(true)}><Send size={15} /> Postularme ({s.sel.length}{s.sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
       </div>
-      <div className="filters-bar">
-        <div className="filter-input-wrapper">
-          <Search size={15} className="filter-icon" />
-          <input className="filter-input" placeholder="Buscar curso, código o programa..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar" />
-        </div>
-        <select className="filter-select" value={sede} onChange={(e) => setSede(e.target.value)} aria-label="Sede">
-          <option value="">Todas las sedes</option>
-          {sedes.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <select className="filter-select" value={jornada} onChange={(e) => setJornada(e.target.value)} aria-label="Jornada">
-          <option value="">Todas las jornadas</option>
-          {jornadas.map(j => <option key={j} value={j}>{j}</option>)}
-        </select>
-        <span className="results-count">{filtrados.length} curso{filtrados.length !== 1 ? 's' : ''}</span>
-      </div>
-      <div className="table-wrapper">
-        <table className="data-table asignia-tabla">
-          <thead>
-            <tr><th className="asignia-col-check"><span className="sr-only">Seleccionar</span></th><th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th></tr>
-          </thead>
-          <tbody>
-            {filtrados.length === 0 ? (
-              <tr><td colSpan={8} className="asignia-sin-filas">No hay cursos disponibles con estos filtros.</td></tr>
-            ) : filtrados.map(c => (
-              <tr key={c.id}>
-                <td data-label="Seleccionar" className="asignia-col-check">
-                  <input type="checkbox" aria-label={`Seleccionar ${c.curso}`} disabled={c.ya_postulado}
-                    checked={sel.includes(c.id)} onChange={() => toggle(c.id)} />
-                </td>
-                <CeldasCurso c={c} />
-                <td data-label="Estado">
-                  {c.ya_postulado ? <Badge e={{ label: 'Ya te postulaste', clase: 'badge-novedad' }} /> : <Badge e={{ label: 'Disponible', clase: 'badge-pending' }} />}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TablaCursos filas={cursos.map(c => ({ key: c.id, c }))} seleccion={s} vacio="No hay cursos disponibles con estos filtros."
+        estado={() => <CeldaEstado e={B.disponible} />} />
 
       {modal && (
         <ConfirmarModal titulo="Enviar postulación" confirmar="Sí, postularme" cursos={seleccionados}
@@ -392,12 +348,65 @@ function Disponibles({ ident, nombre, onCambio }) {
   )
 }
 
+const VISTAS = [
+  { v: 'responder', label: 'Por responder', clase: TONOS.responder.tarjeta },
+  { v: 'aceptados', label: 'Aceptados', clase: TONOS.aceptado.tarjeta },
+  { v: 'revision', label: 'En revisión', clase: TONOS.revision.tarjeta },
+  { v: 'disponibles', label: 'Disponibles', clase: TONOS.disponible.tarjeta },
+  { v: 'rechazados', label: 'Rechazados', clase: TONOS.rechazado.tarjeta },
+]
+
+const AYUDA = {
+  aceptados: 'Cursos que aceptaste o que te aprobaron por postulación.',
+  revision: 'Postulaciones que el líder del programa todavía está revisando.',
+  rechazados: 'Historial de asignaciones que rechazaste y postulaciones que no quedaron, con su motivo.',
+  postulaciones: 'Todas tus postulaciones del periodo y en qué estado van.',
+}
+
 export default function AsigniaProfesor() {
   const [ident, setIdent] = useState(null)
   const [datos, setDatos] = useState(null)
-  const [tab, setTab] = useState('mis')
+  const [disponibles, setDisponibles] = useState(null)
+  const [vista, setVista] = useState(null)
+  const [f, setF] = useState(SIN_FILTROS)
+  const [error, setError] = useState('')
+  const [ok, setOk] = useState('')
 
-  const recargar = useCallback(() => consultarProfesor(ident).then(setDatos).catch(() => {}), [ident])
+  const cargarDisponibles = useCallback((i) => listarDisponibles(i)
+    .then(r => setDisponibles(r.cursos))
+    .catch(e => { setDisponibles([]); setError(e.message) }), [])
+
+  useEffect(() => { if (ident && datos?.periodo) cargarDisponibles(ident) }, [ident, datos?.periodo, cargarDisponibles])
+
+  const recargar = useCallback(() => {
+    consultarProfesor(ident).then(setDatos).catch(() => {})
+    cargarDisponibles(ident)
+  }, [ident, cargarDisponibles])
+
+  const listas = useMemo(() => {
+    if (!datos) return null
+    const asig = (estado) => datos.asignados.filter(c => c.verificacion === estado)
+    const post = (...estados) => datos.postulaciones.filter(p => estados.includes(p.postulacion_estado))
+    return {
+      responder: asig('asignado'),
+      aceptados: asig('aceptado'),
+      revision: post('pendiente'),
+      // Los cursos a los que ya se postuló están en "En revisión" o "Rechazados".
+      disponibles: (disponibles || []).filter(c => !c.ya_postulado),
+      rechazadosAsig: asig('rechazado'),
+      rechazadosPost: post('rechazada', 'descartada'),
+    }
+  }, [datos, disponibles])
+
+  // Al entrar: "Por responder" si hay pendientes, si no "Disponibles".
+  const vistaActual = vista || (listas?.responder.length ? 'responder' : 'disponibles')
+  // Inicio = las pestañas por estado (listado de cursos); Mi horario y Mis postulaciones son vistas aparte.
+  const esInicio = !['horario', 'postulaciones'].includes(vistaActual)
+
+  const salir = () => { setIdent(null); setDatos(null); setDisponibles(null); setVista(null); setF(SIN_FILTROS); setError(''); setOk('') }
+  const hecho = (msg) => { setError(''); setOk(msg); recargar() }
+  const fallo = (msg) => { setOk(''); setError(msg) }
+  const cambiarVista = (v) => { setVista(v); setOk(''); setError('') }
 
   if (!ident || !datos) {
     return (
@@ -407,31 +416,126 @@ export default function AsigniaProfesor() {
     )
   }
 
+  const filtrar = (lista) => lista.filter(c => cumpleFiltros(c, f))
+  const conteo = {
+    responder: listas.responder,
+    aceptados: listas.aceptados,
+    revision: listas.revision,
+    disponibles: listas.disponibles,
+    rechazados: [...listas.rechazadosAsig, ...listas.rechazadosPost],
+  }
+  const totalPosible = horasDe(listas.aceptados) + horasDe(listas.responder) + horasDe(listas.revision)
+
+  // Filas de la vista actual (ya filtradas) para el contador de la barra de filtros.
+  const filasVista = {
+    responder: filtrar(listas.responder),
+    aceptados: filtrar(listas.aceptados),
+    revision: filtrar(listas.revision),
+    disponibles: filtrar(listas.disponibles),
+    rechazados: filtrar(conteo.rechazados),
+    postulaciones: filtrar(datos.postulaciones),
+  }[vistaActual]
+
+  const todosLosCursos = [...datos.asignados, ...datos.postulaciones, ...(disponibles || [])]
+
   return (
     <div className="asignia-publica estilo-hub">
       <div className="asignia-publica-contenido">
         <div className="sync-page-header">
           <div>
-            <h2>{datos.nombre ? `Hola, ${datos.nombre}` : 'Asignia'}</h2>
-            <p className="asignia-sub">{datos.periodo ? `Programación académica ${datos.periodo}` : 'Aún no hay programación publicada.'} · {ident.correo.toLowerCase()}</p>
+            <h2>Asignia</h2>
+            <p className="asignia-sub">{datos.periodo ? `Programación académica ${datos.periodo}` : 'Aún no hay programación publicada.'}</p>
           </div>
-          <button className="btn-secondary" onClick={() => { setIdent(null); setDatos(null); setTab('mis') }}><LogOut size={15} /> Salir</button>
+          <div className="asignia-header-acciones">
+            <div className="asignia-usuario" aria-label="Usuario">
+              <UserRound size={18} aria-hidden="true" />
+              <span>
+                <strong>{datos.nombre || 'Profesor'}</strong>
+                <span className="asignia-dato">{ident.correo.toLowerCase()}</span>
+              </span>
+            </div>
+            <button className="btn-secondary" onClick={salir}><LogOut size={15} /> Salir</button>
+          </div>
         </div>
 
         {datos.periodo && (
+          <nav className="section-nav" aria-label="Navegación del profesor">
+            {[
+              { v: 'inicio', label: 'Inicio', icono: <Home size={16} />, activo: esInicio, ir: () => cambiarVista(null) },
+              { v: 'horario', label: 'Mi horario', icono: <CalendarDays size={16} />, activo: vistaActual === 'horario', ir: () => cambiarVista('horario') },
+              { v: 'postulaciones', label: `Mis postulaciones (${datos.postulaciones.length})`, icono: <ClipboardList size={16} />, activo: vistaActual === 'postulaciones', ir: () => cambiarVista('postulaciones') },
+            ].map(n => (
+              <button key={n.v} type="button" className={`section-nav-tab${n.activo ? ' active' : ''}`} aria-current={n.activo ? 'page' : undefined} onClick={n.ir}>
+                {n.icono} {n.label}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        {datos.periodo && (
           <>
-            <ResumenHoras datos={datos} />
-            <nav className="section-nav" aria-label="Secciones">
-              <button type="button" className={`section-nav-tab${tab === 'mis' ? ' active' : ''}`} aria-current={tab === 'mis' ? 'page' : undefined} onClick={() => setTab('mis')}>
-                <BookOpen size={16} /> Mis cursos
-              </button>
-              <button type="button" className={`section-nav-tab${tab === 'disponibles' ? ' active' : ''}`} aria-current={tab === 'disponibles' ? 'page' : undefined} onClick={() => setTab('disponibles')}>
-                <Search size={16} /> Cursos disponibles
-              </button>
-            </nav>
-            {tab === 'mis'
-              ? <MisCursos ident={ident} datos={datos} onCambio={recargar} />
-              : <Disponibles ident={ident} nombre={datos.nombre} onCambio={recargar} />}
+            {esInicio && (
+            <div className="asignia-estados asignia-estados-profesor" role="group" aria-label="Filtrar por estado">
+              {VISTAS.map(t => (
+                <button key={t.v} type="button" className={`asignia-estado ${t.clase}${vistaActual === t.v ? ' activo' : ''}`}
+                  aria-pressed={vistaActual === t.v} onClick={() => cambiarVista(t.v)}>
+                  <span className="asignia-estado-num">{t.v === 'disponibles' && disponibles === null ? '…' : conteo[t.v].length}</span>
+                  <span>{t.label}</span>
+                  <span className="asignia-dato">{fmtH(horasDe(conteo[t.v]))} semanales</span>
+                </button>
+              ))}
+            </div>
+            )}
+            {esInicio && (
+              <p className="asignia-ayuda asignia-total-posible">
+                Carga posible: <strong>{fmtH(totalPosible)}</strong> semanales si aceptas lo pendiente y te aprueban lo que está en revisión.
+              </p>
+            )}
+
+            {error && <div className="public-form-error" role="alert">{error}</div>}
+            {ok && <div className="asignia-ok" role="status">{ok}</div>}
+
+            {vistaActual === 'horario' && <MiHorario ident={ident} nombre={datos.nombre} />}
+            {vistaActual !== 'horario' && <Filtros f={f} setF={setF} cursos={todosLosCursos} total={filasVista.length} />}
+
+            {vistaActual === 'responder' && (
+              <PorResponder ident={ident} cursos={filasVista} aceptadas={horasDe(listas.aceptados)} onHecho={hecho} onError={fallo} />
+            )}
+            {vistaActual === 'disponibles' && (disponibles === null
+              ? <div className="loading-box"><span className="loader"></span>Cargando cursos disponibles...</div>
+              : <Disponibles ident={ident} nombre={datos.nombre} cursos={filasVista} onHecho={hecho} onError={fallo} />)}
+            {vistaActual === 'aceptados' && (
+              <>
+                <p className="asignia-ayuda asignia-barra">{AYUDA.aceptados}</p>
+                <TablaCursos filas={filasVista.map(c => ({ key: c.id, c }))} vacio="No tienes cursos aceptados con estos filtros."
+                  estado={() => <CeldaEstado e={B.aceptado} />} />
+              </>
+            )}
+            {vistaActual === 'revision' && (
+              <>
+                <p className="asignia-ayuda asignia-barra">{AYUDA.revision}</p>
+                <TablaCursos filas={filasVista.map(p => ({ key: p.postulacion_id, c: p }))} vacio="No tienes postulaciones en revisión con estos filtros."
+                  estado={() => <CeldaEstado e={B.revision} />} />
+              </>
+            )}
+            {vistaActual === 'rechazados' && (
+              <>
+                <p className="asignia-ayuda asignia-barra">{AYUDA.rechazados}</p>
+                <TablaCursos
+                  filas={filasVista.map(c => (c.postulacion_id ? { key: `p${c.postulacion_id}`, c } : { key: `a${c.id}`, c }))}
+                  vacio="No tienes cursos rechazados con estos filtros."
+                  estado={({ c }) => (c.postulacion_id
+                    ? <CeldaEstado e={{ ...ESTADO_POSTULACION[c.postulacion_estado], label: c.postulacion_estado === 'rechazada' ? 'Postulación rechazada' : 'No seleccionada' }} causal={c.causal} motivo={c.motivo} />
+                    : <CeldaEstado e={{ ...B.rechazado, label: 'Rechazaste la asignación' }} motivo={c.motivo_rechazo} />)} />
+              </>
+            )}
+            {vistaActual === 'postulaciones' && (
+              <>
+                <p className="asignia-ayuda asignia-barra">{AYUDA.postulaciones}</p>
+                <TablaCursos filas={filasVista.map(p => ({ key: p.postulacion_id, c: p }))} vacio="No tienes postulaciones con estos filtros. Revisa 'Disponibles' para postularte."
+                  estado={({ c }) => <CeldaEstado e={ESTADO_POSTULACION[c.postulacion_estado]} causal={c.causal} motivo={c.motivo} />} />
+              </>
+            )}
           </>
         )}
       </div>

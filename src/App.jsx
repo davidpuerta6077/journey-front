@@ -195,7 +195,7 @@ function App() {
 
           {/* ─── ASIGNIA ─── */}
           <Route path="asignia" element={
-            <PrivateRoute submoduleCode={['asignia_view', 'asignia_load', 'asignia_manage']}>
+            <PrivateRoute submoduleCode={['asignia_view', 'asignia_load', 'asignia_postulaciones', 'asignia_config', 'asignia_manage']}>
               <AsigniaAdmin />
             </PrivateRoute>
           } />
