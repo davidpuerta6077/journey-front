@@ -1,0 +1,198 @@
+/* Calendario semanal de Asignia (pestaña Calendario del líder y "Mi horario" del profesor).
+   Estilo de marca: bordes completos, esquinas rectas; las líneas de un solo lado
+   solo se usan como cuadrícula (estructura), nunca como acento de una tarjeta. */
+
+.cal-pagina { display: flex; flex-direction: column; gap: 14px; }
+
+/* Herramientas: vista, filtros, color */
+.cal-herramientas { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+/* Rejilla: ningún select queda estirado solo en una fila. */
+.cal-filtros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; flex: 1 1 520px; align-items: center; }
+.cal-filtros .filter-select { min-width: 0; }
+.cal-select-profesor { flex: 1 1 280px; max-width: 420px; }
+.cal-color-por { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); }
+.cal-color-por .filter-select { flex: none; min-width: 130px; }
+
+.cal-segmentado { display: inline-flex; border: 1px solid var(--border-soft); background: var(--bg-surface); }
+.cal-segmentado button {
+  font: inherit; font-size: 0.85rem; padding: 7px 14px; cursor: pointer;
+  background: transparent; color: var(--text-secondary); border: 1px solid transparent;
+}
+.cal-segmentado button:hover { background: var(--bg-surface-hover); }
+.cal-segmentado button.activo {
+  color: var(--text-primary); font-weight: 600;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+}
+.cal-segmentado button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Barra de semana */
+.cal-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.cal-barra-semana { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cal-barra-modo { display: flex; align-items: center; gap: 8px; }
+.cal-barra-modo .filter-select { flex: none; min-width: 130px; }
+.cal-rango { margin: 0 6px; font-size: 1.05rem; color: var(--hub-titulo, #2d4375); white-space: nowrap; }
+.cal-select-semana { flex: none; min-width: 0; max-width: 300px; }
+
+/* Cuadrícula */
+.cal { --alto-30: 22px; border: 1px solid var(--border-soft); background: var(--bg-surface); overflow-x: auto; }
+.cal-cabecera, .cal-cuerpo { display: grid; grid-template-columns: 56px repeat(var(--cal-cols), minmax(120px, 1fr)); min-width: calc(56px + var(--cal-cols) * 120px); }
+.cal-dia .cal-cabecera, .cal-dia .cal-cuerpo { min-width: 0; grid-template-columns: 56px minmax(0, 1fr); }
+.cal-cabecera { position: sticky; top: 0; z-index: 3; background: var(--bg-surface); border-bottom: 1px solid var(--border-soft); }
+.cal-dia-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; padding: 8px 4px; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.cal-dia-num { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 28px; font-size: 1.05rem; color: var(--text-primary); letter-spacing: 0; }
+.cal-hoy .cal-dia-num { background: #2d4375; color: #fff; }
+.cal-dia-head-sin-clase { color: var(--text-muted); }
+
+.cal-horas { position: relative; }
+.cal-hora { position: absolute; right: 8px; transform: translateY(-50%); font-size: 0.7rem; color: var(--text-muted); }
+.cal-hora:first-child { transform: none; }
+.cal-col {
+  position: relative;
+  border-left: 1px solid var(--border-soft);
+  /* Línea por hora y línea más suave cada 30 min (mismo alto que ALTO_30 en CalendarioSemanal.jsx). */
+  background-image:
+    linear-gradient(to bottom, var(--border-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--cal-linea-media, #f1f5f9) 1px, transparent 1px);
+  background-size: 100% calc(var(--alto-30) * 2), 100% var(--alto-30);
+}
+:root[data-theme="dark"] .cal { --cal-linea-media: rgba(148, 163, 184, 0.12); }
+.cal-col-sin-clase {
+  background-color: var(--bg-surface-alt);
+  background-image: repeating-linear-gradient(135deg, transparent 0 10px, rgba(148, 163, 184, 0.12) 10px 20px);
+}
+.cal-sin-clase-texto { position: sticky; top: 52px; display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; font-size: 0.8rem; color: var(--text-secondary); text-align: center; }
+.cal-sin-clase-texto strong { color: var(--text-primary); }
+.cal-sin-clase-n { font-size: 0.72rem; color: var(--text-muted); }
+.cal-marcado { flex-basis: 100%; padding: 1px 6px; text-transform: none; letter-spacing: 0; font-size: 0.68rem; color: #854d0e; background: #fef9c3; border: 1px solid #fde68a; text-align: center; }
+
+/* Bloques (12 tonos; el borde es completo en el tono intenso del mismo color) */
+.cal-bloque {
+  position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  padding: 4px 6px; overflow: hidden; text-align: left; cursor: pointer; font: inherit;
+  background: var(--c-bg); color: var(--c-texto); border: 1px solid var(--c-borde);
+}
+.cal-bloque:hover { filter: brightness(0.97); z-index: 4; }
+.cal-bloque:focus-visible { outline: 2px solid var(--primary, #2563eb); outline-offset: 1px; z-index: 5; }
+.cal-bloque-titulo { font-size: 0.76rem; line-height: 1.2; font-weight: 700; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cal-bloque-dato { font-size: 0.68rem; line-height: 1.2; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.cal-bloque-cruce { border: 2px solid #dc2626; }
+.cal-bloque-alerta { display: inline-flex; align-items: center; gap: 3px; font-size: 0.66rem; font-weight: 700; color: #fff; background: #b91c1c; padding: 0 5px; }
+.cal-bloque-alerta svg.lucide { stroke: #fff; }
+.cal-bloque-tentativa { border-style: dashed; background: repeating-linear-gradient(135deg, var(--c-bg) 0 8px, var(--bg-surface) 8px 14px); }
+.cal-bloque-enfocado { outline: 3px solid #5b7cfa; outline-offset: 1px; z-index: 5; }
+
+.cal-c-0  { --c-bg: #dbeafe; --c-borde: #3b82f6; --c-texto: #1e3a8a; }
+.cal-c-1  { --c-bg: #dcfce7; --c-borde: #22c55e; --c-texto: #14532d; }
+.cal-c-2  { --c-bg: #fef3c7; --c-borde: #f59e0b; --c-texto: #78350f; }
+.cal-c-3  { --c-bg: #ede9fe; --c-borde: #8b5cf6; --c-texto: #4c1d95; }
+.cal-c-4  { --c-bg: #fce7f3; --c-borde: #ec4899; --c-texto: #831843; }
+.cal-c-5  { --c-bg: #ccfbf1; --c-borde: #14b8a6; --c-texto: #134e4a; }
+.cal-c-6  { --c-bg: #ffedd5; --c-borde: #f97316; --c-texto: #7c2d12; }
+.cal-c-7  { --c-bg: #cffafe; --c-borde: #06b6d4; --c-texto: #164e63; }
+.cal-c-8  { --c-bg: #ecfccb; --c-borde: #84cc16; --c-texto: #365314; }
+.cal-c-9  { --c-bg: #e0e7ff; --c-borde: #6366f1; --c-texto: #312e81; }
+.cal-c-10 { --c-bg: #ffe4e6; --c-borde: #f43f5e; --c-texto: #881337; }
+.cal-c-11 { --c-bg: #e0f2fe; --c-borde: #0ea5e9; --c-texto: #0c4a6e; }
+:root[data-theme="dark"] .cal-bloque {
+  background: color-mix(in srgb, var(--c-borde) 24%, var(--bg-surface));
+  color: var(--text-primary);
+}
+:root[data-theme="dark"] .cal-bloque-tentativa {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c-borde) 24%, var(--bg-surface)) 0 8px, var(--bg-surface) 8px 14px);
+}
+
+/* Panel de cruces */
+.cal-cruces-ok { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 8px 12px; font-size: 0.88rem; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; align-self: flex-start; }
+.cal-cruces-ok svg.lucide { stroke: #15803d; }
+.cal-cruces { border: 1px solid #fecaca; background: #fef2f2; padding: 10px 12px; }
+:root[data-theme="dark"] .cal-cruces { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.35); }
+.cal-cruces-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.95rem; color: #b91c1c; }
+.cal-cruces-titulo svg.lucide { stroke: #b91c1c; }
+.cal-cruces-conteo { font-size: 0.8rem; font-weight: 400; color: var(--text-secondary); }
+.cal-cruces-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 190px; overflow-y: auto; }
+.cal-cruce-item {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; width: 100%; padding: 6px 8px;
+  font: inherit; font-size: 0.82rem; text-align: left; cursor: pointer;
+  background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-soft);
+}
+.cal-cruce-item:hover { background: var(--bg-surface-hover); }
+.cal-cruce-cuando { font-weight: 600; }
+.cal-cruce-que { color: var(--text-secondary); }
+.cal-badge-profesor { background: #fee2e2; color: #b91c1c; }
+.cal-badge-aula { background: #ffedd5; color: #c2410c; }
+.cal-badge-grupo { background: #fef9c3; color: #854d0e; }
+
+/* Carga del profesor */
+.cal-carga { display: flex; flex-direction: column; gap: 10px; }
+.cal-carga-cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.cal-carga-cifras > div { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-surface); border: 1px solid var(--border-soft); }
+.cal-carga-num { font-size: 1.35rem; font-weight: 600; color: var(--hub-titulo, #2d4375); line-height: 1.1; }
+.cal-carga-cifras > .cal-carga-alerta { background: #fffbeb; border-color: #fde68a; }
+.cal-carga-alerta .cal-carga-num { color: #b45309; }
+.cal-detalle-cruces-titulo { display: flex; align-items: center; gap: 6px; color: #b91c1c; }
+.cal-detalle-cruces-titulo svg.lucide { stroke: #b91c1c; }
+
+@media (max-width: 768px) {
+  .cal-carga-cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cal-rango { white-space: normal; }
+  .cal-select-semana { max-width: 100%; flex: 1 1 100%; }
+  .cal-color-por { width: 100%; }
+}
+
+/* Configuración (semestre, semanas especiales, días no laborables) */
+.cal-config { display: flex; flex-direction: column; gap: 16px; }
+.cal-config-bloque { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--bg-surface); border: 1px solid var(--border-soft); }
+.cal-config-bloque h3 { margin: 0; font-size: 1.05rem; color: var(--hub-titulo, #2d4375); }
+.cal-config-bloque .asignia-ayuda, .cal-config-bloque .asignia-aviso { margin: 0; }
+.cal-config-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cal-config-fila { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.cal-config-fila .modal-field { flex: 1 1 150px; min-width: 0; }
+.cal-config-fila .cal-config-ancho { flex: 2 1 240px; }
+.cal-config-check { display: inline-flex; align-items: center; gap: 6px; padding-bottom: 9px; font-size: 0.88rem; color: var(--text-secondary); }
+.cal-config-acciones { display: flex; gap: 8px; justify-content: flex-end; margin-left: auto; }
+.cal-config-acciones-fila { display: flex; gap: 4px; }
+.cal-config-boton { align-self: flex-end; }
+.cal-config-inactivo td { color: var(--text-muted); text-decoration: line-through; }
+.cal-config-inactivo td[data-label="Activo"], .cal-config-inactivo td[data-label="Acciones"] { text-decoration: none; }
+@media (max-width: 768px) { .cal-config-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Impresión del horario: solo se imprime .cal-imprimible (título, carga y cuadrícula). */
+.cal-impresion-titulo { display: none; }
+@media print {
+  @page { size: landscape; margin: 10mm; }
+  body * { visibility: hidden; }
+  .cal-imprimible, .cal-imprimible * { visibility: visible; }
+  .cal-imprimible { position: absolute; left: 0; top: 0; width: 100%; }
+  .cal-imprimible .cal-no-imprimir { display: none !important; }
+  .cal-impresion-titulo { display: block; margin: 0 0 8px; }
+  .cal-impresion-titulo h2 { margin: 0; font-size: 16pt; color: #000; }
+  .cal-impresion-titulo p { margin: 2px 0 0; font-size: 10pt; color: #333; }
+  .cal { overflow: visible; border-color: #999; }
+  .cal-cabecera, .cal-cuerpo { min-width: 0; grid-template-columns: 44px repeat(var(--cal-cols), minmax(0, 1fr)); }
+  .cal-bloque, .cal-col, .cal-col-sin-clase, .cal-bloque-alerta, .cal-hoy .cal-dia-num, .cal-carga-cifras > div {
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .cal-bloque { box-shadow: none; }
+  .cal-carga, .cal-cruces, .cal { break-inside: avoid; }
+}
+
+/* Alertas: respetar los saltos de línea del texto (p. ej. la lista de cruces al guardar un curso). */
+.swal2-html-container { white-space: pre-line; }
+.cal-flecha { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+.cal-flecha:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Color por estado (mismos tonos que asigniaUtil.js: TONOS). El bloque también
+   muestra el texto del estado; el color nunca es la única señal. */
+.cal-e-aceptado   { --c-bg: #dcfce7; --c-borde: #22c55e; --c-texto: #14532d; }
+.cal-e-revision   { --c-bg: #dbeafe; --c-borde: #3b82f6; --c-texto: #1e3a8a; }
+.cal-e-responder  { --c-bg: #fef3c7; --c-borde: #f59e0b; --c-texto: #78350f; }
+.cal-e-disponible { --c-bg: #f1f5f9; --c-borde: #94a3b8; --c-texto: #334155; }
+.cal-e-rechazado  { --c-bg: #fee2e2; --c-borde: #ef4444; --c-texto: #7f1d1d; }
+.cal-bloque-estado { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; opacity: 0.85; }
+.cal-leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; list-style: none; font-size: 0.8rem; color: var(--text-secondary); }
+.cal-leyenda li { display: inline-flex; align-items: center; gap: 6px; }
+.cal-leyenda-muestra { width: 14px; height: 14px; background: var(--c-bg); border: 1px solid var(--c-borde); }
+:root[data-theme="dark"] .cal-leyenda-muestra { background: color-mix(in srgb, var(--c-borde) 24%, var(--bg-surface)); }
+@media print { .cal-leyenda-muestra { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+.cal-config-titulo { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }

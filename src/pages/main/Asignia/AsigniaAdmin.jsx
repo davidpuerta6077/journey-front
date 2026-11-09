@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Upload, Link2, Search, Users, Lock, LockOpen, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X } from 'lucide-react'
+import { Upload, Link2, Search, Users, Lock, LockOpen, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X, Table2, Settings, Inbox, RefreshCw } from 'lucide-react'
+import AsigniaCalendario from './AsigniaCalendario'
+import AsigniaConfiguracion from './AsigniaConfiguracion'
+import { simularCruces } from '../../../services/asignia/simularCruces'
+import { TIPO_CRUCE } from './calendario/calendarioUtil'
 import Paginacion from '../../../components/Paginacion'
 import ExportMenu from '../../../components/ExportMenu'
 import ColumnFilter from '../../../components/ColumnFilter'
@@ -7,6 +11,8 @@ import useColumnFilters from '../../../components/useColumnFilters'
 import { listarCursosAsignia } from '../../../services/asignia/listarCursosAsignia'
 import { cargarProgramacion } from '../../../services/asignia/cargarProgramacion'
 import { cargarProfesores } from '../../../services/asignia/cargarProfesores'
+import { sincronizarProfesores } from '../../../services/asignia/sincronizarProfesores'
+import { obtenerPeriodos } from '../../../services/asignia/obtenerPeriodos'
 import { listarProfesores } from '../../../services/asignia/listarProfesores'
 import { crearProfesor } from '../../../services/asignia/crearProfesor'
 import { actualizarProfesor } from '../../../services/asignia/actualizarProfesor'
@@ -16,18 +22,19 @@ import { actualizarCurso } from '../../../services/asignia/actualizarCurso'
 import { borrarCurso } from '../../../services/asignia/borrarCurso'
 import { listarPostulaciones } from '../../../services/asignia/listarPostulaciones'
 import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion'
-import { rechazarPostulacion } from '../../../services/asignia/rechazarPostulacion'
+import RechazoPostulacion from './RechazoPostulacion'
+import AsigniaPostulaciones from './AsigniaPostulaciones'
 import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { usePermissions } from '../../../services/PermissionsContext'
-import { ESTADOS, horarioTexto } from './asigniaUtil'
+import { ESTADOS, ESTADO_POST, horarioTexto, DIAS_SEMANA, FRANJAS, cumpleHorario, horasDistintas } from './asigniaUtil'
 import '../../../styles/main/Sync/SyncMatriculas.css'
 import '../../../styles/main/Sync/SyncUsuariosP.css'
 import '../../../styles/main/Asignia/Asignia.css'
 
 const ENLACE_PROFESORES = `${window.location.origin}/asignia/profesor`
-const FORMATO_PROGRAMACION = '/asignia/formato-programacion-asignia.xlsx'
-const FORMATO_PROFESORES = '/asignia/formato-profesores-asignia.xlsx'
+const FORMATO_PROGRAMACION = '/formatos/asignia/formato-programacion-asignia.xlsx'
+const FORMATO_PROFESORES = '/formatos/asignia/formato-profesores-asignia.xlsx'
 
 // Horas que suman para la carga del profesor: cursos asignados o aceptados.
 const CUENTA_HORAS = ['asignado', 'aceptado']
@@ -102,7 +109,43 @@ function EstadoBadge({ estado }) {
   return <span className={`badge asignia-badge ${e.clase}`}>{e.label}</span>
 }
 
+// Profesores registrados en la pestaña Profesores a partir de la programación.
+function ResumenProfesores({ r }) {
+  return (
+    <>
+      <h4 className="modal-section-title">Profesores ({r.total} en el archivo)</h4>
+      <dl className="asignia-resumen-carga">
+        <div><dt>Nuevos</dt><dd>{r.nuevos}</dd></div>
+        <div><dt>Actualizados</dt><dd>{r.actualizados}</dd></div>
+        <div><dt>Sin cambios</dt><dd>{r.sinCambios}</dd></div>
+        <div><dt>Filas con error</dt><dd>{r.conError}</dd></div>
+      </dl>
+      {r.conError > 0 && (
+        <>
+          <p className="asignia-aviso">Estas filas tienen profesor pero no se pudo registrar: corrige el archivo y vuelve a cargarlo.</p>
+          <ul className="asignia-lista-confirmar">
+            {r.errores.map((e, i) => (
+              <li key={i}><strong>{e.codigo} · {e.curso} (G{e.grupo || '—'})</strong><span>{e.profesor}: {e.motivo}</span></li>
+            ))}
+          </ul>
+          {r.conError > r.errores.length && <p className="asignia-ayuda">…y {r.conError - r.errores.length} más.</p>}
+        </>
+      )}
+    </>
+  )
+}
+
+// Periodos sugeridos (AAAA-1/AAAA-2 desde el año activo −1 a +2 y los que ya existen).
+function usePeriodosSugeridos() {
+  const [lista, setLista] = useState([])
+  useEffect(() => { obtenerPeriodos().then(r => setLista(r.periodos.map(p => p.periodo))).catch(() => {}) }, [])
+  return lista
+}
+
+const ListaPeriodos = ({ id, periodos }) => <datalist id={id}>{periodos.map(p => <option key={p} value={p} />)}</datalist>
+
 function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
+  const sugeridos = usePeriodosSugeridos()
   const esProf = tipo === 'profesores'
   const [archivo, setArchivo] = useState(null)
   const [periodo, setPeriodo] = useState('')
@@ -155,6 +198,7 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
             {resumen.noEnArchivo > 0 && (
               <p className="asignia-ayuda">{resumen.noEnArchivo} curso(s) del periodo ya estaban cargados y no vienen en este archivo; se dejaron como estaban.</p>
             )}
+            {resumen.profesores && <ResumenProfesores r={resumen.profesores} />}
           </div>
         ) : (
           <div className="modal-form">
@@ -181,7 +225,8 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
               <div className="modal-field">
                 <label htmlFor="asignia-periodo">Periodo (opcional)</label>
                 <input id="asignia-periodo" type="text" maxLength={20} placeholder="Ej. 2027-1. Si lo dejas vacío se toma del archivo"
-                  value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
+                  list="asignia-periodos-carga" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
+                <ListaPeriodos id="asignia-periodos-carga" periodos={sugeridos} />
               </div>
             )}
           </div>
@@ -201,13 +246,6 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
       </div>
     </div>
   )
-}
-
-const ESTADO_POST = {
-  pendiente: { label: 'Pendiente', clase: 'badge-novedad' },
-  aprobada: { label: 'Aprobada', clase: 'badge-synced' },
-  rechazada: { label: 'Rechazada', clase: 'badge-error' },
-  descartada: { label: 'Descartada', clase: 'badge-pending' },
 }
 
 function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
@@ -235,21 +273,7 @@ function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
     } catch (e) { alertError(e.message) }
   }
 
-  const rechazar = async (p) => {
-    const ok = await confirmAccion({
-      title: '¿Rechazar la postulación?',
-      text: `${p.nombre} no quedará con ${data.curso.codigo} ${data.curso.curso} (grupo ${data.curso.grupo || '—'}) y no podrá volver a postularse a este curso.`,
-      icon: 'warning',
-      confirmButtonText: 'Sí, rechazar',
-    })
-    if (!ok) return
-    try {
-      await rechazarPostulacion(p.id)
-      toastExito('Postulación rechazada')
-      onCambio()
-      cargar()
-    } catch (e) { alertError(e.message) }
-  }
+  const [rechazoId, setRechazoId] = useState(null) // postulación con el formulario de rechazo abierto
 
   const abierto = puedeDecidir && data && ['vacio', 'postulado'].includes(data.curso.verificacion)
 
@@ -302,12 +326,17 @@ function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
                       <span className="asignia-post-datos">
                         CC {p.documento} · {p.correo} · {new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
                       </span>
+                      {p.causal && <span className="asignia-post-datos">Motivo: {p.causal}{p.motivo ? ` — "${p.motivo}"` : ''}</span>}
                     </div>
-                    {p.estado === 'pendiente' && abierto && (
+                    {p.estado === 'pendiente' && abierto && rechazoId !== p.id && (
                       <div className="asignia-post-acciones">
-                        <button className="btn-secondary asignia-btn-fila asignia-btn-peligro" onClick={() => rechazar(p)}><XCircle size={15} /> Rechazar</button>
+                        <button className="btn-secondary asignia-btn-fila asignia-btn-peligro" onClick={() => setRechazoId(p.id)}><XCircle size={15} /> Rechazar</button>
                         <button className="btn-secondary asignia-btn-fila" onClick={() => aprobar(p)}><CheckCircle2 size={15} /> Asignar</button>
                       </div>
+                    )}
+                    {rechazoId === p.id && (
+                      <RechazoPostulacion postulacion={p} onCancelar={() => setRechazoId(null)}
+                        onHecho={() => { setRechazoId(null); onCambio(); cargar() }} />
                     )}
                   </li>
                 ))}
@@ -333,6 +362,7 @@ const CAMPOS_CURSO = [
 // Crear (curso = null) o editar un curso de la programación. El profesor se
 // puede escribir o elegir de la base de profesores.
 function CursoModal({ curso, periodoPorDefecto, profesores, onClose, onGuardado }) {
+  const sugeridos = usePeriodosSugeridos()
   const [form, setForm] = useState(() => ({
     periodo: curso?.periodo || periodoPorDefecto || '',
     ...Object.fromEntries(CAMPOS_CURSO.map(([k]) => [k, curso?.[k] || ''])),
@@ -356,6 +386,23 @@ function CursoModal({ curso, periodoPorDefecto, profesores, onClose, onGuardado 
     setGuardando(true)
     try {
       const datos = { ...form, horario: horario.filter(h => h.dia || h.hora || h.aula) }
+      // Advertir cruces (profesor, aula, grupo) antes de guardar; se puede guardar igual.
+      if (datos.horario.length) {
+        const sim = await simularCruces({ ...datos, id: curso?.id }).catch(() => null)
+        if (sim?.cruces.length) {
+          const otra = (c) => sim.sesionesRelacionadas.find(s => c.sesiones.includes(s.id))
+          const lineas = sim.cruces.slice(0, 6).map(c => {
+            const o = otra(c)
+            return `• ${TIPO_CRUCE[c.tipo]} ${c.dia} ${c.inicio}–${c.fin}: ${o ? `${o.codigo} ${o.curso} (G${o.grupo || '—'})` : 'otro curso'} · ${c.etiqueta}`
+          })
+          const seguir = await confirmAccion({
+            title: `Este curso tiene ${sim.cruces.length} cruce${sim.cruces.length > 1 ? 's' : ''}`,
+            text: `${lineas.join('\n')}${sim.cruces.length > 6 ? '\n…' : ''}\n\n¿Guardar de todas formas?`,
+            confirmButtonText: 'Guardar de todas formas',
+          })
+          if (!seguir) { setGuardando(false); return }
+        }
+      }
       const r = curso ? await actualizarCurso(curso.id, datos) : await crearCurso(datos)
       toastExito(curso ? 'Curso actualizado' : 'Curso creado')
       onGuardado(r.periodo)
@@ -379,7 +426,8 @@ function CursoModal({ curso, periodoPorDefecto, profesores, onClose, onGuardado 
           <div className="asignia-form-grid">
             <div className="modal-field">
               <label htmlFor="cur-periodo">Periodo *</label>
-              <input id="cur-periodo" type="text" maxLength={20} required disabled={Boolean(curso)} value={form.periodo} onChange={set('periodo')} placeholder="Ej. 2027-1" />
+              <input id="cur-periodo" type="text" maxLength={20} required disabled={Boolean(curso)} value={form.periodo} onChange={set('periodo')} placeholder="Ej. 2027-1" list="asignia-periodos-curso" />
+              <ListaPeriodos id="asignia-periodos-curso" periodos={sugeridos} />
             </div>
             {CAMPOS_CURSO.map(([k, label]) => (
               <div key={k} className={`modal-field${['curso', 'programa', 'espacio'].includes(k) ? ' asignia-form-ancho' : ''}`}>
@@ -442,9 +490,9 @@ function CursoModal({ curso, periodoPorDefecto, profesores, onClose, onGuardado 
           <p className="asignia-ayuda">
             {curso
               ? (cambiaProfesor
-                ? 'Cambiaste el profesor: el curso quedará "Asignado" y el nuevo profesor deberá aceptarlo. Se pierde la respuesta anterior.'
+                ? 'Cambiaste el profesor: el curso quedará "Por responder" hasta que el nuevo profesor lo acepte o rechace. Se pierde la respuesta anterior.'
                 : 'Si no cambias el profesor, el curso conserva su estado de verificación.')
-              : 'Con profesor el curso queda "Asignado" (el profesor lo acepta o rechaza); sin profesor queda "Vacío" y abierto a postulaciones.'}
+              : 'Con profesor el curso queda "Por responder" (el profesor lo acepta o rechaza); sin profesor queda "Disponible" para postulaciones.'}
           </p>
         </div>
         <div className="modal-actions">
@@ -566,7 +614,7 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
   if (!profesores.length) {
     return (
       <div className="asignia-vacio">
-        <p>Aún no hay base de profesores. Usa "Cargar profesores" para subir el Excel (pestaña "BD Profesores"; "Formato guía" trae un ejemplo){puedeEditar ? ' o "Nuevo profesor" para crearlos uno por uno.' : '.'}</p>
+        <p>Aún no hay base de profesores. Usa "Traer de la programación" para registrar los profesores de los cursos cargados, o "Cargar profesores" para subir el Excel (pestaña "BD Profesores"; "Formato guía" trae un ejemplo){puedeEditar ? ' o "Nuevo profesor" para crearlos uno por uno.' : '.'}</p>
         {modal}
       </div>
     )
@@ -630,11 +678,14 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
 }
 
 export default function AsigniaAdmin() {
-  // asignia_view: solo ver · asignia_load: ver + cargar · asignia_manage: todo.
+  // Permisos por capacidad (se combinan en el rol): asignia_view ver · asignia_load cargar/editar ·
+  // asignia_postulaciones decidir postulaciones y liberar · asignia_config configuración · asignia_manage todo.
   const { permissions } = usePermissions()
   const codigos = new Set((permissions?.modules || []).flatMap(m => m.submodules.map(s => s.submodule_code)))
-  const puedeDecidir = codigos.has('asignia_manage')
-  const puedeCargar = puedeDecidir || codigos.has('asignia_load')
+  const todo = codigos.has('asignia_manage')
+  const puedeDecidir = todo || codigos.has('asignia_postulaciones')
+  const puedeCargar = todo || codigos.has('asignia_load')
+  const puedeConfig = todo || codigos.has('asignia_config')
   const [tab, setTab] = useState('programacion')
   const [data, setData] = useState(null) // null = cargando
   const [profesores, setProfesores] = useState([])
@@ -642,6 +693,7 @@ export default function AsigniaAdmin() {
   const [estado, setEstado] = useState('')
   const [sede, setSede] = useState('')
   const [jornada, setJornada] = useState('')
+  const [horarioF, setHorarioF] = useState({ dia: '', franja: '', horas: '' }) // día, franja y horas por semana
   const [busqueda, setBusqueda] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
@@ -649,6 +701,7 @@ export default function AsigniaAdmin() {
   const [postCurso, setPostCurso] = useState(null)
   const [cursoEdit, setCursoEdit] = useState(null) // null | 'nuevo' | curso
   const [profNuevo, setProfNuevo] = useState(false)
+  const [resumenSinc, setResumenSinc] = useState(null) // resultado de "Traer de la programación"
 
   const cargar = useCallback((p) => listarCursosAsignia(p)
     .then((r) => { setData(r); setPeriodo(r.periodo || '') })
@@ -673,6 +726,8 @@ export default function AsigniaAdmin() {
   }, [cursos])
   const sedes = useMemo(() => [...new Set(cursos.map(c => c.sede).filter(Boolean))].sort(), [cursos])
   const jornadas = useMemo(() => [...new Set(cursos.map(c => c.jornada).filter(Boolean))].sort(), [cursos])
+  const horasOpciones = useMemo(() => horasDistintas(cursos), [cursos])
+  const setH = (k) => (e) => { setHorarioF(x => ({ ...x, [k]: e.target.value })); setPage(1) }
 
   const baseFiltrada = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
@@ -680,17 +735,33 @@ export default function AsigniaAdmin() {
       (!estado || c.verificacion === estado) &&
       (!sede || c.sede === sede) &&
       (!jornada || c.jornada === jornada) &&
+      cumpleHorario(c, horarioF) &&
       (!q || [c.codigo, c.curso, c.programa, c.grupo, c.sede, c.profesor_nombre, c.profesor_documento, c.profesor_correo]
         .some(v => (v || '').toLowerCase().includes(q))))
-  }, [cursos, estado, sede, jornada, busqueda])
+  }, [cursos, estado, sede, jornada, horarioF, busqueda])
   const { filtered: filtrados, colProps, anyFilter, clearFilters } = useColumnFilters(baseFiltrada, COL_GETTERS, () => setPage(1))
 
   const totalPages = Math.max(1, Math.ceil(filtrados.length / perPage))
   const visibles = filtrados.slice((page - 1) * perPage, page * perPage)
 
-  const hayFiltros = anyFilter || estado || sede || jornada || busqueda
-  const limpiarTodo = () => { clearFilters(); setEstado(''); setSede(''); setJornada(''); setBusqueda(''); setPage(1) }
-  const cambiarPeriodo = (p) => { setData(null); setPage(1); setSede(''); setJornada(''); cargar(p) }
+  const hayFiltros = anyFilter || estado || sede || jornada || busqueda || Object.values(horarioF).some(Boolean)
+  const limpiarTodo = () => { clearFilters(); setEstado(''); setSede(''); setJornada(''); setHorarioF({ dia: '', franja: '', horas: '' }); setBusqueda(''); setPage(1) }
+  const cambiarPeriodo = (p) => { setData(null); setPage(1); setSede(''); setJornada(''); setHorarioF({ dia: '', franja: '', horas: '' }); cargar(p) }
+
+  // Registra en la pestaña Profesores a los de la programación ya cargada del periodo.
+  const traerProfesores = async () => {
+    const ok = await confirmAccion({
+      title: '¿Traer los profesores de la programación?',
+      text: `Se registran en esta pestaña los profesores de los cursos del periodo ${data.periodo}, identificados por documento. Si ya existen se actualizan sus datos; un dato vacío no borra lo guardado.`,
+      icon: 'question',
+      confirmButtonText: 'Sí, traerlos',
+    })
+    if (!ok) return
+    try {
+      setResumenSinc(await sincronizarProfesores(data.periodo))
+      cargarProfes()
+    } catch (e) { alertError(e.message) }
+  }
 
   const copiarEnlace = async () => {
     try {
@@ -731,6 +802,8 @@ export default function AsigniaAdmin() {
   }
 
   const esProf = tab === 'profesores'
+  // Pestañas sin botones de carga en el encabezado.
+  const esCal = ['calendario', 'postulaciones', 'configuracion'].includes(tab)
 
   return (
     <div className="sync-page estilo-hub asignia-page">
@@ -741,13 +814,16 @@ export default function AsigniaAdmin() {
         </div>
         <div className="asignia-header-acciones">
           <button className="btn-secondary" onClick={copiarEnlace} title={ENLACE_PROFESORES}><Link2 size={15} /> Copiar enlace para profesores</button>
-          <a className="btn-secondary" href={esProf ? FORMATO_PROFESORES : FORMATO_PROGRAMACION} download><Download size={15} /> Formato guía</a>
-          {puedeCargar && (esProf ? (
-            <button className="btn-secondary" onClick={() => setProfNuevo(true)}><UserPlus size={15} /> Nuevo profesor</button>
+          {!esCal && <a className="btn-secondary" href={esProf ? FORMATO_PROFESORES : FORMATO_PROGRAMACION} download><Download size={15} /> Formato guía</a>}
+          {puedeCargar && !esCal && (esProf ? (
+            <>
+              {data?.periodo && <button className="btn-secondary" onClick={traerProfesores}><RefreshCw size={15} /> Traer de la programación</button>}
+              <button className="btn-secondary" onClick={() => setProfNuevo(true)}><UserPlus size={15} /> Nuevo profesor</button>
+            </>
           ) : (
             <button className="btn-secondary" onClick={() => setCursoEdit('nuevo')}><Plus size={15} /> Nuevo curso</button>
           ))}
-          {puedeCargar && (
+          {puedeCargar && !esCal && (
             <button className="btn-primary" onClick={() => setCargaAbierta(tab)}>
               <Upload size={15} /> {esProf ? 'Cargar profesores' : 'Cargar programación'}
             </button>
@@ -756,15 +832,31 @@ export default function AsigniaAdmin() {
       </div>
 
       <nav className="section-nav" aria-label="Secciones de Asignia">
-        <button type="button" className={`section-nav-tab${!esProf ? ' active' : ''}`} aria-current={!esProf ? 'page' : undefined} onClick={() => setTab('programacion')}>
-          <CalendarDays size={16} /> Programación
+        <button type="button" className={`section-nav-tab${tab === 'programacion' ? ' active' : ''}`} aria-current={tab === 'programacion' ? 'page' : undefined} onClick={() => setTab('programacion')}>
+          <Table2 size={16} /> Programación
+        </button>
+        <button type="button" className={`section-nav-tab${tab === 'calendario' ? ' active' : ''}`} aria-current={tab === 'calendario' ? 'page' : undefined} onClick={() => setTab('calendario')}>
+          <CalendarDays size={16} /> Calendario
         </button>
         <button type="button" className={`section-nav-tab${esProf ? ' active' : ''}`} aria-current={esProf ? 'page' : undefined} onClick={() => setTab('profesores')}>
           <GraduationCap size={16} /> Profesores ({profesores.length})
         </button>
+        <button type="button" className={`section-nav-tab${tab === 'postulaciones' ? ' active' : ''}`} aria-current={tab === 'postulaciones' ? 'page' : undefined} onClick={() => setTab('postulaciones')}>
+          <Inbox size={16} /> Postulaciones
+        </button>
+        {puedeConfig && (
+          <button type="button" className={`section-nav-tab${tab === 'configuracion' ? ' active' : ''}`} aria-current={tab === 'configuracion' ? 'page' : undefined} onClick={() => setTab('configuracion')}>
+            <Settings size={16} /> Configuración
+          </button>
+        )}
       </nav>
 
-      {esProf ? (
+      {esCal ? (
+        !data?.periodo ? <div className="asignia-vacio"><p>Aún no hay programación cargada.</p></div>
+          : tab === 'calendario' ? <AsigniaCalendario periodo={data.periodo} />
+            : tab === 'postulaciones' ? <AsigniaPostulaciones periodo={data.periodo} puedeDecidir={puedeDecidir} onCambio={() => cargar(periodo)} />
+              : puedeConfig ? <AsigniaConfiguracion periodo={data.periodo} puedeEditar={puedeConfig} /> : null
+      ) : esProf ? (
         <ProfesoresTab profesores={profesores} carga={carga} periodo={data?.periodo} puedeEditar={puedeCargar} onCambio={cargarProfes}
           nuevo={profNuevo} onNuevoCerrado={() => setProfNuevo(false)} />
       ) : data === null ? (
@@ -780,13 +872,13 @@ export default function AsigniaAdmin() {
               <span className="asignia-estado-num">{cursos.length}</span><span>Todos</span>
             </button>
             {Object.entries(ESTADOS).map(([k, e]) => (
-              <button key={k} type="button" className={`asignia-estado asignia-estado-${k}${estado === k ? ' activo' : ''}`} aria-pressed={estado === k} onClick={() => { setEstado(estado === k ? '' : k); setPage(1) }}>
+              <button key={k} type="button" className={`asignia-estado ${e.tarjeta}${estado === k ? ' activo' : ''}`} aria-pressed={estado === k} onClick={() => { setEstado(estado === k ? '' : k); setPage(1) }}>
                 <span className="asignia-estado-num">{conteo[k] || 0}</span><span>{e.label}</span>
               </button>
             ))}
           </div>
 
-          <div className="filters-bar">
+          <div className="filters-bar asignia-filtros-lider">
             <div className="filter-input-wrapper">
               <Search size={15} className="filter-icon" />
               <input className="filter-input" placeholder="Buscar curso, código, grupo, programa, sede, profesor, documento o correo..."
@@ -802,6 +894,18 @@ export default function AsigniaAdmin() {
             <select className="filter-select" value={jornada} onChange={(e) => { setJornada(e.target.value); setPage(1) }} aria-label="Jornada">
               <option value="">Todas las jornadas</option>
               {jornadas.map(j => <option key={j} value={j}>{j}</option>)}
+            </select>
+            <select className="filter-select" value={horarioF.dia} onChange={setH('dia')} aria-label="Día de la semana">
+              <option value="">Todos los días</option>
+              {DIAS_SEMANA.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select className="filter-select" value={horarioF.franja} onChange={setH('franja')} aria-label="Horario">
+              <option value="">Todo el horario</option>
+              {FRANJAS.map(f => <option key={f.v} value={f.v}>{f.label}</option>)}
+            </select>
+            <select className="filter-select" value={horarioF.horas} onChange={setH('horas')} aria-label="Horas por semana">
+              <option value="">Todas las horas</option>
+              {horasOpciones.map(h => <option key={h} value={h}>{h} h/semana</option>)}
             </select>
             {hayFiltros && <button className="btn-secondary" onClick={limpiarTodo}>Limpiar filtros</button>}
             <ExportMenu title={`Asignia ${data.periodo}`} columns={COLUMNAS_EXPORT} rows={filtrados} allRows={cursos} />
@@ -926,6 +1030,18 @@ export default function AsigniaAdmin() {
       {cargaAbierta && (
         <CargaModal tipo={cargaAbierta} onClose={() => setCargaAbierta(null)}
           onCargado={(p) => (cargaAbierta === 'profesores' ? cargarProfes() : cargar(p))} />
+      )}
+      {resumenSinc && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setResumenSinc(null)}>
+          <div className="modal-box asignia-modal" role="dialog" aria-modal="true" aria-labelledby="asignia-sinc-titulo">
+            <div className="modal-header">
+              <h3 id="asignia-sinc-titulo">Profesores de la programación {resumenSinc.periodo}</h3>
+              <button className="modal-close" onClick={() => setResumenSinc(null)} aria-label="Cerrar">✕</button>
+            </div>
+            <div className="modal-form"><ResumenProfesores r={resumenSinc} /></div>
+            <div className="modal-actions"><button className="btn-primary" onClick={() => setResumenSinc(null)}>Listo</button></div>
+          </div>
+        </div>
       )}
       {cursoEdit && (
         <CursoModal curso={cursoEdit === 'nuevo' ? null : cursoEdit} periodoPorDefecto={periodo} profesores={profesores}

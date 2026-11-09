@@ -1,4 +1,20 @@
+# Fallback SPA para Apache (React Router resuelve las rutas en el navegador).
+# La API está en otro dominio (App Runner): estas reglas no la afectan. Si algún
+# día se sirve en este mismo dominio bajo /api, agregar antes de la última regla:
+#   RewriteRule ^api/ - [L]
+#
+# Ninguna carpeta de public/ puede llamarse igual que una ruta del front: Apache
+# la trata como directorio real (antes public/asignia chocaba con /asignia y daba
+# 403 al recargar; los formatos ahora viven en public/formatos/asignia).
+# Solo directivas de mod_rewrite: Options/DirectorySlash exigen AllowOverride
+# adicional en el servidor y, si no está, Apache responde 500 en todo el sitio.
+
 RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+RewriteBase /
+
+# Archivos reales (js, css, imágenes, .xlsx, codex-editor.html): se sirven tal cual.
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# Todo lo demás, incluidas carpetas reales, va a la SPA.
+RewriteRule ^ index.html [L]

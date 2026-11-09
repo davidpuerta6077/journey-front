@@ -38,22 +38,32 @@
 }
 .asignia-estado-num { font-size: 1.35rem; font-weight: 600; color: var(--hub-titulo, #2d4375); line-height: 1.1; }
 /* Color leve solo en los estados que comunican algo: aceptado (bien), rechazado
-   (problema), postulado (espera decisión del líder). Vacío/asignado quedan neutros. */
+   (problema), por responder (espera respuesta). En revisión y disponible se definen abajo. */
 .asignia-estado-aceptado  { --est-bg: #f0fdf4; --est-borde: #bbf7d0; --est-texto: #15803d; }
 .asignia-estado-rechazado { --est-bg: #fef2f2; --est-borde: #fecaca; --est-texto: #b91c1c; }
-.asignia-estado-postulado { --est-bg: #fffbeb; --est-borde: #fde68a; --est-texto: #b45309; }
+.asignia-estado-responder { --est-bg: #fffbeb; --est-borde: #fde68a; --est-texto: #b45309; }
 :root[data-theme="dark"] .asignia-estado-aceptado  { --est-bg: rgba(34, 197, 94, 0.12);  --est-borde: rgba(34, 197, 94, 0.35);  --est-texto: #4ade80; }
 :root[data-theme="dark"] .asignia-estado-rechazado { --est-bg: rgba(239, 68, 68, 0.12);  --est-borde: rgba(239, 68, 68, 0.35);  --est-texto: #f87171; }
-:root[data-theme="dark"] .asignia-estado-postulado { --est-bg: rgba(245, 158, 11, 0.12); --est-borde: rgba(245, 158, 11, 0.35); --est-texto: #fbbf24; }
-.asignia-estado-aceptado, .asignia-estado-rechazado, .asignia-estado-postulado {
+:root[data-theme="dark"] .asignia-estado-responder { --est-bg: rgba(245, 158, 11, 0.12); --est-borde: rgba(245, 158, 11, 0.35); --est-texto: #fbbf24; }
+/* Pantalla del profesor: en revisión (azul) y disponible (gris). */
+.asignia-estado-revision   { --est-bg: #eff6ff; --est-borde: #bfdbfe; --est-texto: #1d4ed8; }
+.asignia-estado-disponible { --est-bg: #f8fafc; --est-borde: #cbd5e1; --est-texto: #475569; }
+:root[data-theme="dark"] .asignia-estado-revision   { --est-bg: rgba(59, 130, 246, 0.12);  --est-borde: rgba(59, 130, 246, 0.35);  --est-texto: #60a5fa; }
+:root[data-theme="dark"] .asignia-estado-disponible { --est-bg: rgba(148, 163, 184, 0.10); --est-borde: rgba(148, 163, 184, 0.35); --est-texto: #cbd5e1; }
+.asignia-estado-aceptado, .asignia-estado-rechazado, .asignia-estado-responder,
+.asignia-estado-revision, .asignia-estado-disponible {
   background: var(--est-bg); border-color: var(--est-borde);
 }
 .asignia-estado-aceptado .asignia-estado-num, .asignia-estado-rechazado .asignia-estado-num,
-.asignia-estado-postulado .asignia-estado-num, .asignia-estado-aceptado > span:nth-child(2),
-.asignia-estado-rechazado > span:nth-child(2), .asignia-estado-postulado > span:nth-child(2) { color: var(--est-texto); }
-.asignia-estado-aceptado:hover, .asignia-estado-rechazado:hover, .asignia-estado-postulado:hover { filter: brightness(0.97); }
+.asignia-estado-responder .asignia-estado-num, .asignia-estado-aceptado > span:nth-child(2),
+.asignia-estado-rechazado > span:nth-child(2), .asignia-estado-responder > span:nth-child(2),
+.asignia-estado-revision .asignia-estado-num, .asignia-estado-revision > span:nth-child(2),
+.asignia-estado-disponible .asignia-estado-num, .asignia-estado-disponible > span:nth-child(2) { color: var(--est-texto); }
+.asignia-estado-aceptado:hover, .asignia-estado-rechazado:hover, .asignia-estado-responder:hover,
+.asignia-estado-revision:hover, .asignia-estado-disponible:hover { filter: brightness(0.97); }
 /* Seleccionado: conserva el fondo de color y lleva el borde degradado de marca. */
-.asignia-estado-aceptado.activo, .asignia-estado-rechazado.activo, .asignia-estado-postulado.activo {
+.asignia-estado-aceptado.activo, .asignia-estado-rechazado.activo, .asignia-estado-responder.activo,
+.asignia-estado-revision.activo, .asignia-estado-disponible.activo {
   border-color: transparent;
   background: linear-gradient(var(--est-bg), var(--est-bg)) padding-box,
               linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
@@ -230,3 +240,41 @@ button.asignia-btn-peligro { color: #b91c1c; }
               linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
 }
 @media (max-width: 1000px) { .asignia-horas { grid-template-columns: repeat(2, minmax(0, 1fr)); } .asignia-horas-total { grid-column: 1 / -1; } }
+
+/* Pantalla del profesor: pestañas por estado, filtros y "Mis postulaciones" */
+.asignia-estados-profesor { grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 8px; }
+.asignia-total-posible { margin: 0 0 14px; }
+/* Rejilla para que los 7 filtros queden en filas parejas (sin un select estirado solo). */
+.asignia-filtros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; }
+.asignia-filtros .filter-input-wrapper { grid-column: span 2; min-width: 0; }
+.asignia-filtros .filter-select { min-width: 0; }
+@media (max-width: 700px) {
+  .asignia-filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.asignia-btn-activo {
+  border: 1px solid transparent !important;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box !important;
+}
+@media (max-width: 900px) { .asignia-estados-profesor { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Rechazo de postulación (modal del líder): causal + comentario en línea */
+.asignia-rechazo-form { flex: 1 1 100%; display: flex; flex-direction: column; gap: 10px; }
+.asignia-rechazo-form .asignia-post-acciones { justify-content: flex-end; }
+
+/* Pestaña Postulaciones del líder: 5 contadores por estado */
+.asignia-estados-post { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 900px) { .asignia-estados-post { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Encabezado del profesor: usuario identificado + Salir */
+.asignia-usuario { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--border-soft); background: var(--bg-surface); color: var(--text-primary); min-width: 0; }
+.asignia-usuario > span { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.asignia-usuario strong { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.asignia-usuario .asignia-dato { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Filtros de Programación (líder): rejilla pareja, sin selects estirados solos en una fila. */
+.asignia-filtros-lider { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); align-items: center; }
+.asignia-filtros-lider .filter-input-wrapper { grid-column: span 2; min-width: 0; }
+.asignia-filtros-lider .filter-select { min-width: 0; }
+.asignia-filtros-lider .results-count { justify-self: end; }
+@media (max-width: 700px) { .asignia-filtros-lider .filter-input-wrapper { grid-column: 1 / -1; } }
