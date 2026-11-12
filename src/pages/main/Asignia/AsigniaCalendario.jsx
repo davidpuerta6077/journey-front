@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { X, Printer } from 'lucide-react'
+import { X, Printer, Search } from 'lucide-react'
 import { obtenerCalendario } from '../../../services/asignia/obtenerCalendario'
 import CalendarioSemanal from './calendario/CalendarioSemanal'
 import BarraSemana from './calendario/BarraSemana'
@@ -12,7 +12,7 @@ import {
 import { DIAS_SEMANA, FRANJAS, franjaDe, horasDistintas } from './asigniaUtil'
 import '../../../styles/main/Asignia/AsigniaCalendario.css'
 
-const SIN_FILTROS = { profesor: '', programa: '', asignatura: '', aula: '', modalidad: '', dia: '', franja: '', horas: '' }
+const SIN_FILTROS = { q: '', profesor: '', programa: '', asignatura: '', aula: '', modalidad: '', dia: '', franja: '', horas: '' }
 const opciones = (lista, valor, etiqueta = valor) => {
   const m = new Map()
   for (const s of lista) { const v = valor(s); if (v && !m.has(v)) m.set(v, etiqueta(s)) }
@@ -66,7 +66,10 @@ export default function AsigniaCalendario({ periodo }) {
 
   const sesiones = useMemo(() => {
     if (!data) return []
-    return data.sesiones.filter(s => (!f.profesor || s.profesor_documento === f.profesor)
+    const q = f.q.trim().toLowerCase()
+    return data.sesiones.filter(s => (!q || [s.codigo, s.curso, s.grupo, s.programa, s.sede, s.aula, s.profesor_nombre, s.profesor_documento, s.profesor_correo]
+      .some(v => String(v || '').toLowerCase().includes(q)))
+      && (!f.profesor || s.profesor_documento === f.profesor)
       && (!f.programa || s.programa === f.programa)
       && (!f.asignatura || s.codigo === f.asignatura)
       && (!f.aula || s.aula === f.aula)
@@ -107,6 +110,11 @@ export default function AsigniaCalendario({ periodo }) {
     <div className="cal-pagina">
       <div className="cal-herramientas">
           <div className="cal-filtros">
+            <div className="filter-input-wrapper cal-buscar">
+              <Search size={15} className="filter-icon" />
+              <input className="filter-input" placeholder="Buscar curso, código, grupo, programa, sede, aula, profesor, documento o correo..."
+                value={f.q} onChange={(e) => { set('q')(e); setEnfocado(null) }} aria-label="Buscar en el calendario" />
+            </div>
             <select className="filter-select" value={f.profesor} onChange={(e) => { set('profesor')(e); setEnfocado(null) }} aria-label="Profesor">
               <option value="">Todos los profesores</option>
               {profesores.map(([doc, nombre]) => <option key={doc} value={doc}>{nombre}</option>)}

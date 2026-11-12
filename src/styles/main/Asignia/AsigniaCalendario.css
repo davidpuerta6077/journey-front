@@ -9,6 +9,7 @@
 /* Rejilla: ningún select queda estirado solo en una fila. */
 .cal-filtros { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; flex: 1 1 520px; align-items: center; }
 .cal-filtros .filter-select { min-width: 0; }
+.cal-filtros .cal-buscar { grid-column: 1 / -1; }
 .cal-select-profesor { flex: 1 1 280px; max-width: 420px; }
 .cal-color-por { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); }
 .cal-color-por .filter-select { flex: none; min-width: 130px; }

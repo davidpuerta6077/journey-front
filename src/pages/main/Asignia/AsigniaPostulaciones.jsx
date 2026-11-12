@@ -5,6 +5,7 @@ import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import RechazoPostulacion from './RechazoPostulacion'
 import { ESTADO_POST, horarioTexto } from './asigniaUtil'
+import { VerCalificacion } from './CalificacionSidem'
 
 const FILTROS_ESTADO = [
   { v: '', label: 'Todas' },
@@ -118,6 +119,7 @@ export default function AsigniaPostulaciones({ periodo, puedeDecidir, onCambio }
                       <div className="asignia-celda">
                         <span>{p.nombre}</span>
                         <span className="asignia-dato">CC {p.documento} · {p.correo}</span>
+                        <span><VerCalificacion profesor={p} periodo={periodo} /></span>
                       </div>
                     </td>
                     <td data-label="Fecha">{new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}</td>

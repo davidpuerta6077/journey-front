@@ -24,6 +24,7 @@ import { listarPostulaciones } from '../../../services/asignia/listarPostulacion
 import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion'
 import RechazoPostulacion from './RechazoPostulacion'
 import AsigniaPostulaciones from './AsigniaPostulaciones'
+import { VerCalificacion } from './CalificacionSidem'
 import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { usePermissions } from '../../../services/PermissionsContext'
@@ -198,6 +199,17 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
             {resumen.noEnArchivo > 0 && (
               <p className="asignia-ayuda">{resumen.noEnArchivo} curso(s) del periodo ya estaban cargados y no vienen en este archivo; se dejaron como estaban.</p>
             )}
+            {resumen.cruces?.total > 0 && (
+              <div className="asignia-aviso" role="alert">
+                <strong>{resumen.cruces.total} cruce(s) de horario en el periodo</strong> (la carga masiva se guarda igual; revísalos en Calendario):
+                <ul className="asignia-cruces-carga">
+                  {resumen.cruces.lista.map((c, i) => (
+                    <li key={i}>{TIPO_CRUCE[c.tipo]} {c.etiqueta} · {c.dia} {c.inicio}–{c.fin}: {c.cursos.join(' y ')}</li>
+                  ))}
+                </ul>
+                {resumen.cruces.total > resumen.cruces.lista.length && <span>… y {resumen.cruces.total - resumen.cruces.lista.length} más.</span>}
+              </div>
+            )}
             {resumen.profesores && <ResumenProfesores r={resumen.profesores} />}
           </div>
         ) : (
@@ -326,6 +338,7 @@ function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
                       <span className="asignia-post-datos">
                         CC {p.documento} · {p.correo} · {new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
                       </span>
+                      <span><VerCalificacion profesor={p} periodo={data.curso.periodo} /></span>
                       {p.causal && <span className="asignia-post-datos">Motivo: {p.causal}{p.motivo ? ` — "${p.motivo}"` : ''}</span>}
                     </div>
                     {p.estado === 'pendiente' && abierto && rechazoId !== p.id && (
@@ -386,18 +399,24 @@ function CursoModal({ curso, periodoPorDefecto, profesores, onClose, onGuardado 
     setGuardando(true)
     try {
       const datos = { ...form, horario: horario.filter(h => h.dia || h.hora || h.aula) }
-      // Advertir cruces (profesor, aula, grupo) antes de guardar; se puede guardar igual.
+      // Cruce de profesor o de aula: no se guarda (el servidor también lo impide).
+      // Posible cruce de grupo: se advierte y se puede guardar igual.
       if (datos.horario.length) {
         const sim = await simularCruces({ ...datos, id: curso?.id }).catch(() => null)
         if (sim?.cruces.length) {
           const otra = (c) => sim.sesionesRelacionadas.find(s => c.sesiones.includes(s.id))
-          const lineas = sim.cruces.slice(0, 6).map(c => {
+          const lineas = (lista) => lista.slice(0, 6).map(c => {
             const o = otra(c)
             return `• ${TIPO_CRUCE[c.tipo]} ${c.dia} ${c.inicio}–${c.fin}: ${o ? `${o.codigo} ${o.curso} (G${o.grupo || '—'})` : 'otro curso'} · ${c.etiqueta}`
-          })
+          }).join('\n') + (lista.length > 6 ? '\n…' : '')
+          const bloquean = sim.cruces.filter(c => c.tipo === 'profesor' || c.tipo === 'aula')
+          if (bloquean.length) {
+            alertError(`No se puede guardar: el horario se cruza (profesor o aula).\n${lineas(bloquean)}\n\nCambia el día, la hora, el aula o el profesor.`)
+            setGuardando(false); return
+          }
           const seguir = await confirmAccion({
-            title: `Este curso tiene ${sim.cruces.length} cruce${sim.cruces.length > 1 ? 's' : ''}`,
-            text: `${lineas.join('\n')}${sim.cruces.length > 6 ? '\n…' : ''}\n\n¿Guardar de todas formas?`,
+            title: `Posible cruce de grupo (${sim.cruces.length})`,
+            text: `${lineas(sim.cruces)}\n\n¿Guardar de todas formas?`,
             confirmButtonText: 'Guardar de todas formas',
           })
           if (!seguir) { setGuardando(false); return }
@@ -642,12 +661,13 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
               <th><ColumnFilter label="Vinculación" {...colProps('vinculacion')} /></th>
               <th><ColumnFilter label={`Cursos ${periodo || ''}`} {...colProps('cursos')} /></th>
               <th><ColumnFilter label="Horas acumuladas" {...colProps('horas')} /></th>
+              {periodo && <th>Calificación VISOR</th>}
               {puedeEditar && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
-              <tr><td colSpan={puedeEditar ? 7 : 6} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
+              <tr><td colSpan={6 + (puedeEditar ? 1 : 0) + (periodo ? 1 : 0)} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
             ) : visibles.map(p => (
               <tr key={p.id}>
                 <td data-label="Documento">{p.documento}</td>
@@ -656,6 +676,11 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
                 <td data-label="Vinculación">{p.vinculacion || '—'}</td>
                 <td data-label="Cursos">{p.cursos}</td>
                 <td data-label="Horas acumuladas"><strong>{p.horas} h</strong></td>
+                {periodo && (
+                  <td data-label="Calificación VISOR">
+                    <VerCalificacion profesor={p} periodo={periodo} />
+                  </td>
+                )}
                 {puedeEditar && (
                   <td data-label="Acciones">
                     <div className="asignia-acciones">

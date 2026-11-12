@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, UserRound } from 'lucide-react'
+import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, UserRound, Star } from 'lucide-react'
 import MiHorario from './calendario/MiHorario'
 import { TONOS, ESTADO_POST, DIAS_SEMANA as DIAS, FRANJAS, cumpleHorario } from './asigniaUtil'
 import { consultarProfesor } from '../../../services/asignia/consultarProfesor'
+import { MiCalificacion } from './CalificacionSidem'
 import { aceptarAsignacion } from '../../../services/asignia/aceptarAsignacion'
 import { rechazarAsignacion } from '../../../services/asignia/rechazarAsignacion'
 import { listarDisponibles } from '../../../services/asignia/listarDisponibles'
@@ -105,7 +106,8 @@ function TablaCursos({ filas, vacio, seleccion, estado }) {
             <tr key={key}>
               {seleccion && (
                 <td data-label="Seleccionar" className="asignia-col-check">
-                  <input type="checkbox" aria-label={`Seleccionar ${c.curso}`} checked={seleccion.sel.includes(c.id)} onChange={() => seleccion.toggle(c.id)} />
+                  <input type="checkbox" aria-label={`Seleccionar ${c.curso}`} checked={seleccion.sel.includes(c.id)} onChange={() => seleccion.toggle(c.id)}
+                    disabled={Boolean(c.cruce)} title={c.cruce ? 'Se cruza con tu horario' : undefined} />
                 </td>
               )}
               <CeldasCurso c={c} />
@@ -306,7 +308,8 @@ function PorResponder({ ident, cursos, aceptadas, onHecho, onError }) {
 
 // Cursos sin profesor a los que el profesor aún no se ha postulado.
 function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
-  const s = useSeleccion(cursos)
+  // Un curso que se cruza con uno que ya tienes no se puede seleccionar.
+  const s = useSeleccion(cursos.filter(c => !c.cruce))
   const [modal, setModal] = useState(false)
   const [nombreEscrito, setNombreEscrito] = useState('')
   const seleccionados = cursos.filter(c => s.sel.includes(c.id))
@@ -330,7 +333,9 @@ function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
         <button className="btn-primary" disabled={!s.sel.length} onClick={() => setModal(true)}><Send size={15} /> Postularme ({s.sel.length}{s.sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
       </div>
       <TablaCursos filas={cursos.map(c => ({ key: c.id, c }))} seleccion={s} vacio="No hay cursos disponibles con estos filtros."
-        estado={() => <CeldaEstado e={B.disponible} />} />
+        estado={({ c }) => (c.cruce
+          ? <CeldaEstado e={{ ...B.rechazado, label: 'Se cruza con tu horario' }} motivo={`Con ${c.cruce}`} />
+          : <CeldaEstado e={B.disponible} />)} />
 
       {modal && (
         <ConfirmarModal titulo="Enviar postulación" confirmar="Sí, postularme" cursos={seleccionados}
@@ -401,7 +406,7 @@ export default function AsigniaProfesor() {
   // Al entrar: "Por responder" si hay pendientes, si no "Disponibles".
   const vistaActual = vista || (listas?.responder.length ? 'responder' : 'disponibles')
   // Inicio = las pestañas por estado (listado de cursos); Mi horario y Mis postulaciones son vistas aparte.
-  const esInicio = !['horario', 'postulaciones'].includes(vistaActual)
+  const esInicio = !['horario', 'postulaciones', 'calificacion'].includes(vistaActual)
 
   const salir = () => { setIdent(null); setDatos(null); setDisponibles(null); setVista(null); setF(SIN_FILTROS); setError(''); setOk('') }
   const hecho = (msg) => { setError(''); setOk(msg); recargar() }
@@ -434,7 +439,7 @@ export default function AsigniaProfesor() {
     disponibles: filtrar(listas.disponibles),
     rechazados: filtrar(conteo.rechazados),
     postulaciones: filtrar(datos.postulaciones),
-  }[vistaActual]
+  }[vistaActual] || []
 
   const todosLosCursos = [...datos.asignados, ...datos.postulaciones, ...(disponibles || [])]
 
@@ -464,6 +469,7 @@ export default function AsigniaProfesor() {
               { v: 'inicio', label: 'Inicio', icono: <Home size={16} />, activo: esInicio, ir: () => cambiarVista(null) },
               { v: 'horario', label: 'Mi horario', icono: <CalendarDays size={16} />, activo: vistaActual === 'horario', ir: () => cambiarVista('horario') },
               { v: 'postulaciones', label: `Mis postulaciones (${datos.postulaciones.length})`, icono: <ClipboardList size={16} />, activo: vistaActual === 'postulaciones', ir: () => cambiarVista('postulaciones') },
+              { v: 'calificacion', label: 'Mi calificación', icono: <Star size={16} />, activo: vistaActual === 'calificacion', ir: () => cambiarVista('calificacion') },
             ].map(n => (
               <button key={n.v} type="button" className={`section-nav-tab${n.activo ? ' active' : ''}`} aria-current={n.activo ? 'page' : undefined} onClick={n.ir}>
                 {n.icono} {n.label}
@@ -496,7 +502,8 @@ export default function AsigniaProfesor() {
             {ok && <div className="asignia-ok" role="status">{ok}</div>}
 
             {vistaActual === 'horario' && <MiHorario ident={ident} nombre={datos.nombre} />}
-            {vistaActual !== 'horario' && <Filtros f={f} setF={setF} cursos={todosLosCursos} total={filasVista.length} />}
+            {vistaActual === 'calificacion' && <MiCalificacion ident={ident} />}
+            {!['horario', 'calificacion'].includes(vistaActual) && <Filtros f={f} setF={setF} cursos={todosLosCursos} total={filasVista.length} />}
 
             {vistaActual === 'responder' && (
               <PorResponder ident={ident} cursos={filasVista} aceptadas={horasDe(listas.aceptados)} onHecho={hecho} onError={fallo} />
