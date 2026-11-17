@@ -25,6 +25,7 @@ import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion
 import RechazoPostulacion from './RechazoPostulacion'
 import AsigniaPostulaciones from './AsigniaPostulaciones'
 import { VerCalificacion } from './CalificacionSidem'
+import { VerInduccion } from './InduccionDocente'
 import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { usePermissions } from '../../../services/PermissionsContext'
@@ -338,7 +339,7 @@ function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
                       <span className="asignia-post-datos">
                         CC {p.documento} · {p.correo} · {new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
                       </span>
-                      <span><VerCalificacion profesor={p} periodo={data.curso.periodo} /></span>
+                      <span className="asignia-acciones"><VerCalificacion profesor={p} periodo={data.curso.periodo} /><VerInduccion profesor={p} /></span>
                       {p.causal && <span className="asignia-post-datos">Motivo: {p.causal}{p.motivo ? ` — "${p.motivo}"` : ''}</span>}
                     </div>
                     {p.estado === 'pendiente' && abierto && rechazoId !== p.id && (
@@ -662,12 +663,13 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
               <th><ColumnFilter label={`Cursos ${periodo || ''}`} {...colProps('cursos')} /></th>
               <th><ColumnFilter label="Horas acumuladas" {...colProps('horas')} /></th>
               {periodo && <th>Calificación VISOR</th>}
+              <th>Inducción docente</th>
               {puedeEditar && <th>Acciones</th>}
             </tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
-              <tr><td colSpan={6 + (puedeEditar ? 1 : 0) + (periodo ? 1 : 0)} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
+              <tr><td colSpan={7 + (puedeEditar ? 1 : 0) + (periodo ? 1 : 0)} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
             ) : visibles.map(p => (
               <tr key={p.id}>
                 <td data-label="Documento">{p.documento}</td>
@@ -681,6 +683,7 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
                     <VerCalificacion profesor={p} periodo={periodo} />
                   </td>
                 )}
+                <td data-label="Inducción docente"><VerInduccion profesor={p} /></td>
                 {puedeEditar && (
                   <td data-label="Acciones">
                     <div className="asignia-acciones">

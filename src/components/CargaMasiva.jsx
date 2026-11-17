@@ -4,9 +4,10 @@ import {
   CheckCircle2, AlertTriangle, Database, Settings, Check, Trophy, FileText, X,
 } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import config from '../config'
 import '../styles/main/CargaMasiva/CargaMasiva.css'
 
-const API_BASE = import.meta.env.VITE_URL_BASE
+const API_BASE = config.api_domain.url_base
 const TAMANO_MAX_MB = 50 // límite de express-fileupload en la API
 
 // Pantalla común de Carga Masiva (usuarios, cursos, matrículas, cancelaciones).

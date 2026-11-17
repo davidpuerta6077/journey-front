@@ -1,15 +1,19 @@
+// Dirección de la API: en producción es la de API Gateway (Journey API), que reenvía a App Runner.
+// Se toma de VITE_API_URL (.env o variables del despliegue); el front ya no llama directo a App Runner.
+const apiUrl = import.meta.env.VITE_API_URL;
+
 const config = {
     api_domain: {
-        url_base: import.meta.env.VITE_URL_BASE,
-        url_apigateway: import.meta.env.VITE_URL_APIGATEWAY,
+        url_base: apiUrl,
+        url_apigateway: apiUrl,
     }, 
     aws: {
         redirect_uri: "http://localhost:5173",
-        backend_uri: "http://localhost:3001",
+        backend_uri: apiUrl,
     }
     // aws: {
     //     redirect_uri: "https://bravohub.pascualbravovirtual.edu.co",
-    //     backend_uri: "https://ywjmda93pu.us-east-1.awsapprunner.com",
+    //     backend_uri: apiUrl,
     // }
 }
 
