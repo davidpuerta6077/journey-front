@@ -3,6 +3,8 @@ import "./styles/global/index.css";
 import "./styles/global/Tables.css";
 import App from "./App.jsx";
 import config from "./config.js";
+// Token de aplicación (API Gateway) en todas las peticiones a la API.
+import "./services/http/apiClient";
 
 import { AuthProvider } from "react-oidc-context";
 import { WebStorageStateStore } from "oidc-client-ts";

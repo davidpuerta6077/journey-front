@@ -27,6 +27,7 @@ export default function BloqueSesion({ s, color, estado, verEstado, cruces, styl
       {enCruce && <span className="cal-bloque-alerta"><AlertTriangle size={12} aria-hidden="true" /> Cruce</span>}
       {verEstado && <span className="cal-bloque-estado">{estado}</span>}
       <strong className="cal-bloque-titulo">{s.curso}</strong>
+      <span className="cal-bloque-dato cal-bloque-profesor">{s.profesor_nombre || 'Sin profesor'}</span>
       <span className="cal-bloque-dato">{s.codigo} · G{s.grupo || '—'}</span>
       <span className="cal-bloque-dato">{s.aula || s.modalidad} · {s.inicio}–{s.fin}</span>
     </button>

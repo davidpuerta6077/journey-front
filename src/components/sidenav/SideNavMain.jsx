@@ -14,6 +14,7 @@ import { useNotificationsPolling } from '../../services/notifications/useNotific
 import { buildNavSearchIndex, searchNavIndex } from './navSearchIndex'
 import { applyChartTheme } from '../charts/chartTheme'
 import config from "../../config.js";
+import { clearAppToken } from "../../services/auth/tokenManager";
 import logoPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/bravo_hub_positivo.svg'
 import logoNegativo from '../../assets/Recursos/Iconos/Para fondo oscuros/SVG/bravo_hub_negativo.svg'
 import logoPascualPositivo from '../../assets/Recursos/Iconos/Para fondo claros/SVG/logo_pascual_positivo.svg'
@@ -45,6 +46,7 @@ const Layout = () => {
     const logoutUri = `${config.aws.redirect_uri}/login`;
     const cognitoDomain = "https://us-east-1ynphsrvag.auth.us-east-1.amazoncognito.com";
     auth.removeUser();
+    clearAppToken();
     window.location.href = `${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(logoutUri)}`;
   };
   //End logout process
