@@ -1,5 +1,5 @@
-// Dirección de la API: en producción es la de API Gateway (Journey API), que reenvía a App Runner.
-// Se toma de VITE_API_URL (.env o variables del despliegue); el front ya no llama directo a App Runner.
+// Dirección de la API: en producción es la de API Gateway (Journey API), que reenvía a ECS.
+// Se toma de VITE_API_URL (.env o variables del despliegue).
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const config = {
