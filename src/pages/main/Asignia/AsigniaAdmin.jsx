@@ -30,7 +30,8 @@ import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { usePermissions } from '../../../services/PermissionsContext'
 import { ESTADOS, ESTADO_POST, horarioTexto, DIAS_SEMANA, FRANJAS, cumpleHorario, horasDistintas, alertaHoras } from './asigniaUtil'
-import { Coincidencia, AvatarProfesor, RequerimientosChecks, AlertaHoras } from './PerfilProfesor'
+import { Coincidencia, AvatarProfesor, RequerimientosChecks, AlertaHoras, CopiarDato } from './PerfilProfesor'
+import { listarSolicitudesHoras } from '../../../services/asignia/listarSolicitudesHoras'
 import SolicitudesTutor from './SolicitudesTutor'
 import { listarRequerimientos } from '../../../services/asignia/listarRequerimientos'
 import { listarNiveles } from '../../../services/asignia/listarNiveles'
@@ -652,6 +653,12 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
   const [busqueda, setBusqueda] = useState('')
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
+  // Cartas de carga mínima del periodo por documento (generada / gestionada).
+  const [cartas, setCartas] = useState({})
+  useEffect(() => {
+    if (!periodo) return
+    listarSolicitudesHoras(periodo).then(l => setCartas(Object.fromEntries(l.map(c => [c.documento, c])))).catch(() => {})
+  }, [periodo])
 
   // Base de profesores con su carga (cursos y horas) del periodo mostrado.
   const filas = useMemo(() => profesores.map(p => {
@@ -729,17 +736,17 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
               <tr><td colSpan={8 + (puedeEditar ? 1 : 0) + (periodo ? 1 : 0)} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
             ) : visibles.map(p => (
               <tr key={p.id}>
-                <td data-label="Documento">{p.documento}</td>
+                <td data-label="Documento"><CopiarDato texto={p.documento} etiqueta="Documento" /></td>
                 <td data-label="Profesor">
                   <span className="asignia-perfil-cab"><AvatarProfesor url={p.url_imagen_perfil} nombre={p.nombre} tamano={32} />{p.nombre}</span>
                 </td>
-                <td data-label="Correo institucional">{p.correo || '—'}</td>
+                <td data-label="Correo institucional">{p.correo ? <CopiarDato texto={p.correo} etiqueta="Correo" /> : '—'}</td>
                 <td data-label="Vinculación">{p.vinculacion || '—'}</td>
                 <td data-label="Cursos">{p.cursos}</td>
                 <td data-label="Horas acumuladas"><strong>{p.horas} h</strong></td>
                 <td data-label="Nivel académico">
                   <AlertaHoras nivel={p.nivel} horas={p.horasNum} alerta={p.alerta} profesor={p}
-                    solicitud={periodo ? { periodo, redacto } : null} />
+                    solicitud={periodo ? { periodo, redacto, carta: cartas[p.documento], onCarta: (c) => setCartas(m => ({ ...m, [c.documento]: c })) } : null} />
                 </td>
                 {periodo && (
                   <td data-label="Calificación VISOR">
@@ -811,11 +818,16 @@ export default function AsigniaAdmin() {
   useEffect(() => { cargar(); cargarProfes(); cargarCatalogos() }, [cargar, cargarProfes, cargarCatalogos])
 
   const carga = useMemo(() => cargaPorProfesor(data?.cursos || []), [data])
-  // Cada curso con las horas acumuladas de su profesor en el periodo.
+  // Nivel académico de cada profesor de la base, por documento (alerta de horas en Programación).
+  const nivelPorDoc = useMemo(() => Object.fromEntries(profesores.filter(p => p.nivel_nombre)
+    .map(p => [p.documento, { nombre: p.nivel_nombre, min_horas: p.min_horas, max_horas: p.max_horas }])), [profesores])
+  // Cada curso con las horas acumuladas de su profesor en el periodo y su alerta de nivel.
   const cursos = useMemo(() => (data?.cursos || []).map(c => {
     const k = claveProfesor(c.profesor_documento, c.profesor_nombre)
-    return { ...c, horas_profesor: k ? fmtHoras(carga[k]?.horas || 0) : null }
-  }), [data, carga])
+    const horas = carga[k]?.horas || 0
+    const nivel = nivelPorDoc[c.profesor_documento] || null
+    return { ...c, horas_profesor: k ? fmtHoras(horas) : null, nivel_profesor: nivel, alerta_horas: k ? alertaHoras(horas, nivel) : null }
+  }), [data, carga, nivelPorDoc])
   const conteo = useMemo(() => {
     const c = {}
     cursos.forEach(x => { c[x.verificacion] = (c[x.verificacion] || 0) + 1 })
@@ -1069,14 +1081,20 @@ export default function AsigniaAdmin() {
                       {c.profesor_nombre ? (
                         <div className="asignia-celda">
                           <span>{c.profesor_nombre}</span>
-                          <span className="asignia-dato">{c.profesor_documento || 'Sin documento'}</span>
-                          <span className="asignia-dato asignia-correo" title={c.profesor_correo}>{c.profesor_correo || 'Sin correo'}</span>
+                          {c.profesor_documento ? <CopiarDato texto={c.profesor_documento} etiqueta="Documento" className="asignia-dato" /> : <span className="asignia-dato">Sin documento</span>}
+                          {c.profesor_correo ? <CopiarDato texto={c.profesor_correo} etiqueta="Correo" className="asignia-dato asignia-correo" /> : <span className="asignia-dato">Sin correo</span>}
                           <Coincidencia m={c.coincidencia} compacto />
                         </div>
                       ) : '—'}
                     </td>
                     <td data-label="Horas profesor" title="Suma de horas semanales de los cursos asignados o aceptados del profesor en el periodo">
-                      {c.horas_profesor === null ? '—' : <strong>{c.horas_profesor} h</strong>}
+                      {c.horas_profesor === null ? '—' : (
+                        <div className="asignia-celda">
+                          <strong>{c.horas_profesor} h</strong>
+                          {c.alerta_horas === 'minimo' && <span className="badge asignia-badge badge-novedad" title={`${c.nivel_profesor.nombre}: mínimo ${c.nivel_profesor.min_horas} h`}>Bajo el mínimo ({c.nivel_profesor.min_horas} h)</span>}
+                          {c.alerta_horas === 'maximo' && <span className="badge asignia-badge badge-error" title={`${c.nivel_profesor.nombre}: máximo ${c.nivel_profesor.max_horas} h`}>Cupo alcanzado ({c.nivel_profesor.max_horas} h)</span>}
+                        </div>
+                      )}
                     </td>
                     <td data-label="Verificación">
                       <div className="asignia-celda">
