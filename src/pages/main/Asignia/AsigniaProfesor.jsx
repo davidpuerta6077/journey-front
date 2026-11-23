@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, UserRound, Star } from 'lucide-react'
+import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, Star, GraduationCap } from 'lucide-react'
+import { AvatarProfesor, Coincidencia, AlertaHoras } from './PerfilProfesor'
+import { tutorVirtualProfesor } from '../../../services/asignia/tutorVirtualProfesor'
+import { solicitarTutor } from '../../../services/asignia/solicitarTutor'
 import MiHorario from './calendario/MiHorario'
 import { TONOS, ESTADO_POST, DIAS_SEMANA as DIAS, FRANJAS, cumpleHorario } from './asigniaUtil'
 import { consultarProfesor } from '../../../services/asignia/consultarProfesor'
@@ -21,6 +24,47 @@ const horasDe = (lista) => lista.reduce((t, c) => t + (Number(String(c.horas_sem
 const fmtH = (n) => `${Number.isInteger(n) ? n : n.toFixed(1)} h`
 
 const SIN_FILTROS = { q: '', programa: '', sede: '', jornada: '', dia: '', franja: '', horas: '' }
+
+const DESCRIPCION = 'Tu espacio de asignación académica, acepta las asignaciones de cursos para el siguiente semestre, consulta los cursos disponibles y selecciona tus preferencias.'
+
+// Tutor Virtual: si no tiene el certificado, puede pedir matrícula al curso (llega al administrador).
+function TutorVirtual({ ident }) {
+  const [estado, setEstado] = useState(null)
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+  useEffect(() => { tutorVirtualProfesor(ident).then(setEstado).catch(() => setEstado(false)) }, [ident])
+  if (!estado || estado.certificado) return null
+
+  const solicitar = async () => {
+    setEnviando(true)
+    setError('')
+    try {
+      const s = await solicitarTutor(ident)
+      setEstado(e => ({ ...e, solicitud: s }))
+    } catch (e) { setError(e.message) }
+    setEnviando(false)
+  }
+
+  return (
+    <div className="asignia-tutor" role="status">
+      <GraduationCap size={18} aria-hidden="true" />
+      {estado.solicitud ? (
+        <span>
+          Tu solicitud de matrícula al curso Tutor Virtual está{' '}
+          <span className={`badge asignia-badge ${estado.solicitud.estado === 'matriculado' ? 'badge-synced' : 'badge-novedad'}`}>
+            {estado.solicitud.estado === 'matriculado' ? 'Matriculado' : 'Pendiente'}
+          </span>
+        </span>
+      ) : (
+        <>
+          <span>{estado.disponible ? 'Aún no tienes el certificado Tutor Virtual.' : 'No pudimos confirmar tu certificado Tutor Virtual.'} Puedes solicitar tu matrícula al curso.</span>
+          <button className="btn-primary" onClick={solicitar} disabled={enviando}><Send size={15} /> {enviando ? 'Enviando...' : 'Solicitar matrícula'}</button>
+        </>
+      )}
+      {error && <span className="public-form-error" role="alert">{error}</span>}
+    </div>
+  )
+}
 
 function cumpleFiltros(c, f) {
   const q = f.q.trim().toLowerCase()
@@ -235,8 +279,8 @@ function Ingreso({ onIngresar }) {
 
   return (
     <div className="asignia-ingreso">
-      <h1>Asignia</h1>
-      <p className="asignia-ayuda">Consulta los cursos que te asignaron para el semestre, acéptalos o recházalos, y postúlate a cursos sin profesor.</p>
+      <h1>Mi cátedra</h1>
+      <p className="asignia-ayuda">{DESCRIPCION}</p>
       <form className="modal-form" onSubmit={enviar}>
         {error && <div className="public-form-error" role="alert">{error}</div>}
         <div className="modal-field">
@@ -334,8 +378,23 @@ function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
       </div>
       <TablaCursos filas={cursos.map(c => ({ key: c.id, c }))} seleccion={s} vacio="No hay cursos disponibles con estos filtros."
         estado={({ c }) => (c.cruce
-          ? <CeldaEstado e={{ ...B.rechazado, label: 'Se cruza con tu horario' }} motivo={`Con ${c.cruce}`} />
-          : <CeldaEstado e={B.disponible} />)} />
+          ? (
+            <td data-label="Estado">
+              <div className="asignia-celda">
+                <Badge e={{ ...B.rechazado, label: 'Se cruza con tu horario' }} />
+                <span className="asignia-dato">"Con {c.cruce}"</span>
+                <Coincidencia m={c.coincidencia} compacto />
+              </div>
+            </td>
+          )
+          : (
+            <td data-label="Estado">
+              <div className="asignia-celda">
+                <Badge e={B.disponible} />
+                <Coincidencia m={c.coincidencia} compacto />
+              </div>
+            </td>
+          ))} />
 
       {modal && (
         <ConfirmarModal titulo="Enviar postulación" confirmar="Sí, postularme" cursos={seleccionados}
@@ -448,12 +507,13 @@ export default function AsigniaProfesor() {
       <div className="asignia-publica-contenido">
         <div className="sync-page-header">
           <div>
-            <h2>Asignia</h2>
+            <h2>Mi cátedra</h2>
+            <p className="asignia-sub">{DESCRIPCION}</p>
             <p className="asignia-sub">{datos.periodo ? `Programación académica ${datos.periodo}` : 'Aún no hay programación publicada.'}</p>
           </div>
           <div className="asignia-header-acciones">
             <div className="asignia-usuario" aria-label="Usuario">
-              <UserRound size={18} aria-hidden="true" />
+              <AvatarProfesor url={datos.perfil?.url_imagen_perfil} nombre={datos.nombre} tamano={40} />
               <span>
                 <strong>{datos.nombre || 'Profesor'}</strong>
                 <span className="asignia-dato">{ident.correo.toLowerCase()}</span>
@@ -462,6 +522,14 @@ export default function AsigniaProfesor() {
             <button className="btn-secondary" onClick={salir}><LogOut size={15} /> Salir</button>
           </div>
         </div>
+
+        <TutorVirtual ident={ident} />
+        {datos.perfil?.nivel && datos.perfil.alerta && (
+          <div className="asignia-tutor">
+            <span>Tu nivel académico:</span>
+            <AlertaHoras nivel={datos.perfil.nivel} horas={datos.perfil.horas} alerta={datos.perfil.alerta} />
+          </div>
+        )}
 
         {datos.periodo && (
           <nav className="section-nav" aria-label="Navegación del profesor">

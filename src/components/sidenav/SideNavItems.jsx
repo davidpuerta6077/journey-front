@@ -64,8 +64,8 @@ export const menuItems = [
   { label: 'Onix-IA', icon: iconInformesOnix, beta: true, path: '/informes', moduleCode: 'onix_reports', submoduleCode: 'onix_reports_use' },
   { label: 'Acudex', icon: ClipboardList, path: '/formularios', moduleCode: 'attendance_forms', submoduleCode: 'attendance_forms_manage' },
   { label: 'C0deX', icon: LayoutTemplate, path: '/codex', moduleCode: 'codex', submoduleCode: 'codex_use' },
-  // Sin submoduleCode: basta cualquiera de los permisos de Asignia (view/load/manage).
-  { label: 'Asignia', icon: CalendarCheck, path: '/asignia', moduleCode: 'asignia' },
+  // Sin submoduleCode: basta cualquiera de los permisos de Mi cátedra (código interno asignia_*: view/load/manage).
+  { label: 'Mi cátedra', icon: CalendarCheck, path: '/mi-catedra', moduleCode: 'asignia' },
 
   { type: 'divider' },
 

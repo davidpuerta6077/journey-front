@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import SideNavMain from './components/sidenav/SideNavMain'
 import PrivateRoute from './components/PrivateRoute'
 import './styles/global/Layout.css'
@@ -61,8 +61,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/no-autorizado" element={<NoAutorizado />} />
         <Route path="/f/:publicToken" element={<FormularioPublico />} />
-        {/* Asignia: pantalla pública del profesor (se identifica con documento + correo) */}
-        <Route path="/asignia/profesor" element={<AsigniaProfesor />} />
+        {/* Mi cátedra (interno: Asignia): pantalla pública del profesor (se identifica con documento + correo).
+            Las rutas /asignia anteriores redirigen a las nuevas (enlaces ya compartidos). */}
+        <Route path="/mi-catedra/profesor" element={<AsigniaProfesor />} />
+        <Route path="/asignia/profesor" element={<Navigate to="/mi-catedra/profesor" replace />} />
 
         {/* Editor CodeX a pantalla completa (fuera del layout con menú) */}
         <Route path="/codex/:id" element={
@@ -193,8 +195,9 @@ function App() {
             </PrivateRoute>
           } />
 
-          {/* ─── ASIGNIA ─── */}
-          <Route path="asignia" element={
+          {/* ─── MI CÁTEDRA (interno: Asignia) ─── */}
+          <Route path="asignia" element={<Navigate to="/mi-catedra" replace />} />
+          <Route path="mi-catedra" element={
             <PrivateRoute submoduleCode={['asignia_view', 'asignia_load', 'asignia_postulaciones', 'asignia_config', 'asignia_manage']}>
               <AsigniaAdmin />
             </PrivateRoute>
