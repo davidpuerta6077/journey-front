@@ -63,6 +63,15 @@ export function cumpleHorario(c, { dia, franja, horas }) {
     && (!dia || horario.some(h => h.dia === dia))
     && (!franja || horario.some(h => (!dia || h.dia === dia) && franjaDe(h.hora) === franja))
 }
+// Alerta de horas por nivel académico: 'minimo' | 'maximo' | null.
+// Misma regla que el servidor (journey-api, api/asignia/perfil.js alertaHoras).
+export function alertaHoras(horas, nivel) {
+  if (!nivel) return null
+  if (horas < Number(nivel.min_horas)) return 'minimo'
+  if (horas >= Number(nivel.max_horas)) return 'maximo'
+  return null
+}
+
 // Valores distintos de "H. semana" ordenados numéricamente.
 export const horasDistintas = (lista) =>
   [...new Set(lista.map(c => c.horas_semana).filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b, 'es', { numeric: true }))

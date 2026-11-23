@@ -14,6 +14,7 @@ import { borrarNoLaborable } from '../../../services/asignia/borrarNoLaborable'
 import { generarFestivos } from '../../../services/asignia/generarFestivos'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { fechaLarga, fechaCorta, hoyBogota } from './calendario/calendarioUtil'
+import { Requerimientos, NivelesAcademicos } from './CatalogosMiCatedra'
 import '../../../styles/main/Asignia/AsigniaCalendario.css'
 
 const SEMANA_VACIA = { id: null, nombre: '', fecha_inicio: '', fecha_fin: '', sin_clase: true }
@@ -297,7 +298,7 @@ function NoLaborables({ anioInicial, anios: aniosDisponibles, puedeEditar }) {
 }
 
 // Pestaña "Configuración": semestre, semanas especiales y días no laborables.
-export default function AsigniaConfiguracion({ periodo: periodoInicial, puedeEditar }) {
+export default function AsigniaConfiguracion({ periodo: periodoInicial, puedeEditar, onCatalogos }) {
   const [ver, setVer] = useState(0)
   const info = useConsulta(`periodos#${ver}`, () => obtenerPeriodos())
   // Periodo cuyas fechas se configuran: el elegido aquí o, por defecto, el periodo activo.
@@ -312,7 +313,9 @@ export default function AsigniaConfiguracion({ periodo: periodoInicial, puedeEdi
   const anio = Number((data.semestre?.fecha_inicio || hoyBogota()).slice(0, 4))
   return (
     <div className="cal-config">
-      {!puedeEditar && <p className="asignia-aviso">Solo quien tiene el permiso de configuración (o gestión completa) de Asignia puede cambiar esta configuración.</p>}
+      {!puedeEditar && <p className="asignia-aviso">Solo quien tiene el permiso de configuración (o gestión completa) de Mi cátedra puede cambiar esta configuración.</p>}
+      <Requerimientos puedeEditar={puedeEditar} onCambio={onCatalogos} />
+      <NivelesAcademicos puedeEditar={puedeEditar} onCambio={onCatalogos} />
       <PeriodoActivo key={`${info.configurado}${ver}`} info={info} puedeEditar={puedeEditar} onGuardado={recargar} />
       <Semestre key={`${periodo}${data.semestre?.fecha_inicio}${data.semestre?.fecha_fin}`} periodo={periodo} periodos={info.periodos} onPeriodo={setElegido} semestre={data.semestre} puedeEditar={puedeEditar} onGuardado={recargar} />
       <Semanas periodo={periodo} semestre={data.semestre} semanas={data.semanas} puedeEditar={puedeEditar} onCambio={recargar} />

@@ -301,3 +301,36 @@ button.asignia-btn-peligro { color: #b91c1c; }
 .asignia-nota-relleno { display: block; height: 100%; background: linear-gradient(to right, #5b7cfa, #9b6cff); }
 .asignia-mi-nota { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
 .asignia-mi-nota-titulo { margin: 0; font-size: 1.05rem; color: var(--hub-titulo, #2d4375); }
+
+/* ── Mi cátedra: coincidencias, avatar, requerimientos ── */
+/* Coincidencias curso-profesor: 0 rojo · 1 naranja · 2 amarillo · ≥3 verde (siempre con el número). */
+.asignia-match { border: 1px solid var(--match-borde); background: var(--match-bg); color: var(--match-texto); }
+.asignia-match-0 { --match-bg: #fef2f2; --match-borde: #fecaca; --match-texto: #b91c1c; }
+.asignia-match-1 { --match-bg: #fff7ed; --match-borde: #fed7aa; --match-texto: #c2410c; }
+.asignia-match-2 { --match-bg: #fefce8; --match-borde: #fde68a; --match-texto: #a16207; }
+.asignia-match-3 { --match-bg: #f0fdf4; --match-borde: #bbf7d0; --match-texto: #15803d; }
+:root[data-theme="dark"] .asignia-match-0 { --match-bg: rgba(239, 68, 68, 0.12); --match-borde: rgba(239, 68, 68, 0.35); --match-texto: #f87171; }
+:root[data-theme="dark"] .asignia-match-1 { --match-bg: rgba(249, 115, 22, 0.12); --match-borde: rgba(249, 115, 22, 0.35); --match-texto: #fb923c; }
+:root[data-theme="dark"] .asignia-match-2 { --match-bg: rgba(234, 179, 8, 0.12); --match-borde: rgba(234, 179, 8, 0.35); --match-texto: #facc15; }
+:root[data-theme="dark"] .asignia-match-3 { --match-bg: rgba(34, 197, 94, 0.12); --match-borde: rgba(34, 197, 94, 0.35); --match-texto: #4ade80; }
+
+.asignia-avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  border-radius: 50%; overflow: hidden; border: 1px solid var(--border-soft);
+  background: var(--bg-surface-alt, #f1f5f9); color: var(--text-secondary, #64748b);
+}
+.asignia-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.asignia-reqs { display: flex; flex-wrap: wrap; gap: 8px; }
+.asignia-req {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer;
+  border: 1px solid var(--border-soft); font-size: 0.85rem;
+}
+.asignia-req.activo {
+  border-color: transparent;
+  background: linear-gradient(var(--bg-surface, #fff), var(--bg-surface, #fff)) padding-box,
+              linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+}
+
+.asignia-perfil-cab { display: flex; align-items: center; gap: 12px; }
+.asignia-tutor { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--border-soft); }

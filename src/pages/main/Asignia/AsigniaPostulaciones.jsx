@@ -6,6 +6,7 @@ import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import RechazoPostulacion from './RechazoPostulacion'
 import { ESTADO_POST, horarioTexto } from './asigniaUtil'
 import { VerCalificacion } from './CalificacionSidem'
+import { Coincidencia } from './PerfilProfesor'
 
 const FILTROS_ESTADO = [
   { v: '', label: 'Todas' },
@@ -119,6 +120,7 @@ export default function AsigniaPostulaciones({ periodo, puedeDecidir, onCambio }
                       <div className="asignia-celda">
                         <span>{p.nombre}</span>
                         <span className="asignia-dato">CC {p.documento} · {p.correo}</span>
+                        <Coincidencia m={p.coincidencia} compacto />
                         <span><VerCalificacion profesor={p} periodo={periodo} /></span>
                       </div>
                     </td>
