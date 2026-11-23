@@ -321,16 +321,43 @@ button.asignia-btn-peligro { color: #b91c1c; }
 }
 .asignia-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.asignia-reqs { display: flex; flex-wrap: wrap; gap: 8px; }
-.asignia-req {
-  display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer;
-  border: 1px solid var(--border-soft); font-size: 0.85rem;
-}
-.asignia-req.activo {
-  border-color: transparent;
+/* Selector de requerimientos: elegidos como chips + buscador (no la lista completa). */
+.asignia-reqsel { display: flex; flex-direction: column; gap: 8px; }
+.asignia-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; max-height: 120px; overflow-y: auto; }
+.asignia-chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; font-size: 0.82rem;
+  border: 1px solid transparent;
   background: linear-gradient(var(--bg-surface, #fff), var(--bg-surface, #fff)) padding-box,
               linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
 }
+.asignia-chip button { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+.asignia-chip button:hover { color: #b91c1c; }
+.asignia-reqsel-buscar { width: 100%; }
+.asignia-reqsel-lista {
+  margin: 0; padding: 4px; list-style: none; max-height: 240px; overflow-y: auto;
+  border: 1px solid var(--border-soft); background: var(--bg-surface, #fff);
+}
+.asignia-reqsel-lista li.asignia-dato { padding: 6px 8px; }
+.asignia-reqsel-lista button {
+  display: flex; align-items: center; gap: 6px; width: 100%; min-height: 36px; padding: 6px 8px;
+  border: 0; background: none; color: inherit; text-align: left; cursor: pointer; font-size: 0.85rem;
+}
+.asignia-reqsel-lista button:hover, .asignia-reqsel-lista button:focus-visible { background: var(--bg-surface-hover, #f1f5f9); }
 
 .asignia-perfil-cab { display: flex; align-items: center; gap: 12px; }
 .asignia-tutor { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--border-soft); }
+
+/* Cédula y correo copiables con un clic (vistas del líder). */
+.asignia-copiar {
+  display: inline-flex; align-items: center; gap: 4px; max-width: 100%; padding: 0; border: 0;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: copy;
+}
+.asignia-copiar span { overflow: hidden; text-overflow: ellipsis; }
+.asignia-copiar svg { flex-shrink: 0; opacity: 0.55; }
+.asignia-copiar:hover svg, .asignia-copiar:focus-visible svg { opacity: 1; }
+.asignia-copiar:hover span { text-decoration: underline; }
+
+/* Carta de carga mínima generada: el líder la marca como gestionada. */
+.asignia-carta { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; color: var(--text-secondary, #64748b); }
+.asignia-carta.lista { color: #15803d; }
+:root[data-theme="dark"] .asignia-carta.lista { color: #4ade80; }
