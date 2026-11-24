@@ -319,7 +319,33 @@ button.asignia-btn-peligro { color: #b91c1c; }
   border-radius: 50%; overflow: hidden; border: 1px solid var(--border-soft);
   background: var(--bg-surface-alt, #f1f5f9); color: var(--text-secondary, #64748b);
 }
-.asignia-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Fotos verticales (≈3300×6000): recorte desde arriba, donde está la cara. */
+.asignia-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+button.asignia-avatar-btn { padding: 0; cursor: zoom-in; transition: transform 0.18s ease, border-color 0.18s ease; }
+button.asignia-avatar-btn:hover { transform: scale(1.06); border-color: #7c6cff; }
+button.asignia-avatar-btn:focus-visible { outline: 2px solid #5b7cfa; outline-offset: 2px; }
+
+/* Modal de la foto en grande. */
+.asignia-foto-overlay { backdrop-filter: blur(4px); animation: asignia-foto-fondo 0.2s ease; }
+.modal-box.asignia-foto-box { width: auto; max-width: min(92vw, 460px); padding: 16px; animation: asignia-foto-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.asignia-foto-grande { display: block; width: 100%; max-height: 74vh; object-fit: contain; background: var(--bg-surface-alt, #f1f5f9); border: 1px solid var(--border-soft); }
+@keyframes asignia-foto-fondo { from { opacity: 0; } }
+@keyframes asignia-foto-in { from { opacity: 0; transform: scale(0.94) translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .asignia-foto-overlay, .modal-box.asignia-foto-box { animation: none; }
+  button.asignia-avatar-btn { transition: none; }
+}
+
+/* Columna Nivel académico compacta. */
+.asignia-nivel { max-width: 190px; gap: 4px; }
+.asignia-nivel-nombre { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; }
+.asignia-nivel .badge { align-self: flex-start; white-space: nowrap; }
+.asignia-nivel-carta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.asignia-nivel-carta .asignia-carta { font-size: 0.75rem; }
+@media (max-width: 768px) {
+  .asignia-nivel { max-width: none; }
+  .asignia-nivel .badge { align-self: flex-end; }
+}
 
 /* Selector de requerimientos: elegidos como chips + buscador (no la lista completa). */
 .asignia-reqsel { display: flex; flex-direction: column; gap: 8px; }

@@ -738,7 +738,7 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
               <tr key={p.id}>
                 <td data-label="Documento"><CopiarDato texto={p.documento} etiqueta="Documento" /></td>
                 <td data-label="Profesor">
-                  <span className="asignia-perfil-cab"><AvatarProfesor url={p.url_imagen_perfil} nombre={p.nombre} tamano={32} />{p.nombre}</span>
+                  <span className="asignia-perfil-cab"><AvatarProfesor url={p.url_imagen_perfil} nombre={p.nombre} tamano={48} ampliable />{p.nombre}</span>
                 </td>
                 <td data-label="Correo institucional">{p.correo ? <CopiarDato texto={p.correo} etiqueta="Correo" /> : '—'}</td>
                 <td data-label="Vinculación">{p.vinculacion || '—'}</td>
