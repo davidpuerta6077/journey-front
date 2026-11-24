@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { UserRound, FileText, X, Plus, Search, Copy } from 'lucide-react'
 import { descargarSolicitudHoras } from '../../../services/asignia/solicitudHorasPdf'
 import { registrarSolicitudHoras } from '../../../services/asignia/registrarSolicitudHoras'
@@ -32,16 +33,44 @@ export function Coincidencia({ m, compacto }) {
   )
 }
 
-// Imagen de perfil; sin enlace o si no carga, avatar genérico.
-export function AvatarProfesor({ url, nombre, tamano = 40 }) {
+// Foto en grande (las fotos son verticales, la cara queda arriba). Esc o clic fuera cierra.
+function FotoModal({ url, nombre, onClose }) {
+  useEffect(() => {
+    const tecla = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', tecla)
+    return () => document.removeEventListener('keydown', tecla)
+  }, [onClose])
+  return createPortal(
+    <div className="modal-overlay asignia-foto-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box asignia-foto-box" role="dialog" aria-modal="true" aria-labelledby="asignia-foto-titulo">
+        <div className="modal-header">
+          <h3 id="asignia-foto-titulo">{nombre || 'Profesor'}</h3>
+          <button className="modal-close" onClick={onClose} aria-label="Cerrar" autoFocus>✕</button>
+        </div>
+        <img className="asignia-foto-grande" src={url} alt={`Foto de ${nombre || 'el profesor'}`} referrerPolicy="no-referrer" />
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+// Imagen de perfil; sin enlace o si no carga, avatar genérico. Con `ampliable`, clic abre la foto en grande.
+export function AvatarProfesor({ url, nombre, tamano = 40, ampliable }) {
   const [fallo, setFallo] = useState(null)
+  const [abierta, setAbierta] = useState(false)
   const sirve = url && fallo !== url
+  const contenido = sirve
+    ? <img src={url} alt={`Foto de ${nombre || 'el profesor'}`} onError={() => setFallo(url)} referrerPolicy="no-referrer" />
+    : <UserRound size={Math.round(tamano * 0.55)} aria-label="Sin foto" />
+  if (!ampliable || !sirve) return <span className="asignia-avatar" style={{ width: tamano, height: tamano }}>{contenido}</span>
   return (
-    <span className="asignia-avatar" style={{ width: tamano, height: tamano }}>
-      {sirve
-        ? <img src={url} alt={`Foto de ${nombre || 'el profesor'}`} onError={() => setFallo(url)} referrerPolicy="no-referrer" />
-        : <UserRound size={Math.round(tamano * 0.55)} aria-label="Sin foto" />}
-    </span>
+    <>
+      <button type="button" className="asignia-avatar asignia-avatar-btn" style={{ width: tamano, height: tamano }}
+        onClick={() => setAbierta(true)} aria-label={`Ver foto de ${nombre || 'el profesor'}`} title="Ver foto">
+        {contenido}
+      </button>
+      {abierta && <FotoModal url={url} nombre={nombre} onClose={() => setAbierta(false)} />}
+    </>
   )
 }
 
@@ -142,26 +171,39 @@ export function AlertaHoras({ nivel, horas, alerta, profesor, solicitud }) {
     } catch (e) { alertError(e.message) }
   }
   if (!nivel) return <span className="asignia-dato">Sin nivel académico</span>
+  // Compacto: nombre (máx. 2 líneas, completo en el tooltip), rango, alerta corta y la carta en una fila de íconos.
   return (
-    <div className="asignia-celda">
-      <span>{nivel.nombre} <span className="asignia-dato">({fmt(nivel.min_horas)}–{fmt(nivel.max_horas)} h)</span></span>
+    <div className="asignia-celda asignia-nivel">
+      <span className="asignia-nivel-nombre" title={nivel.nombre}>{nivel.nombre}</span>
+      <span className="asignia-dato">Rango {fmt(nivel.min_horas)}–{fmt(nivel.max_horas)} h</span>
       {alerta === 'minimo' && (
-        <>
-          <span className="badge asignia-badge badge-novedad">Bajo el mínimo: {fmt(horas)} de {fmt(nivel.min_horas)} h</span>
-          {solicitud && (
-            <button type="button" className="btn-secondary asignia-btn-fila" onClick={generar} disabled={generando}>
-              <FileText size={15} /> {generando ? 'Generando...' : carta ? 'Volver a generar' : 'Generar solicitud'}
-            </button>
-          )}
+        <span className="badge asignia-badge badge-novedad" title={`Bajo el mínimo: ${fmt(horas)} de ${fmt(nivel.min_horas)} h`}>
+          Bajo mínimo · {fmt(horas)}/{fmt(nivel.min_horas)} h
+        </span>
+      )}
+      {alerta === 'maximo' && (
+        <span className="badge asignia-badge badge-error" title={`Cupo alcanzado: ${fmt(horas)} de ${fmt(nivel.max_horas)} h`}>
+          Cupo lleno · {fmt(horas)}/{fmt(nivel.max_horas)} h
+        </span>
+      )}
+      {alerta === 'minimo' && solicitud && (
+        <div className="asignia-nivel-carta">
+          <button type="button" className="btn-icon asignia-accion asignia-tip" onClick={generar} disabled={generando}
+            data-tip={generando ? 'Generando...' : carta ? 'Volver a generar la solicitud' : 'Generar solicitud de carga mínima'}
+            aria-label={carta ? 'Volver a generar la solicitud' : 'Generar solicitud de carga mínima'}>
+            <FileText size={15} />
+          </button>
           {carta && (
-            <label className={`asignia-carta${carta.gestionada ? ' lista' : ''}`} title={carta.gestionada && carta.gestionada_por ? `Marcada por ${carta.gestionada_por}` : undefined}>
+            <label className={`asignia-carta${carta.gestionada ? ' lista' : ''}`}
+              title={carta.gestionada
+                ? `Gestionada el ${fecha(carta.gestionada_at)}${carta.gestionada_por ? ` por ${carta.gestionada_por}` : ''}`
+                : `Carta generada el ${fecha(carta.generada_at)}. Márcala cuando la envíes.`}>
               <input type="checkbox" checked={carta.gestionada} onChange={(e) => marcar(e.target.checked)} />
-              {carta.gestionada ? `Gestionada · ${fecha(carta.gestionada_at)}` : `Generada ${fecha(carta.generada_at)} · marcar como gestionada`}
+              {carta.gestionada ? `Gestionada ${fecha(carta.gestionada_at)}` : 'Pendiente'}
             </label>
           )}
-        </>
+        </div>
       )}
-      {alerta === 'maximo' && <span className="badge asignia-badge badge-error">Cupo alcanzado: {fmt(horas)} de {fmt(nivel.max_horas)} h</span>}
     </div>
   )
 }
