@@ -513,7 +513,7 @@ export default function AsigniaProfesor() {
           </div>
           <div className="asignia-header-acciones">
             <div className="asignia-usuario" aria-label="Usuario">
-              <AvatarProfesor url={datos.perfil?.url_imagen_perfil} nombre={datos.nombre} tamano={40} />
+              <AvatarProfesor url={datos.perfil?.url_imagen_perfil} nombre={datos.nombre} tamano={64} ampliable />
               <span>
                 <strong>{datos.nombre || 'Profesor'}</strong>
                 <span className="asignia-dato">{ident.correo.toLowerCase()}</span>
