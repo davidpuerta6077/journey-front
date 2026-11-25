@@ -406,7 +406,10 @@ function Disponibles({ ident, nombre, cursos, carga, onHecho, onError }) {
       <div className="asignia-barra-fija" role="region" aria-label="Postulación">
         <span>
           {s.sel.length
-            ? <><strong>{s.sel.length} curso{s.sel.length !== 1 ? 's' : ''} elegido{s.sel.length !== 1 ? 's' : ''}</strong> · {fmtH(horasDe(seleccionados))} semanales{carga?.max ? ` · tu carga quedaría en ${fmtH(carga.horas + horasDe(seleccionados))} de ${fmtH(carga.max)}` : ''}</>
+            ? <><strong>{s.sel.length} curso{s.sel.length !== 1 ? 's' : ''} elegido{s.sel.length !== 1 ? 's' : ''}</strong> · {fmtH(horasDe(seleccionados))} semanales{carga?.max ? ` · tu carga quedaría en ${fmtH(carga.horas + horasDe(seleccionados))} de ${fmtH(carga.max)}` : ''}
+              {carga?.max > 0 && carga.horas + horasDe(seleccionados) > carga.max && (
+                <span className="asignia-carga-texto asignia-carga-minimo"> · supera el máximo de tu nivel; el líder puede no aprobarlas todas</span>
+              )}</>
             : 'Marca los cursos a los que te quieres postular.'}
         </span>
         <button className="btn-primary" disabled={!s.sel.length} onClick={() => setModal(true)}>
