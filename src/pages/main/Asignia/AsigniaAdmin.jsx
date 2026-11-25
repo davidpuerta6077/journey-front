@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Upload, Link2, Search, Users, Lock, LockOpen, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X, Table2, Settings, Inbox, RefreshCw } from 'lucide-react'
+import { Upload, Link2, Search, Users, Lock, LockOpen, Unlink, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X, Table2, Settings, Inbox, RefreshCw } from 'lucide-react'
 import AsigniaCalendario from './AsigniaCalendario'
 import AsigniaConfiguracion from './AsigniaConfiguracion'
 import { simularCruces } from '../../../services/asignia/simularCruces'
@@ -30,7 +30,7 @@ import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { usePermissions } from '../../../services/PermissionsContext'
 import { ESTADOS, ESTADO_POST, horarioTexto, DIAS_SEMANA, FRANJAS, cumpleHorario, horasDistintas, alertaHoras } from './asigniaUtil'
-import { Coincidencia, AvatarProfesor, RequerimientosChecks, AlertaHoras, CopiarDato } from './PerfilProfesor'
+import { Coincidencia, AvatarProfesor, RequerimientosChecks, AlertaHoras, CopiarDato, BarraCarga } from './PerfilProfesor'
 import { listarSolicitudesHoras } from '../../../services/asignia/listarSolicitudesHoras'
 import SolicitudesTutor from './SolicitudesTutor'
 import { listarRequerimientos } from '../../../services/asignia/listarRequerimientos'
@@ -106,6 +106,9 @@ const COLUMNAS_PROF_EXPORT = [
   { label: 'Nivel académico', get: p => p.nivel?.nombre || '' },
   { label: 'Alerta de horas', get: p => ({ minimo: 'Bajo el mínimo', maximo: 'Cupo alcanzado' })[p.alerta] || '' },
   { label: 'Años de experiencia', get: p => p.anios_experiencia ?? 0 },
+  { label: 'Inducción realizada', get: p => (p.induccion_realizada ? 'Sí' : 'No') },
+  { label: 'Calificación SICAU', get: p => p.calificacion_sicau ?? '' },
+  { label: 'Habilidades', get: p => (p.habilidades || []).map(h => `${h.nombre} (${h.nivel ?? '—'}/10)`).join(', ') },
 ]
 const COL_GETTERS_PROF = {
   documento: p => p.documento,
@@ -115,6 +118,33 @@ const COL_GETTERS_PROF = {
   cursos: p => String(p.cursos),
   horas: p => `${p.horas} h`,
   nivel: p => (p.nivel ? `${p.nivel.nombre}${p.alerta === 'minimo' ? ' · bajo el mínimo' : p.alerta === 'maximo' ? ' · cupo alcanzado' : ''}` : 'Sin nivel'),
+  induccion: p => (p.induccion_realizada ? 'Sí' : 'No'),
+  sicau: p => (p.calificacion_sicau ?? 'Sin registrar').toString(),
+}
+
+// Filtros rápidos de la pestaña Profesores (lo que el líder revisa a diario).
+const RAPIDOS = [
+  { v: 'minimo', label: 'Bajo el mínimo de horas', cumple: p => p.alerta === 'minimo' },
+  { v: 'induccion', label: 'Sin inducción', cumple: p => !p.induccion_realizada },
+  { v: 'habilidades', label: 'Sin habilidades', cumple: p => !(p.habilidades || []).length },
+]
+
+// Habilidades que marcó el profesor con su nivel de dominio, en un desplegable para no cargar la tabla.
+function HabilidadesProfesor({ habilidades = [] }) {
+  if (!habilidades.length) return <span className="asignia-dato">Sin habilidades</span>
+  const orden = [...habilidades].sort((x, y) => (y.nivel || 0) - (x.nivel || 0))
+  const chip = (h) => <li key={h.id} className="asignia-hab-chip">{h.nombre}<strong>{h.nivel ?? '—'}</strong></li>
+  return (
+    <div className="asignia-habilidades">
+      <ul className="asignia-hab-chips" aria-label="Habilidades con su nivel de 1 a 10">{orden.slice(0, 2).map(chip)}</ul>
+      {orden.length > 2 && (
+        <details>
+          <summary>+{orden.length - 2} más</summary>
+          <ul className="asignia-hab-chips">{orden.slice(2).map(chip)}</ul>
+        </details>
+      )}
+    </div>
+  )
 }
 
 function EstadoBadge({ estado }) {
@@ -195,6 +225,15 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
               <div><dt>Omitidos</dt><dd>{resumen.omitidas}</dd></div>
             </dl>
             {resumen.omitidas > 0 && <p className="asignia-ayuda">Se omiten las filas sin documento, nombre o correo.</p>}
+            {resumen.conError > 0 && (
+              <div className="asignia-aviso" role="alert">
+                <strong>{resumen.conError} dato(s) no se pudieron leer</strong> (el resto del profesor sí se guardó):
+                <ul className="asignia-cruces-carga">
+                  {resumen.errores.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+                {resumen.conError > resumen.errores.length && <span>… y {resumen.conError - resumen.errores.length} más.</span>}
+              </div>
+            )}
           </div>
         ) : resumen ? (
           <div className="modal-form">
@@ -230,7 +269,9 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
               <p className="asignia-ayuda">
                 Sube el Excel (.xlsx) con los profesores de la institución. Se lee la pestaña "BD Profesores" (o la primera con columnas
                 Identificación/Documento y Profesor) y el correo institucional. Así pueden entrar y postularse también los profesores que
-                no tienen cursos en la programación. Si un profesor ya existe, se actualizan sus datos.
+                no tienen cursos en la programación. Si un profesor ya existe, se actualizan sus datos. Columnas opcionales: Nivel académico
+                (con el mismo nombre de Configuración), Inducción (Sí/No) y Calificación SICAU (último semestre calificado); si vienen vacías
+                no se borra lo que ya estaba guardado.
               </p>
             ) : (
               <p className="asignia-ayuda">
@@ -350,6 +391,7 @@ function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
                       </div>
                       <span className="asignia-post-datos">
                         CC {p.documento} · {p.correo} · {new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
+                        {' · '}Calificación SICAU: {p.calificacion_sicau ?? 'sin registrar'}
                       </span>
                       <span className="asignia-acciones"><VerCalificacion profesor={p} periodo={data.curso.periodo} /><VerInduccion profesor={p} /></span>
                       {p.causal && <span className="asignia-post-datos">Motivo: {p.causal}{p.motivo ? ` — "${p.motivo}"` : ''}</span>}
@@ -562,6 +604,8 @@ function ProfesorModal({ profesor, catalogos, onClose, onGuardado }) {
     url_imagen_perfil: profesor?.url_imagen_perfil || '', anios_experiencia: profesor?.anios_experiencia ?? 0,
     nivel_academico_id: profesor?.nivel_academico_id ? String(profesor.nivel_academico_id) : '',
     requerimientos: profesor?.requerimientos || [],
+    induccion_realizada: Boolean(profesor?.induccion_realizada),
+    calificacion_sicau: profesor?.calificacion_sicau ?? '',
   })
   const [guardando, setGuardando] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -633,7 +677,22 @@ function ProfesorModal({ profesor, catalogos, onClose, onGuardado }) {
               </select>
             </div>
           </div>
-          <p id="prof-reqs-titulo" className="asignia-ayuda">Requerimientos técnicos/profesionales que cumple:</p>
+          <div className="modal-row">
+            <div className="modal-field">
+              <label htmlFor="prof-sicau">Calificación profesoral SICAU (opcional)</label>
+              <input id="prof-sicau" type="number" min={0} max={100} step="0.01" value={form.calificacion_sicau}
+                onChange={set('calificacion_sicau')} placeholder="Último semestre calificado" />
+            </div>
+            <div className="modal-field">
+              <span className="asignia-ayuda">Inducción institucional</span>
+              <label className="cal-config-check" htmlFor="prof-induccion">
+                <input id="prof-induccion" type="checkbox" checked={form.induccion_realizada}
+                  onChange={(e) => setForm(f => ({ ...f, induccion_realizada: e.target.checked }))} />
+                Ya realizó la inducción
+              </label>
+            </div>
+          </div>
+          <p id="prof-reqs-titulo" className="asignia-ayuda">Requerimientos técnicos/profesionales que cumple (el profesor también puede marcarlos con su nivel desde su pantalla):</p>
           <RequerimientosChecks id="prof-reqs-titulo" catalogo={catalogos.requerimientos} valor={form.requerimientos}
             onChange={(requerimientos) => setForm(f => ({ ...f, requerimientos }))} />
         </div>
@@ -667,10 +726,14 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
     return { ...p, cursos: c.cursos, horas: fmtHoras(c.horas), horasNum: c.horas, nivel, alerta: alertaHoras(c.horas, nivel) }
   }), [profesores, carga])
 
+  const [rapido, setRapido] = useState(null)
   const base = useMemo(() => {
     const q = busqueda.trim().toLowerCase()
-    return q ? filas.filter(p => [p.documento, p.nombre, p.correo, p.vinculacion].some(v => (v || '').toLowerCase().includes(q))) : filas
-  }, [filas, busqueda])
+    const cumple = RAPIDOS.find(r => r.v === rapido)?.cumple
+    return filas
+      .filter(p => !q || [p.documento, p.nombre, p.correo, p.vinculacion].some(v => (v || '').toLowerCase().includes(q)))
+      .filter(p => !cumple || cumple(p))
+  }, [filas, busqueda, rapido])
   const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(base, COL_GETTERS_PROF, () => setPage(1))
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const visibles = filtered.slice((page - 1) * perPage, page * perPage)
@@ -715,55 +778,71 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
         <ExportMenu title="Mi cátedra profesores" columns={COLUMNAS_PROF_EXPORT} rows={filtered} allRows={filas} />
         <span className="results-count">{filtered.length} profesor{filtered.length !== 1 ? 'es' : ''}</span>
       </div>
+      <div className="asignia-rapidos" role="group" aria-label="Ver solo">
+        <span className="asignia-dato">Ver solo:</span>
+        {RAPIDOS.map(r => (
+          <button key={r.v} type="button" className={`asignia-rapido${rapido === r.v ? ' activo' : ''}`} aria-pressed={rapido === r.v}
+            onClick={() => { setRapido(x => (x === r.v ? null : r.v)); setPage(1) }}>
+            {r.label} · {filas.filter(r.cumple).length}
+          </button>
+        ))}
+      </div>
       <div className="table-wrapper">
-        <table className="data-table asignia-tabla">
+        <table className="data-table asignia-tabla asignia-tabla-prof">
           <thead>
             <tr>
-              <th><ColumnFilter label="Documento" {...colProps('documento')} /></th>
               <th><ColumnFilter label="Profesor" {...colProps('nombre')} /></th>
-              <th><ColumnFilter label="Correo institucional" {...colProps('correo')} /></th>
-              <th><ColumnFilter label="Vinculación" {...colProps('vinculacion')} /></th>
-              <th><ColumnFilter label={`Cursos ${periodo || ''}`} {...colProps('cursos')} /></th>
-              <th><ColumnFilter label="Horas acumuladas" {...colProps('horas')} /></th>
-              <th><ColumnFilter label="Nivel académico" {...colProps('nivel')} /></th>
-              {periodo && <th>Calificación VISOR</th>}
-              <th>Tutor Virtual</th>
-              {puedeEditar && <th>Acciones</th>}
+              <th><ColumnFilter label={`Carga ${periodo || ''}`} {...colProps('nivel')} /></th>
+              <th><ColumnFilter label="Inducción" {...colProps('induccion')} /></th>
+              <th><ColumnFilter label="SICAU" {...colProps('sicau')} /></th>
+              <th>Habilidades</th>
+              <th className="asignia-col-acciones">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {visibles.length === 0 ? (
-              <tr><td colSpan={8 + (puedeEditar ? 1 : 0) + (periodo ? 1 : 0)} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
+              <tr><td colSpan={6} className="asignia-sin-filas">No hay profesores con estos filtros.</td></tr>
             ) : visibles.map(p => (
               <tr key={p.id}>
-                <td data-label="Documento"><CopiarDato texto={p.documento} etiqueta="Documento" /></td>
                 <td data-label="Profesor">
-                  <span className="asignia-perfil-cab"><AvatarProfesor url={p.url_imagen_perfil} nombre={p.nombre} tamano={48} ampliable />{p.nombre}</span>
+                  <div className="asignia-prof-celda">
+                    <AvatarProfesor url={p.url_imagen_perfil} nombre={p.nombre} tamano={44} ampliable />
+                    <div className="asignia-celda">
+                      <strong>{p.nombre}</strong>
+                      <span className="asignia-dato asignia-prof-datos">
+                        <CopiarDato texto={p.documento} etiqueta="Documento" />
+                        {p.correo && <CopiarDato texto={p.correo} etiqueta="Correo" />}
+                        {p.vinculacion && <span>{p.vinculacion}</span>}
+                      </span>
+                    </div>
+                  </div>
                 </td>
-                <td data-label="Correo institucional">{p.correo ? <CopiarDato texto={p.correo} etiqueta="Correo" /> : '—'}</td>
-                <td data-label="Vinculación">{p.vinculacion || '—'}</td>
-                <td data-label="Cursos">{p.cursos}</td>
-                <td data-label="Horas acumuladas"><strong>{p.horas} h</strong></td>
-                <td data-label="Nivel académico">
-                  <AlertaHoras nivel={p.nivel} horas={p.horasNum} alerta={p.alerta} profesor={p}
+                <td data-label="Carga">
+                  <BarraCarga horas={p.horasNum} cursos={p.cursos} nivel={p.nivel} alerta={p.alerta} />
+                  <AlertaHoras soloCarta nivel={p.nivel} horas={p.horasNum} alerta={p.alerta} profesor={p}
                     solicitud={periodo ? { periodo, redacto, carta: cartas[p.documento], onCarta: (c) => setCartas(m => ({ ...m, [c.documento]: c })) } : null} />
                 </td>
-                {periodo && (
-                  <td data-label="Calificación VISOR">
-                    <VerCalificacion profesor={p} periodo={periodo} />
-                  </td>
-                )}
-                <td data-label="Tutor Virtual"><VerInduccion profesor={p} /></td>
-                {puedeEditar && (
-                  <td data-label="Acciones">
-                    <div className="asignia-acciones">
-                      <button className="btn-icon asignia-accion asignia-tip" onClick={() => setEditando(p)}
-                        data-tip="Editar profesor" aria-label={`Editar a ${p.nombre}`}><Pencil size={15} /></button>
-                      <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => quitar(p)}
-                        data-tip="Quitar de la base de profesores" aria-label={`Quitar a ${p.nombre}`}><Trash2 size={15} /></button>
-                    </div>
-                  </td>
-                )}
+                <td data-label="Inducción">
+                  {p.induccion_realizada
+                    ? <span className="asignia-ok-texto"><CheckCircle2 size={15} aria-hidden="true" /> Realizada</span>
+                    : <span className="asignia-pend-texto">Pendiente</span>}
+                </td>
+                <td data-label="SICAU">{p.calificacion_sicau != null ? <strong>{p.calificacion_sicau}</strong> : <span className="asignia-dato">Sin registrar</span>}</td>
+                <td data-label="Habilidades"><HabilidadesProfesor habilidades={p.habilidades} /></td>
+                <td data-label="Acciones" className="asignia-col-acciones">
+                  <div className="asignia-acciones">
+                    <VerInduccion profesor={p} icono />
+                    {periodo && <VerCalificacion profesor={p} periodo={periodo} icono />}
+                    {puedeEditar && (
+                      <>
+                        <button className="btn-icon asignia-accion asignia-tip" onClick={() => setEditando(p)}
+                          data-tip="Editar profesor" aria-label={`Editar a ${p.nombre}`}><Pencil size={15} /></button>
+                        <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => quitar(p)}
+                          data-tip="Quitar de la base de profesores" aria-label={`Quitar a ${p.nombre}`}><Trash2 size={15} /></button>
+                      </>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -1114,7 +1193,7 @@ export default function AsigniaAdmin() {
                           <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => liberar(c)}
                             data-tip="Curso ocupado. Clic para liberarlo: se quita al profesor y queda vacante para que otros se postulen"
                             aria-label="Liberar curso: quitar al profesor y dejarlo vacante">
-                            <Lock size={15} />
+                            <Unlink size={15} />
                           </button>
                         ) : c.verificacion !== 'vacio' ? (
                           <span className="btn-icon asignia-accion asignia-accion-estado asignia-tip" tabIndex={0}
