@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Upload, Link2, Search, Users, Lock, LockOpen, Unlink, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X, Table2, Settings, Inbox, RefreshCw } from 'lucide-react'
+import { Upload, Link2, Search, Users, Lock, LockOpen, UserMinus, CheckCircle2, XCircle, Download, CalendarDays, GraduationCap, UserPlus, Pencil, Trash2, Save, Plus, X, Table2, Settings, Inbox, RefreshCw } from 'lucide-react'
 import AsigniaCalendario from './AsigniaCalendario'
 import AsigniaConfiguracion from './AsigniaConfiguracion'
 import { simularCruces } from '../../../services/asignia/simularCruces'
@@ -1193,7 +1193,7 @@ export default function AsigniaAdmin() {
                           <button className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => liberar(c)}
                             data-tip="Curso ocupado. Clic para liberarlo: se quita al profesor y queda vacante para que otros se postulen"
                             aria-label="Liberar curso: quitar al profesor y dejarlo vacante">
-                            <Unlink size={15} />
+                            <UserMinus size={15} />
                           </button>
                         ) : c.verificacion !== 'vacio' ? (
                           <span className="btn-icon asignia-accion asignia-accion-estado asignia-tip" tabIndex={0}

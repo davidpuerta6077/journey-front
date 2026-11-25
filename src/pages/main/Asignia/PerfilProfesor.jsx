@@ -67,7 +67,11 @@ export function MisHabilidades({ ident, perfil, onGuardado }) {
   const [abierto, setAbierto] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const catalogo = perfil?.catalogo || []
-  if (!perfil?.en_base) {
+  // en_base lo manda el API desde esta versión: si no viene, el API aún no está actualizado (no es que falte el profesor).
+  if (perfil?.en_base === undefined) {
+    return <p className="asignia-aviso">Esta sección se está actualizando. Intenta de nuevo en unos minutos.</p>
+  }
+  if (!perfil.en_base) {
     return <p className="asignia-aviso">Aún no estás en la base de profesores de Mi cátedra. Pide al líder del programa que te registre para marcar tus habilidades.</p>
   }
   if (!catalogo.length) return <p className="asignia-ayuda">La institución aún no ha definido el catálogo de habilidades.</p>

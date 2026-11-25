@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { GraduationCap } from 'lucide-react'
 import { induccionProfesor } from '../../../services/asignia/induccionProfesor'
 
@@ -46,7 +47,8 @@ function InduccionModal({ profesor, onClose }) {
       .then(setData)
       .catch(() => setData({ disponible: false }))
   }, [profesor.documento, profesor.correo])
-  return (
+  // Portal al body: dentro de la celda de la tabla heredaba text-align y white-space y el texto se montaba.
+  return createPortal(
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-box asignia-modal" role="dialog" aria-modal="true" aria-labelledby="asignia-ind-titulo">
         <div className="modal-header">
@@ -56,7 +58,8 @@ function InduccionModal({ profesor, onClose }) {
         <div className="modal-form"><Detalle data={data} /></div>
         <div className="modal-actions"><button className="btn-secondary" onClick={onClose}>Cerrar</button></div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { ClipboardCheck } from 'lucide-react'
 import { calificacionProfesor } from '../../../services/asignia/calificacionProfesor'
 import { miCalificacion } from '../../../services/asignia/miCalificacion'
@@ -73,7 +74,8 @@ function CalificacionModal({ profesor, periodo, onClose }) {
       .then(setData)
       .catch(() => setData({ periodos: [] }))
   }, [profesor.documento, periodo])
-  return (
+  // Portal al body: dentro de la celda de la tabla heredaba text-align y white-space y el texto se montaba.
+  return createPortal(
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-box asignia-modal" role="dialog" aria-modal="true" aria-labelledby="asignia-cal-titulo">
         <div className="modal-header">
@@ -83,7 +85,8 @@ function CalificacionModal({ profesor, periodo, onClose }) {
         <div className="modal-form"><Detalle data={data} /></div>
         <div className="modal-actions"><button className="btn-secondary" onClick={onClose}>Cerrar</button></div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
