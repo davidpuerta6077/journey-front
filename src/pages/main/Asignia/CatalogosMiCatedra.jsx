@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Save, Plus, Pencil, Trash2, X, Power } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Save, Plus, Pencil, Trash2, X, Power, Search } from 'lucide-react'
+import Paginacion from '../../../components/Paginacion'
 import { listarRequerimientos } from '../../../services/asignia/listarRequerimientos'
 import { crearRequerimiento } from '../../../services/asignia/crearRequerimiento'
 import { actualizarRequerimiento } from '../../../services/asignia/actualizarRequerimiento'
@@ -15,9 +16,19 @@ export function Requerimientos({ puedeEditar, onCambio }) {
   const [lista, setLista] = useState(null)
   const [form, setForm] = useState({ id: null, nombre: '' })
   const [guardando, setGuardando] = useState(false)
+  const [busqueda, setBusqueda] = useState('')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(10)
   const cargar = useCallback(() => listarRequerimientos().then(setLista).catch((e) => { setLista([]); alertError(e.message) }), [])
   useEffect(() => { cargar() }, [cargar])
   const listo = () => { cargar(); onCambio?.() }
+
+  const filtrada = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    return q ? (lista || []).filter(r => r.nombre.toLowerCase().includes(q)) : (lista || [])
+  }, [lista, busqueda])
+  const totalPages = Math.max(1, Math.ceil(filtrada.length / perPage))
+  const visibles = filtrada.slice((page - 1) * perPage, page * perPage)
 
   const guardar = async (e) => {
     e.preventDefault()
@@ -60,11 +71,22 @@ export function Requerimientos({ puedeEditar, onCambio }) {
       )}
       {lista === null ? <div className="loading-box"><span className="loader"></span>Cargando...</div>
         : lista.length === 0 ? <p className="asignia-ayuda">Aún no hay requerimientos.</p> : (
+          <>
+            <div className="filters-bar">
+              <div className="filter-input-wrapper">
+                <Search size={15} className="filter-icon" />
+                <input className="filter-input" placeholder="Buscar requerimiento..." value={busqueda}
+                  onChange={(e) => { setBusqueda(e.target.value); setPage(1) }} aria-label="Buscar requerimiento" />
+              </div>
+              <span className="results-count">{filtrada.length} requerimiento{filtrada.length !== 1 ? 's' : ''}</span>
+            </div>
           <div className="table-wrapper">
             <table className="data-table">
               <thead><tr><th>Requerimiento</th><th>Estado</th>{puedeEditar && <th>Acciones</th>}</tr></thead>
               <tbody>
-                {lista.map(r => (
+                {visibles.length === 0 ? (
+                  <tr><td colSpan={puedeEditar ? 3 : 2} className="asignia-sin-filas">Ningún requerimiento coincide.</td></tr>
+                ) : visibles.map(r => (
                   <tr key={r.id}>
                     <td data-label="Requerimiento">{r.nombre}</td>
                     <td data-label="Estado"><span className={`badge ${r.activo ? 'badge-synced' : 'badge-pending'}`}>{r.activo ? 'Activo' : 'Inactivo'}</span></td>
@@ -81,6 +103,9 @@ export function Requerimientos({ puedeEditar, onCambio }) {
               </tbody>
             </table>
           </div>
+          <Paginacion page={page} totalPages={totalPages} total={filtrada.length} perPage={perPage}
+            onPage={setPage} onPerPage={(n) => { setPerPage(n); setPage(1) }} />
+          </>
         )}
     </section>
   )

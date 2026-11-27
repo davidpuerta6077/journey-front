@@ -30,7 +30,7 @@ import { liberarCurso } from '../../../services/asignia/liberarCurso'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import { usePermissions } from '../../../services/PermissionsContext'
 import { ESTADOS, ESTADO_POST, horarioTexto, DIAS_SEMANA, FRANJAS, cumpleHorario, horasDistintas, alertaHoras } from './asigniaUtil'
-import { Coincidencia, AvatarProfesor, RequerimientosChecks, AlertaHoras, CopiarDato, BarraCarga } from './PerfilProfesor'
+import { CoincidenciaDetalle, AvatarProfesor, RequerimientosChecks, AlertaHoras, CopiarDato, BarraCarga } from './PerfilProfesor'
 import { listarSolicitudesHoras } from '../../../services/asignia/listarSolicitudesHoras'
 import SolicitudesTutor from './SolicitudesTutor'
 import { listarRequerimientos } from '../../../services/asignia/listarRequerimientos'
@@ -112,7 +112,6 @@ const COLUMNAS_PROF_EXPORT = [
   { label: 'Calificación SICAU', get: p => p.calificacion_sicau ?? '' },
   { label: 'Habilidades', get: p => (p.habilidades || []).map(h => `${h.nombre} (${h.nivel ?? '—'}/10)`).join(', ') },
 ]
-const fmtFechaCorta = (f) => new Date(`${f}T00:00:00Z`).toLocaleDateString('es-CO', { timeZone: 'UTC' })
 
 const COL_GETTERS_PROF = {
   documento: p => p.documento,
@@ -392,7 +391,7 @@ function PostulacionesModal({ cursoId, onClose, onCambio, puedeDecidir }) {
                       <div className="asignia-post-nombre">
                         <strong>{p.nombre}</strong>
                         <span className={`badge ${ESTADO_POST[p.estado]?.clase || ''}`}>{ESTADO_POST[p.estado]?.label || p.estado}</span>
-                        <Coincidencia m={p.coincidencia} compacto />
+                        <CoincidenciaDetalle m={p.coincidencia} />
                       </div>
                       <span className="asignia-post-datos">
                         CC {p.documento} · {p.correo} · {new Date(p.created_at).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' })}
@@ -826,13 +825,10 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
                     <AvatarProfesor url={p.url_imagen_perfil} nombre={p.nombre} tamano={44} ampliable />
                     <div className="asignia-celda">
                       <strong>{p.nombre}</strong>
-                      <span className="asignia-dato asignia-prof-datos">
-                        <CopiarDato texto={p.documento} etiqueta="Documento" />
-                        {p.correo && <CopiarDato texto={p.correo} etiqueta="Correo" />}
-                        {p.celular && <CopiarDato texto={p.celular} etiqueta="Celular" />}
-                        {p.vinculacion && <span>{p.vinculacion}</span>}
-                        {p.fecha_expedicion_cedula && <span>Cédula exp. {fmtFechaCorta(p.fecha_expedicion_cedula)}</span>}
-                      </span>
+                      <span className="asignia-dato"><CopiarDato texto={p.documento} etiqueta="Documento" /></span>
+                      {p.correo && <span className="asignia-dato"><CopiarDato texto={p.correo} etiqueta="Correo" /></span>}
+                      {p.celular && <span className="asignia-dato"><CopiarDato texto={p.celular} etiqueta="Celular" /></span>}
+                      {p.vinculacion && <span className="asignia-dato">{p.vinculacion}</span>}
                     </div>
                   </div>
                 </td>
@@ -1181,7 +1177,7 @@ export default function AsigniaAdmin() {
                           <span>{c.profesor_nombre}</span>
                           {c.profesor_documento ? <CopiarDato texto={c.profesor_documento} etiqueta="Documento" className="asignia-dato" /> : <span className="asignia-dato">Sin documento</span>}
                           {c.profesor_correo ? <CopiarDato texto={c.profesor_correo} etiqueta="Correo" className="asignia-dato asignia-correo" /> : <span className="asignia-dato">Sin correo</span>}
-                          <Coincidencia m={c.coincidencia} compacto />
+                          <CoincidenciaDetalle m={c.coincidencia} />
                         </div>
                       ) : '—'}
                     </td>
