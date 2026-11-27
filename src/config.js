@@ -12,7 +12,7 @@ const config = {
     //     backend_uri: apiUrl,
     // }
     aws: {
-        redirect_uri: "https://bravohubtest.pascualbravovirtual.edu.co",
+        redirect_uri: "https://bravohub.pascualbravovirtual.edu.co",
         backend_uri: apiUrl,
     }
 }
