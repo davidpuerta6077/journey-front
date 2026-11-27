@@ -270,6 +270,7 @@ function ConfirmarModal({ titulo, texto, cursos, confirmar, peligro, onConfirmar
 function Ingreso({ onIngresar }) {
   const [documento, setDocumento] = useState('')
   const [correo, setCorreo] = useState('')
+  const [fechaExpedicionCedula, setFechaExpedicionCedula] = useState('')
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
 
@@ -278,7 +279,7 @@ function Ingreso({ onIngresar }) {
     setError('')
     setCargando(true)
     try {
-      const ident = { documento: documento.trim(), correo: correo.trim() }
+      const ident = { documento: documento.trim(), correo: correo.trim(), fecha_expedicion_cedula: fechaExpedicionCedula }
       onIngresar(ident, await consultarProfesor(ident))
     } catch (err) {
       setError(err.message)
@@ -299,6 +300,10 @@ function Ingreso({ onIngresar }) {
         <div className="modal-field">
           <label htmlFor="asignia-correo">Correo institucional</label>
           <input id="asignia-correo" type="email" autoComplete="email" required value={correo} onChange={(e) => setCorreo(e.target.value)} placeholder="nombre.apellido@pascualbravo.edu.co" />
+        </div>
+        <div className="modal-field">
+          <label htmlFor="asignia-fecha-cedula">Fecha de expedición de la cédula</label>
+          <input id="asignia-fecha-cedula" type="date" required value={fechaExpedicionCedula} onChange={(e) => setFechaExpedicionCedula(e.target.value)} />
         </div>
         <button className="btn-primary asignia-btn-ancho" type="submit" disabled={cargando}>{cargando ? 'Consultando...' : 'Consultar'}</button>
       </form>
@@ -548,6 +553,7 @@ export default function AsigniaProfesor() {
               <span>
                 <strong>{datos.nombre || 'Profesor'}</strong>
                 <span className="asignia-dato">{ident.correo.toLowerCase()}</span>
+                {datos.perfil?.celular && <span className="asignia-dato">{datos.perfil.celular}</span>}
               </span>
             </div>
             <button className="btn-secondary" onClick={salir}><LogOut size={15} /> Salir</button>

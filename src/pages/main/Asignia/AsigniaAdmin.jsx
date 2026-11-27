@@ -99,8 +99,10 @@ const COL_GETTERS = {
 const COLUMNAS_PROF_EXPORT = [
   { label: 'Documento', get: p => p.documento },
   { label: 'Profesor', get: p => p.nombre },
+  { label: 'Celular', get: p => p.celular || '' },
   { label: 'Correo institucional', get: p => p.correo },
   { label: 'Vinculación', get: p => p.vinculacion },
+  { label: 'Fecha expedición cédula', get: p => p.fecha_expedicion_cedula || '' },
   { label: 'Cursos en el periodo', get: p => p.cursos },
   { label: 'Horas acumuladas', get: p => p.horas },
   { label: 'Nivel académico', get: p => p.nivel?.nombre || '' },
@@ -110,6 +112,8 @@ const COLUMNAS_PROF_EXPORT = [
   { label: 'Calificación SICAU', get: p => p.calificacion_sicau ?? '' },
   { label: 'Habilidades', get: p => (p.habilidades || []).map(h => `${h.nombre} (${h.nivel ?? '—'}/10)`).join(', ') },
 ]
+const fmtFechaCorta = (f) => new Date(`${f}T00:00:00Z`).toLocaleDateString('es-CO', { timeZone: 'UTC' })
+
 const COL_GETTERS_PROF = {
   documento: p => p.documento,
   nombre: p => p.nombre,
@@ -269,9 +273,10 @@ function CargaModal({ tipo = 'programacion', onClose, onCargado }) {
               <p className="asignia-ayuda">
                 Sube el Excel (.xlsx) con los profesores de la institución. Se lee la pestaña "BD Profesores" (o la primera con columnas
                 Identificación/Documento y Profesor) y el correo institucional. Así pueden entrar y postularse también los profesores que
-                no tienen cursos en la programación. Si un profesor ya existe, se actualizan sus datos. Columnas opcionales: Nivel académico
-                (con el mismo nombre de Configuración), Inducción (Sí/No) y Calificación SICAU (último semestre calificado); si vienen vacías
-                no se borra lo que ya estaba guardado.
+                no tienen cursos en la programación. Si un profesor ya existe, se actualizan sus datos. Columnas opcionales: Celular,
+                Tiempo de experiencia como docente universitario (texto libre, ej. "Entre 3 y 4 años": se toma el primer número), Fecha
+                de expedición de la cédula, Nivel académico o Nivel de formación (con el mismo nombre de Configuración), Inducción (Sí/No)
+                y Calificación SICAU (último semestre calificado); si vienen vacías no se borra lo que ya estaba guardado.
               </p>
             ) : (
               <p className="asignia-ayuda">
@@ -606,6 +611,8 @@ function ProfesorModal({ profesor, catalogos, onClose, onGuardado }) {
     requerimientos: profesor?.requerimientos || [],
     induccion_realizada: Boolean(profesor?.induccion_realizada),
     calificacion_sicau: profesor?.calificacion_sicau ?? '',
+    celular: profesor?.celular || '',
+    fecha_expedicion_cedula: profesor?.fecha_expedicion_cedula || '',
   })
   const [guardando, setGuardando] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -679,6 +686,16 @@ function ProfesorModal({ profesor, catalogos, onClose, onGuardado }) {
           </div>
           <div className="modal-row">
             <div className="modal-field">
+              <label htmlFor="prof-celular">Número celular (opcional)</label>
+              <input id="prof-celular" type="tel" inputMode="numeric" maxLength={15} value={form.celular} onChange={set('celular')} placeholder="3001234567" />
+            </div>
+            <div className="modal-field">
+              <label htmlFor="prof-fechacedula">Fecha de expedición de la cédula (opcional)</label>
+              <input id="prof-fechacedula" type="date" value={form.fecha_expedicion_cedula} onChange={set('fecha_expedicion_cedula')} />
+            </div>
+          </div>
+          <div className="modal-row">
+            <div className="modal-field">
               <label htmlFor="prof-sicau">Calificación profesoral SICAU (opcional)</label>
               <input id="prof-sicau" type="number" min={0} max={100} step="0.01" value={form.calificacion_sicau}
                 onChange={set('calificacion_sicau')} placeholder="Último semestre calificado" />
@@ -731,7 +748,7 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
     const q = busqueda.trim().toLowerCase()
     const cumple = RAPIDOS.find(r => r.v === rapido)?.cumple
     return filas
-      .filter(p => !q || [p.documento, p.nombre, p.correo, p.vinculacion].some(v => (v || '').toLowerCase().includes(q)))
+      .filter(p => !q || [p.documento, p.nombre, p.correo, p.vinculacion, p.celular].some(v => (v || '').toLowerCase().includes(q)))
       .filter(p => !cumple || cumple(p))
   }, [filas, busqueda, rapido])
   const { filtered, colProps, anyFilter, clearFilters } = useColumnFilters(base, COL_GETTERS_PROF, () => setPage(1))
@@ -771,7 +788,7 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
       <div className="filters-bar">
         <div className="filter-input-wrapper">
           <Search size={15} className="filter-icon" />
-          <input className="filter-input" placeholder="Buscar documento, nombre, correo o vinculación..."
+          <input className="filter-input" placeholder="Buscar documento, nombre, correo, celular o vinculación..."
             value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPage(1) }} aria-label="Buscar profesor" />
         </div>
         {anyFilter && <button className="btn-secondary" onClick={clearFilters}>Limpiar filtros</button>}
@@ -812,7 +829,9 @@ function ProfesoresTab({ profesores, carga, periodo, puedeEditar, onCambio, nuev
                       <span className="asignia-dato asignia-prof-datos">
                         <CopiarDato texto={p.documento} etiqueta="Documento" />
                         {p.correo && <CopiarDato texto={p.correo} etiqueta="Correo" />}
+                        {p.celular && <CopiarDato texto={p.celular} etiqueta="Celular" />}
                         {p.vinculacion && <span>{p.vinculacion}</span>}
+                        {p.fecha_expedicion_cedula && <span>Cédula exp. {fmtFechaCorta(p.fecha_expedicion_cedula)}</span>}
                       </span>
                     </div>
                   </div>
