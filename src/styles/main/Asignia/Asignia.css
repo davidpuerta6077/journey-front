@@ -419,6 +419,12 @@ button.asignia-avatar-btn:focus-visible { outline: 2px solid #5b7cfa; outline-of
 .asignia-habilidades summary { cursor: pointer; font-size: 0.8rem; color: var(--text-muted); width: fit-content; }
 .asignia-habilidades details[open] summary { margin-bottom: 4px; }
 
+/* Coincidencia desplegable (postulaciones, programación): el badge es el "summary". */
+.asignia-coincidencia-desplegable summary { cursor: pointer; width: fit-content; list-style-position: outside; }
+.asignia-coincidencia-desplegable summary::marker { font-size: 0.7em; }
+.asignia-coincidencia-desplegable[open] summary { margin-bottom: 6px; }
+.asignia-coincidencia-desplegable .asignia-chips { max-height: none; }
+
 /* Editor de habilidades en la pantalla pública. */
 .asignia-habilidades-editor { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 .asignia-hab-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }

@@ -462,15 +462,37 @@ const AYUDA = {
   postulaciones: 'Todas tus postulaciones del periodo y en qué estado van.',
 }
 
+// La sesión se guarda en el navegador para que F5 no saque al profesor: solo
+// "Salir" la borra. Al montar se vuelve a validar contra el backend (por si el
+// profesor ya no está en la base o cambiaron sus datos).
+const IDENT_KEY = 'asignia-profesor-ident'
+const identGuardado = () => {
+  try { return JSON.parse(localStorage.getItem(IDENT_KEY)) } catch { return null }
+}
+
 export default function AsigniaProfesor() {
-  const [ident, setIdent] = useState(null)
+  const [ident, setIdent] = useState(identGuardado)
   const [datos, setDatos] = useState(null)
+  const [validandoSesion, setValidandoSesion] = useState(() => Boolean(identGuardado()))
   const [disponibles, setDisponibles] = useState(null)
   const [vista, setVista] = useState(null)
   const [f, setF] = useState(SIN_FILTROS)
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
   const [sinCruces, setSinCruces] = useState(false)
+
+  const entrar = (i, d) => {
+    localStorage.setItem(IDENT_KEY, JSON.stringify(i))
+    setIdent(i)
+    setDatos(d)
+  }
+
+  // Sesión restaurada desde localStorage: no hay `datos` todavía, hay que pedirlos.
+  useEffect(() => {
+    if (!ident || datos) return
+    consultarProfesor(ident).then(setDatos).catch(() => { localStorage.removeItem(IDENT_KEY); setIdent(null) })
+      .finally(() => setValidandoSesion(false))
+  }, [ident, datos])
 
   const cargarDisponibles = useCallback((i) => listarDisponibles(i)
     .then(r => setDisponibles(r.cursos))
@@ -503,15 +525,22 @@ export default function AsigniaProfesor() {
   // Inicio = las pestañas por estado (listado de cursos); Mi horario y Mis postulaciones son vistas aparte.
   const esInicio = !['horario', 'postulaciones', 'calificacion', 'habilidades'].includes(vistaActual)
 
-  const salir = () => { setIdent(null); setDatos(null); setDisponibles(null); setVista(null); setF(SIN_FILTROS); setError(''); setOk('') }
+  const salir = () => {
+    localStorage.removeItem(IDENT_KEY)
+    setIdent(null); setDatos(null); setDisponibles(null); setVista(null); setF(SIN_FILTROS); setError(''); setOk('')
+  }
   const hecho = (msg) => { setError(''); setOk(msg); recargar() }
   const fallo = (msg) => { setOk(''); setError(msg) }
   const cambiarVista = (v) => { setVista(v); setOk(''); setError('') }
 
+  if (validandoSesion) {
+    return <div className="asignia-publica estilo-hub"><div className="loading-box"><span className="loader"></span>Cargando tu sesión...</div></div>
+  }
+
   if (!ident || !datos) {
     return (
       <div className="asignia-publica estilo-hub">
-        <Ingreso onIngresar={(i, d) => { setIdent(i); setDatos(d) }} />
+        <Ingreso onIngresar={entrar} />
       </div>
     )
   }
