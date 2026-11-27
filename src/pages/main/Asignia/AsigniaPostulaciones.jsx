@@ -1,12 +1,13 @@
 import { Fragment, useState, useEffect, useMemo } from 'react'
-import { Search, CheckCircle2, XCircle, X } from 'lucide-react'
+import { Search, CheckCircle2, XCircle, X, Trash2 } from 'lucide-react'
 import { listarPostulacionesPeriodo } from '../../../services/asignia/listarPostulacionesPeriodo'
 import { aprobarPostulacion } from '../../../services/asignia/aprobarPostulacion'
+import { borrarPostulacion } from '../../../services/asignia/borrarPostulacion'
 import { alertError, confirmAccion, toastExito } from '../../../services/alerts'
 import RechazoPostulacion from './RechazoPostulacion'
 import { ESTADO_POST, horarioTexto } from './asigniaUtil'
 import { VerCalificacion } from './CalificacionSidem'
-import { Coincidencia } from './PerfilProfesor'
+import { CoincidenciaDetalle } from './PerfilProfesor'
 
 const FILTROS_ESTADO = [
   { v: '', label: 'Todas' },
@@ -56,6 +57,23 @@ export default function AsigniaPostulaciones({ periodo, puedeDecidir, onCambio }
     try {
       await aprobarPostulacion(p.id)
       toastExito('Curso asignado')
+      recargar()
+    } catch (e) { alertError(e.message) }
+  }
+
+  // Limpieza de una postulación ya cerrada: p. ej. una aprobada de un curso que se
+  // liberó por otro lado (programación) y bloqueaba al profesor para postularse de nuevo.
+  const borrar = async (p) => {
+    const ok = await confirmAccion({
+      title: '¿Borrar la postulación?',
+      text: `Se borra la postulación de ${p.nombre} a ${p.codigo} ${p.curso} (estado actual: ${ESTADO_POST[p.estado]?.label || p.estado}). Si el curso sigue vacante, el profesor podrá postularse de nuevo.`,
+      icon: 'warning',
+      confirmButtonText: 'Sí, borrar',
+    })
+    if (!ok) return
+    try {
+      await borrarPostulacion(p.id)
+      toastExito('Postulación borrada')
       recargar()
     } catch (e) { alertError(e.message) }
   }
@@ -121,7 +139,7 @@ export default function AsigniaPostulaciones({ periodo, puedeDecidir, onCambio }
                         <span>{p.nombre}</span>
                         <span className="asignia-dato">CC {p.documento} · {p.correo}</span>
                         <span className="asignia-dato">Calificación SICAU: {p.calificacion_sicau ?? 'sin registrar'}</span>
-                        <Coincidencia m={p.coincidencia} compacto />
+                        <CoincidenciaDetalle m={p.coincidencia} />
                         <span><VerCalificacion profesor={p} periodo={periodo} /></span>
                       </div>
                     </td>
@@ -141,6 +159,10 @@ export default function AsigniaPostulaciones({ periodo, puedeDecidir, onCambio }
                             <button type="button" className="btn-secondary asignia-btn-fila asignia-btn-peligro" onClick={() => setRechazoId(p.id)}><XCircle size={15} /> Rechazar</button>
                             <button type="button" className="btn-secondary asignia-btn-fila" onClick={() => aprobar(p)}><CheckCircle2 size={15} /> Asignar</button>
                           </div>
+                        ) : p.estado !== 'pendiente' ? (
+                          <button type="button" className="btn-icon asignia-accion asignia-btn-peligro asignia-tip" onClick={() => borrar(p)}
+                            data-tip="Borrar postulación: libera al profesor para postularse de nuevo a este curso"
+                            aria-label={`Borrar la postulación de ${p.nombre}`}><Trash2 size={15} /></button>
                         ) : '—'}
                       </td>
                     )}

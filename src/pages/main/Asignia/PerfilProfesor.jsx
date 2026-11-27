@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { UserRound, FileText, X, Plus, Search, Copy, CircleHelp, Save, CheckCircle2 } from 'lucide-react'
+import Paginacion from '../../../components/Paginacion'
 import { guardarHabilidades } from '../../../services/asignia/guardarHabilidades'
 import { descargarSolicitudHoras } from '../../../services/asignia/solicitudHorasPdf'
 import { registrarSolicitudHoras } from '../../../services/asignia/registrarSolicitudHoras'
@@ -34,6 +35,22 @@ export function Coincidencia({ m, compacto }) {
   )
 }
 
+// Mismo badge, pero desplegable: qué habilidades cumple (comunes) y cuáles le faltan
+// (faltantes), ambas ya resueltas a nombre por el backend. Vistas del líder
+// (postulaciones, programación); la pantalla del profesor usa PerfilAplica.
+export function CoincidenciaDetalle({ m }) {
+  if (!m?.comunes?.length && !m?.faltantes?.length) return <Coincidencia m={m} compacto />
+  return (
+    <details className="asignia-coincidencia-desplegable">
+      <summary><Coincidencia m={m} compacto /></summary>
+      <ul className="asignia-chips" aria-label="Habilidades que cumple y que le faltan">
+        {m.comunes.map(n => <li key={n} className="asignia-chip asignia-chip-ok"><CheckCircle2 size={13} aria-hidden="true" /> {n}</li>)}
+        {m.faltantes.map(n => <li key={n} className="asignia-chip asignia-chip-falta">Falta: {n}</li>)}
+      </ul>
+    </details>
+  )
+}
+
 // Ícono de ayuda con explicación al pasar el mouse o al enfocarlo con teclado/toque.
 export function Ayuda({ texto }) {
   return (
@@ -64,7 +81,8 @@ export function PerfilAplica({ m }) {
 export function MisHabilidades({ ident, perfil, onGuardado }) {
   const [lista, setLista] = useState(() => (perfil?.habilidades || []).map(h => ({ ...h, nivel: h.nivel || '' })))
   const [q, setQ] = useState('')
-  const [abierto, setAbierto] = useState(false)
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(10)
   const [guardando, setGuardando] = useState(false)
   const catalogo = perfil?.catalogo || []
   // en_base lo manda el API desde esta versión: si no viene, el API aún no está actualizado (no es que falte el profesor).
@@ -77,7 +95,10 @@ export function MisHabilidades({ ident, perfil, onGuardado }) {
   if (!catalogo.length) return <p className="asignia-ayuda">La institución aún no ha definido el catálogo de habilidades.</p>
   const busca = sinTildes(q.trim())
   const opciones = catalogo.filter(r => !lista.some(h => h.id === r.id) && (!busca || sinTildes(r.nombre).includes(busca)))
-  const agregar = (r) => { setLista(l => [...l, { id: r.id, nombre: r.nombre, nivel: '' }]); setQ('') }
+  const totalPages = Math.max(1, Math.ceil(opciones.length / perPage))
+  const paginaActual = Math.min(page, totalPages)
+  const visibles = opciones.slice((paginaActual - 1) * perPage, paginaActual * perPage)
+  const agregar = (r) => { setLista(l => [...l, { id: r.id, nombre: r.nombre, nivel: '' }]); setQ(''); setPage(1) }
   const faltaNivel = lista.some(h => !h.nivel)
 
   const guardar = async () => {
@@ -116,23 +137,21 @@ export function MisHabilidades({ ident, perfil, onGuardado }) {
       <div className="asignia-reqsel">
         <div className="filter-input-wrapper asignia-reqsel-buscar">
           <Search size={15} className="filter-icon" />
-          <input className="filter-input" type="search" aria-label="Buscar habilidad para agregar" placeholder={`Buscar y agregar habilidad (${opciones.length} disponibles)...`}
-            value={q} onChange={(e) => { setQ(e.target.value); setAbierto(true) }} onFocus={() => setAbierto(true)}
-            onBlur={() => setTimeout(() => setAbierto(false), 150)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (opciones[0]) agregar(opciones[0]) } if (e.key === 'Escape') setAbierto(false) }} />
+          <input className="filter-input" type="search" aria-label="Buscar habilidad para agregar" placeholder={`Buscar habilidad (${opciones.length} disponibles)...`}
+            value={q} onChange={(e) => { setQ(e.target.value); setPage(1) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (visibles[0]) agregar(visibles[0]) } }} />
         </div>
-        {abierto && (
-          <ul className="asignia-reqsel-lista" role="listbox" aria-label="Habilidades para agregar">
-            {opciones.length === 0
-              ? <li className="asignia-dato">{busca ? 'Ninguna habilidad coincide.' : 'Ya agregaste todas.'}</li>
-              : opciones.slice(0, MAX_SUGERENCIAS).map(r => (
-                <li key={r.id} role="option" aria-selected="false">
-                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => agregar(r)}><Plus size={13} /> {r.nombre}</button>
-                </li>
-              ))}
-            {opciones.length > MAX_SUGERENCIAS && <li className="asignia-dato">…y {opciones.length - MAX_SUGERENCIAS} más: escribe para filtrar.</li>}
-          </ul>
-        )}
+        <ul className="asignia-reqsel-lista" role="listbox" aria-label="Habilidades para agregar">
+          {visibles.length === 0
+            ? <li className="asignia-dato">{busca ? 'Ninguna habilidad coincide.' : 'Ya agregaste todas.'}</li>
+            : visibles.map(r => (
+              <li key={r.id} role="option" aria-selected="false">
+                <button type="button" onClick={() => agregar(r)}><Plus size={13} /> {r.nombre}</button>
+              </li>
+            ))}
+        </ul>
+        <Paginacion page={paginaActual} totalPages={totalPages} total={opciones.length} perPage={perPage}
+          onPage={setPage} onPerPage={(n) => { setPerPage(n); setPage(1) }} />
       </div>
       <div className="asignia-barra">
         {faltaNivel && <span className="asignia-dato" role="status">Elige el nivel de cada habilidad para guardar.</span>}
