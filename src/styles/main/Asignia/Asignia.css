@@ -319,7 +319,34 @@ button.asignia-btn-peligro { color: #b91c1c; }
   border-radius: 50%; overflow: hidden; border: 1px solid var(--border-soft);
   background: var(--bg-surface-alt, #f1f5f9); color: var(--text-secondary, #64748b);
 }
-.asignia-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* Fotos verticales (≈3300×6000): recorte desde arriba, donde está la cara. */
+.asignia-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+.asignia-avatar-foto { display: block; width: 100%; height: 100%; }
+button.asignia-avatar-btn { padding: 0; cursor: zoom-in; transition: border-color 0.18s ease; }
+button.asignia-avatar-btn:hover { border-color: #7c6cff; }
+button.asignia-avatar-btn:focus-visible { outline: 2px solid #5b7cfa; outline-offset: 2px; }
+
+/* Modal de la foto en grande. */
+.asignia-foto-overlay { backdrop-filter: blur(4px); animation: asignia-foto-fondo 0.2s ease; }
+.modal-box.asignia-foto-box { width: auto; max-width: min(92vw, 460px); padding: 16px; animation: asignia-foto-in 0.24s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.asignia-foto-grande { display: block; width: 100%; max-height: 74vh; object-fit: contain; background: var(--bg-surface-alt, #f1f5f9); border: 1px solid var(--border-soft); }
+@keyframes asignia-foto-fondo { from { opacity: 0; } }
+@keyframes asignia-foto-in { from { opacity: 0; transform: scale(0.94) translateY(8px); } }
+@media (prefers-reduced-motion: reduce) {
+  .asignia-foto-overlay, .modal-box.asignia-foto-box { animation: none; }
+  button.asignia-avatar-btn { transition: none; }
+}
+
+/* Columna Nivel académico compacta. */
+.asignia-nivel { max-width: 190px; gap: 4px; }
+.asignia-nivel-nombre { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; }
+.asignia-nivel .badge { align-self: flex-start; white-space: nowrap; }
+.asignia-nivel-carta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.asignia-nivel-carta .asignia-carta { font-size: 0.75rem; }
+@media (max-width: 768px) {
+  .asignia-nivel { max-width: none; }
+  .asignia-nivel .badge { align-self: flex-end; }
+}
 
 /* Selector de requerimientos: elegidos como chips + buscador (no la lista completa). */
 .asignia-reqsel { display: flex; flex-direction: column; gap: 8px; }
@@ -361,3 +388,163 @@ button.asignia-btn-peligro { color: #b91c1c; }
 .asignia-carta { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; color: var(--text-secondary, #64748b); }
 .asignia-carta.lista { color: #15803d; }
 :root[data-theme="dark"] .asignia-carta.lista { color: #4ade80; }
+
+/* Ayuda contextual: ícono con tooltip debajo (pantalla pública). */
+.asignia-ayuda-icono { display: inline-flex; align-items: center; vertical-align: middle; color: var(--text-muted); cursor: help; }
+.asignia-ayuda-icono:focus-visible { outline: 2px solid #5b7cfa; outline-offset: 2px; }
+.asignia-tip-abajo[data-tip]::after { right: auto; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); }
+.asignia-tip-abajo[data-tip]:focus::after { opacity: 1; visibility: visible; }
+
+/* "Su perfil aplica para el curso": habilidades que cumple y que faltan, a la vista. */
+.asignia-aplica { display: flex; flex-direction: column; gap: 6px; }
+.asignia-aplica-titulo { font-size: 0.82rem; font-weight: 600; color: #15803d; }
+:root[data-theme="dark"] .asignia-aplica-titulo { color: #4ade80; }
+.asignia-aplica .asignia-chips { max-height: none; }
+.asignia-aplica .asignia-chip { padding-right: 10px; font-size: 0.78rem; }
+.asignia-chip-ok {
+  background: linear-gradient(var(--bg-surface, #fff), var(--bg-surface, #fff)) padding-box,
+              linear-gradient(to right top, #16a34a, #22c55e) border-box;
+}
+.asignia-chip-ok svg { color: #16a34a; }
+.asignia-chip.asignia-chip-falta { background: none; border: 1px dashed #94a3b8; color: var(--text-muted); }
+
+/* Habilidades del profesor en la tabla del líder: 2 a la vista (las de mayor nivel) y el resto desplegable. */
+.asignia-habilidades { display: flex; flex-direction: column; gap: 4px; max-width: 260px; }
+.asignia-hab-chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.asignia-hab-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; font-size: 0.78rem; border: 1px solid #c9d3fb; background: #f5f7ff; }
+.asignia-hab-chip strong { font-weight: 600; color: #2d4375; }
+:root[data-theme="dark"] .asignia-hab-chip { border-color: #3a4573; background: #1e2540; }
+:root[data-theme="dark"] .asignia-hab-chip strong { color: #c7d2fe; }
+.asignia-habilidades summary { cursor: pointer; font-size: 0.8rem; color: var(--text-muted); width: fit-content; }
+.asignia-habilidades details[open] summary { margin-bottom: 4px; }
+
+/* Editor de habilidades en la pantalla pública. */
+.asignia-habilidades-editor { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.asignia-hab-lista { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.asignia-hab-lista li { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border: 1px solid var(--border-soft); }
+.asignia-hab-lista li > span { flex: 1; }
+.asignia-hab-lista select { flex: 0 0 120px; width: 120px; min-width: 0; }
+
+/* ── Pestaña Profesores del líder: 6 columnas que caben sin desplazar ── */
+.asignia-rapidos { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+.asignia-rapido {
+  min-height: 34px; padding: 0 12px; font: inherit; font-size: 0.82rem; cursor: pointer;
+  border: 1px solid var(--border-soft); background: var(--bg-surface, #fff); color: var(--text-primary, #1f2a44);
+}
+.asignia-rapido:hover { border-color: #5b7cfa; }
+.asignia-rapido.activo {
+  border: 1px solid transparent; font-weight: 600; color: #2d4375;
+  background: linear-gradient(#eef2ff, #eef2ff) padding-box, linear-gradient(to right top, #5b7cfa, #9b6cff) border-box;
+}
+:root[data-theme="dark"] .asignia-rapido.activo { color: #c7d2fe; background: linear-gradient(#1e2540, #1e2540) padding-box, linear-gradient(to right top, #5b7cfa, #9b6cff) border-box; }
+.asignia-rapido:focus-visible { outline: 2px solid #5b7cfa; outline-offset: 2px; }
+
+.asignia-tabla-prof td { vertical-align: top; }
+@media (min-width: 769px) {
+  .asignia-tabla-prof td:first-child { width: 32%; }
+  .asignia-tabla-prof td + td { padding-left: 16px; }
+}
+/* En celular la celda del profesor va a todo el ancho, sin etiqueta (el nombre ya lo dice). */
+@media screen and (max-width: 768px) {
+  table.data-table.asignia-tabla-prof tbody td[data-label="Profesor"] { display: block; text-align: left; }
+  table.data-table.asignia-tabla-prof tbody td[data-label="Profesor"]::before { content: none; }
+  .asignia-tabla-prof td[data-label="Profesor"] .asignia-celda { align-items: flex-start; text-align: left; }
+  .asignia-tabla-prof .asignia-prof-datos { justify-content: flex-start; }
+  table.data-table.asignia-tabla-prof tbody td[data-label="Carga"] { display: block; text-align: left; }
+  table.data-table.asignia-tabla-prof tbody td[data-label="Carga"]::before { content: none; }
+  .asignia-tabla-prof .asignia-carga { max-width: none; min-width: 0; }
+  .asignia-tabla-prof .asignia-habilidades { align-items: flex-end; }
+}
+.asignia-prof-celda { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.asignia-prof-celda .asignia-celda { min-width: 0; }
+.asignia-prof-celda strong { font-weight: 600; overflow-wrap: break-word; }
+.asignia-prof-datos { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.asignia-col-acciones { white-space: nowrap; text-align: right; }
+.asignia-tabla-prof td[data-label="SICAU"], .asignia-tabla-prof td[data-label="Inducción"] { white-space: nowrap; }
+.asignia-tabla-prof .asignia-acciones { justify-content: flex-end; }
+
+.asignia-carga { display: flex; flex-direction: column; gap: 6px; min-width: 200px; max-width: 260px; }
+.asignia-carga-barra { display: block; height: 6px; background: var(--bg-surface-alt, #eef1f6); }
+.asignia-carga-barra > span { display: block; height: 100%; background: linear-gradient(to right, #5b7cfa, #9b6cff); }
+.asignia-carga-barra.asignia-carga-minimo > span { background: #d97706; }
+.asignia-carga-barra.asignia-carga-maximo > span { background: #2d4375; }
+.asignia-carga-texto { font-size: 0.78rem; font-weight: 600; }
+.asignia-carga-texto.asignia-carga-minimo { color: #b45309; }
+.asignia-carga-texto.asignia-carga-maximo { color: #2d4375; }
+:root[data-theme="dark"] .asignia-carga-texto.asignia-carga-minimo { color: #fbbf24; }
+:root[data-theme="dark"] .asignia-carga-texto.asignia-carga-maximo { color: #a5b4fc; }
+:root[data-theme="dark"] .asignia-carga-barra.asignia-carga-maximo > span { background: #a5b4fc; }
+.asignia-tabla-prof .asignia-nivel-carta { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.asignia-ok-texto { display: inline-flex; align-items: center; gap: 4px; color: #15803d; font-size: 0.85rem; white-space: nowrap; }
+.asignia-pend-texto { color: var(--text-muted); font-size: 0.85rem; }
+:root[data-theme="dark"] .asignia-ok-texto { color: #4ade80; }
+
+/* ── Pantalla del profesor: banda de perfil, pestañas de estado y barra fija de postulación ── */
+.asignia-banda { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border-soft); background: var(--bg-surface, #fff); margin: 0 0 16px; }
+.asignia-banda > div { display: flex; flex-direction: column; gap: 6px; padding: 14px 18px; min-width: 0; overflow-wrap: anywhere; }
+.asignia-banda > div + div { border-left: 1px solid var(--border-soft); }
+.asignia-banda-etq { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.asignia-banda-num { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; line-height: 1.1; color: var(--hub-titulo, #2d4375); }
+.asignia-banda .asignia-carga { max-width: none; min-width: 0; }
+.asignia-enlace { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; font-size: 0.85rem; color: #3b5bdb; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.asignia-enlace:hover { color: #2d4375; }
+:root[data-theme="dark"] .asignia-enlace { color: #a5b4fc; }
+@media (max-width: 900px) {
+  .asignia-banda { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .asignia-banda > div:nth-child(3) { border-left: 0; }
+  .asignia-banda > div:nth-child(n+3) { border-top: 1px solid var(--border-soft); }
+}
+
+.asignia-tabs-estado { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid var(--border-soft); overflow-x: auto; }
+.asignia-tab-estado {
+  flex: none; min-height: 44px; padding: 0 16px; border: 0; border-bottom: 2px solid transparent; background: none;
+  font: inherit; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+}
+.asignia-tab-estado strong { color: var(--text-primary, #1f2a44); margin-left: 4px; }
+.asignia-tab-estado:hover { color: var(--text-primary, #1f2a44); }
+.asignia-tab-estado.activo { color: #2d4375; font-weight: 600; border-bottom-color: #5b7cfa; }
+:root[data-theme="dark"] .asignia-tab-estado.activo { color: #c7d2fe; }
+.asignia-tab-estado:focus-visible { outline: 2px solid #5b7cfa; outline-offset: -2px; }
+
+.asignia-filtros-mas { display: contents; }
+.asignia-check-cruces { padding-bottom: 0; }
+.asignia-tabla tr.asignia-fila-elegida td { background: #f5f7ff; }
+:root[data-theme="dark"] .asignia-tabla tr.asignia-fila-elegida td { background: #1e2540; }
+
+.asignia-barra-fija {
+  position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 16px; margin: 0 0 12px; background: var(--bg-surface, #fff); border: 1px solid var(--border-soft);
+}
+.asignia-barra-fija > span { font-size: 0.9rem; }
+@media (max-width: 768px) {
+  .asignia-barra-fija { order: 99; margin: 12px 0 0; flex-direction: column; align-items: stretch; }
+  .asignia-barra-fija .btn-primary { width: 100%; min-height: 48px; justify-content: center; }
+}
+
+/* ── Cursos del profesor en celular: un bloque compacto por curso (no 8 filas etiqueta-valor) ── */
+@media screen and (max-width: 768px) {
+  table.data-table.asignia-tabla-cursos tbody tr {
+    display: grid; grid-template-columns: 1fr; row-gap: 6px; padding: 14px; border-radius: 0;
+  }
+  table.data-table.asignia-tabla-cursos tbody tr:has(td.asignia-col-check) { grid-template-columns: 32px minmax(0, 1fr); column-gap: 10px; }
+  table.data-table.asignia-tabla-cursos tbody td {
+    display: block; padding: 0; border: 0; text-align: left; font-size: 0.9rem; grid-column: -2 / -1;
+  }
+  table.data-table.asignia-tabla-cursos tbody td::before { content: none; }
+  table.data-table.asignia-tabla-cursos tbody td.asignia-col-check { grid-column: 1; grid-row: 1 / span 3; padding-top: 2px; }
+  table.data-table.asignia-tabla-cursos tbody td.asignia-col-check input { width: 22px; height: 22px; }
+  table.data-table.asignia-tabla-cursos tbody td[data-label="Programa"] { display: none; }
+  table.data-table.asignia-tabla-cursos tbody td[data-label="Curso"] .asignia-celda > span:first-child { font-weight: 600; font-size: 0.95rem; }
+  table.data-table.asignia-tabla-cursos tbody tr.asignia-fila-elegida { border-color: #5b7cfa; background: #f5f7ff; }
+  :root[data-theme="dark"] table.data-table.asignia-tabla-cursos tbody tr.asignia-fila-elegida { background: #1e2540; }
+  .asignia-tabla tr.asignia-fila-elegida td { background: transparent; }
+  table.data-table.asignia-tabla-cursos tbody td .asignia-celda,
+  table.data-table.asignia-tabla-cursos tbody td .asignia-aplica { align-items: flex-start; text-align: left; }
+  table.data-table.asignia-tabla-cursos tbody td .asignia-chips { justify-content: flex-start; }
+  table.data-table.asignia-tabla-cursos thead { display: none; }
+  table.data-table.asignia-tabla-cursos tbody td.asignia-sin-filas { grid-column: 1 / -1; }
+}
+
+.asignia-intro { margin: 0 0 12px; }
+.asignia-tabla-cursos td[data-label="Curso"] { min-width: 260px; }

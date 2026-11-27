@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { GraduationCap } from 'lucide-react'
 import { induccionProfesor } from '../../../services/asignia/induccionProfesor'
 
@@ -13,7 +14,7 @@ function Detalle({ data }) {
   return (
     <div className="asignia-notas">
       <div className={`asignia-nota-global ${data.certificado ? 'asignia-estado-aceptado' : 'asignia-estado-rechazado'}`}>
-        <span className="asignia-nota-etq">Inducción docente</span>
+        <span className="asignia-nota-etq">Certificado docente</span>
         <span className="asignia-nota-num">{data.certificado ? 'Certificado' : 'Sin certificar'}</span>
         <span className="asignia-nota-sub">
           {data.certificado ? `Desde el ${fecha(data.fecha)}` : 'No tiene el certificado Ser+ Digital Docente'}
@@ -21,7 +22,7 @@ function Detalle({ data }) {
       </div>
       {data.certificados.length > 0 && (
         <div className="table-wrapper">
-          <table className="data-table asignia-tabla" aria-label="Certificados de inducción docente">
+          <table className="data-table asignia-tabla" aria-label="Certificados docentes">
             <thead><tr><th>Curso</th><th>Fecha</th><th>Código</th></tr></thead>
             <tbody>
               {data.certificados.map((c) => (
@@ -46,27 +47,35 @@ function InduccionModal({ profesor, onClose }) {
       .then(setData)
       .catch(() => setData({ disponible: false }))
   }, [profesor.documento, profesor.correo])
-  return (
+  // Portal al body: dentro de la celda de la tabla heredaba text-align y white-space y el texto se montaba.
+  return createPortal(
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal-box asignia-modal" role="dialog" aria-modal="true" aria-labelledby="asignia-ind-titulo">
         <div className="modal-header">
-          <h3 id="asignia-ind-titulo">Inducción docente · {profesor.nombre}</h3>
+          <h3 id="asignia-ind-titulo">Certificado docente · {profesor.nombre}</h3>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">✕</button>
         </div>
         <div className="modal-form"><Detalle data={data} /></div>
         <div className="modal-actions"><button className="btn-secondary" onClick={onClose}>Cerrar</button></div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
 // Botón que abre la certificación de inducción docente del profesor.
-export function VerInduccion({ profesor }) {
+// Con `icono`, solo el ícono con su tooltip (tabla de profesores del líder).
+export function VerInduccion({ profesor, icono }) {
   const [abierto, setAbierto] = useState(false)
   return (
     <>
-      <button type="button" className="btn-secondary asignia-btn-fila" onClick={() => setAbierto(true)}
-        aria-label={`Ver inducción docente de ${profesor.nombre}`}><GraduationCap size={15} /> Ver inducción</button>
+      {icono ? (
+        <button type="button" className="btn-icon asignia-accion asignia-tip" onClick={() => setAbierto(true)}
+          data-tip="Ver certificado Tutor Virtual" aria-label={`Ver certificado docente de ${profesor.nombre}`}><GraduationCap size={15} /></button>
+      ) : (
+        <button type="button" className="btn-secondary asignia-btn-fila" onClick={() => setAbierto(true)}
+          aria-label={`Ver certificado docente de ${profesor.nombre}`}><GraduationCap size={15} /> Ver certificado</button>
+      )}
       {abierto && <InduccionModal profesor={profesor} onClose={() => setAbierto(false)} />}
     </>
   )

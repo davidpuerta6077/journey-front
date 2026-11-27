@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, Star, GraduationCap } from 'lucide-react'
-import { AvatarProfesor, Coincidencia, AlertaHoras } from './PerfilProfesor'
+import { Search, CheckCircle2, XCircle, Send, LogOut, ClipboardList, X, CalendarDays, Home, ClipboardCheck, ListChecks } from 'lucide-react'
+import { AvatarProfesor, PerfilAplica, MisHabilidades, Ayuda, BarraCarga } from './PerfilProfesor'
 import { tutorVirtualProfesor } from '../../../services/asignia/tutorVirtualProfesor'
 import { solicitarTutor } from '../../../services/asignia/solicitarTutor'
 import MiHorario from './calendario/MiHorario'
@@ -33,7 +33,9 @@ function TutorVirtual({ ident }) {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   useEffect(() => { tutorVirtualProfesor(ident).then(setEstado).catch(() => setEstado(false)) }, [ident])
-  if (!estado || estado.certificado) return null
+  if (estado === null) return <span className="asignia-dato">Consultando…</span>
+  if (estado?.certificado) return <span className="asignia-ok-texto"><CheckCircle2 size={16} aria-hidden="true" /> Certificado</span>
+  if (!estado) return <span className="asignia-dato">No pudimos consultar tu certificado.</span>
 
   const solicitar = async () => {
     setEnviando(true)
@@ -46,19 +48,18 @@ function TutorVirtual({ ident }) {
   }
 
   return (
-    <div className="asignia-tutor" role="status">
-      <GraduationCap size={18} aria-hidden="true" />
+    <div className="asignia-celda" role="status">
       {estado.solicitud ? (
         <span>
-          Tu solicitud de matrícula al curso Tutor Virtual está{' '}
+          Matrícula{' '}
           <span className={`badge asignia-badge ${estado.solicitud.estado === 'matriculado' ? 'badge-synced' : 'badge-novedad'}`}>
             {estado.solicitud.estado === 'matriculado' ? 'Matriculado' : 'Pendiente'}
           </span>
         </span>
       ) : (
         <>
-          <span>{estado.disponible ? 'Aún no tienes el certificado Tutor Virtual.' : 'No pudimos confirmar tu certificado Tutor Virtual.'} Puedes solicitar tu matrícula al curso.</span>
-          <button className="btn-primary" onClick={solicitar} disabled={enviando}><Send size={15} /> {enviando ? 'Enviando...' : 'Solicitar matrícula'}</button>
+          <span className="asignia-dato">{estado.disponible ? 'Aún no tienes el certificado.' : 'No pudimos confirmar tu certificado.'}</span>
+          <button className="btn-secondary asignia-btn-fila" onClick={solicitar} disabled={enviando}><Send size={15} /> {enviando ? 'Enviando...' : 'Solicitar matrícula'}</button>
         </>
       )}
       {error && <span className="public-form-error" role="alert">{error}</span>}
@@ -92,20 +93,13 @@ function CeldasCurso({ c }) {
         <div className="asignia-celda">
           <span>{c.codigo} · {c.curso}</span>
           {(c.creditos || c.horas_semana) && <span className="asignia-dato">{[c.creditos && `${c.creditos} créditos`, c.horas_semana && `${c.horas_semana} h/semana`].filter(Boolean).join(' · ')}</span>}
+          <span className="asignia-dato">{[c.grupo && `Grupo ${c.grupo}`, c.sede, c.jornada, c.espacio].filter(Boolean).join(' · ')}</span>
         </div>
       </td>
-      <td data-label="Grupo">{c.grupo || '—'}</td>
       <td data-label="Programa">
         <div className="asignia-celda">
           <span>{c.programa || '—'}</span>
           <span className="asignia-dato">Plan {c.plan || '—'}{c.nivel ? ` · Nivel ${c.nivel}` : ''}</span>
-        </div>
-      </td>
-      <td data-label="Sede">{c.sede || '—'}</td>
-      <td data-label="Jornada">
-        <div className="asignia-celda">
-          <span>{c.jornada || '—'}</span>
-          {c.espacio && <span className="asignia-dato">{c.espacio}</span>}
         </div>
       </td>
       <td data-label="Días y horario"><Horario horario={c.horario} /></td>
@@ -128,10 +122,10 @@ function CeldaEstado({ e, causal, motivo }) {
 
 // Tabla de cursos. Con `seleccion` agrega la columna de checkbox.
 function TablaCursos({ filas, vacio, seleccion, estado }) {
-  const cols = seleccion ? 8 : 7
+  const cols = seleccion ? 5 : 4
   return (
     <div className="table-wrapper">
-      <table className="data-table asignia-tabla">
+      <table className="data-table asignia-tabla asignia-tabla-cursos">
         <thead>
           <tr>
             {seleccion && (
@@ -140,14 +134,14 @@ function TablaCursos({ filas, vacio, seleccion, estado }) {
                   onChange={seleccion.toggleTodos} />
               </th>
             )}
-            <th>Curso</th><th>Grupo</th><th>Programa</th><th>Sede</th><th>Jornada</th><th>Días y horario</th><th>Estado</th>
+            <th>Curso</th><th>Programa</th><th>Días y horario</th><th>Estado</th>
           </tr>
         </thead>
         <tbody>
           {filas.length === 0 ? (
             <tr><td colSpan={cols} className="asignia-sin-filas">{vacio}</td></tr>
           ) : filas.map(({ key, c, ...resto }) => (
-            <tr key={key}>
+            <tr key={key} className={seleccion?.sel.includes(c.id) ? 'asignia-fila-elegida' : undefined}>
               {seleccion && (
                 <td data-label="Seleccionar" className="asignia-col-check">
                   <input type="checkbox" aria-label={`Seleccionar ${c.curso}`} checked={seleccion.sel.includes(c.id)} onChange={() => seleccion.toggle(c.id)}
@@ -178,7 +172,9 @@ function useSeleccion(lista) {
   }
 }
 
-function Filtros({ f, setF, cursos, total }) {
+function Filtros({ f, setF, cursos, total, ocultarCruces }) {
+  const [mas, setMas] = useState(false)
+  const ocultos = ['programa', 'franja', 'horas', 'sede'].filter(k => f[k]).length
   const opciones = (campo) => [...new Set(cursos.map(c => c[campo]).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true }))
   const programas = useMemo(() => opciones('programa'), [cursos]) // eslint-disable-line react-hooks/exhaustive-deps
   const sedes = useMemo(() => opciones('sede'), [cursos]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -193,13 +189,28 @@ function Filtros({ f, setF, cursos, total }) {
         <Search size={15} className="filter-icon" />
         <input className="filter-input" placeholder="Buscar curso, código o programa..." value={f.q} onChange={set('q')} aria-label="Buscar" />
       </div>
-      <select className="filter-select" value={f.programa} onChange={set('programa')} aria-label="Programa académico">
-        <option value="">Todos los programas</option>
-        {programas.map(p => <option key={p} value={p}>{p}</option>)}
-      </select>
       <select className="filter-select" value={f.dia} onChange={set('dia')} aria-label="Día de la semana">
         <option value="">Todos los días</option>
         {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
+      </select>
+      <select className="filter-select" value={f.jornada} onChange={set('jornada')} aria-label="Jornada">
+        <option value="">Todas las jornadas</option>
+        {jornadas.map(j => <option key={j} value={j}>{j}</option>)}
+      </select>
+      <button type="button" className="btn-secondary asignia-btn-fila" aria-expanded={mas} onClick={() => setMas(m => !m)}>
+        {mas ? 'Menos filtros' : `Más filtros${ocultos ? ` · ${ocultos}` : ''}`}
+      </button>
+      {ocultarCruces && (
+        <label className="cal-config-check asignia-check-cruces">
+          <input type="checkbox" checked={ocultarCruces.valor} onChange={(e) => ocultarCruces.set(e.target.checked)} />
+          Ocultar los que se cruzan con mi horario
+        </label>
+      )}
+      {mas && (
+      <div className="asignia-filtros-mas">
+      <select className="filter-select" value={f.programa} onChange={set('programa')} aria-label="Programa académico">
+        <option value="">Todos los programas</option>
+        {programas.map(p => <option key={p} value={p}>{p}</option>)}
       </select>
       <select className="filter-select" value={f.franja} onChange={set('franja')} aria-label="Horario">
         <option value="">Todo el horario</option>
@@ -213,10 +224,8 @@ function Filtros({ f, setF, cursos, total }) {
         <option value="">Todas las sedes</option>
         {sedes.map(s => <option key={s} value={s}>{s}</option>)}
       </select>
-      <select className="filter-select" value={f.jornada} onChange={set('jornada')} aria-label="Jornada">
-        <option value="">Todas las jornadas</option>
-        {jornadas.map(j => <option key={j} value={j}>{j}</option>)}
-      </select>
+      </div>
+      )}
       {activos && <button type="button" className="btn-secondary asignia-btn-fila" onClick={() => setF(SIN_FILTROS)}><X size={14} /> Limpiar filtros</button>}
       <span className="results-count">{total} curso{total !== 1 ? 's' : ''}</span>
     </div>
@@ -351,7 +360,7 @@ function PorResponder({ ident, cursos, aceptadas, onHecho, onError }) {
 }
 
 // Cursos sin profesor a los que el profesor aún no se ha postulado.
-function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
+function Disponibles({ ident, nombre, cursos, carga, onHecho, onError }) {
   // Un curso que se cruza con uno que ya tienes no se puede seleccionar.
   const s = useSeleccion(cursos.filter(c => !c.cruce))
   const [modal, setModal] = useState(false)
@@ -372,10 +381,10 @@ function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
 
   return (
     <>
-      <div className="asignia-barra">
-        <p className="asignia-ayuda">Cursos sin profesor. Marca los que te interesan y envía tu postulación; el líder del programa decide la asignación.</p>
-        <button className="btn-primary" disabled={!s.sel.length} onClick={() => setModal(true)}><Send size={15} /> Postularme ({s.sel.length}{s.sel.length ? ` · ${fmtH(horasDe(seleccionados))}` : ''})</button>
-      </div>
+      <p className="asignia-ayuda asignia-intro">
+        Cursos sin profesor que aplican a tu perfil. Marca los que te interesan y envía tu postulación; el líder del programa decide la asignación.{' '}
+        <Ayuda texto="Solo ves los cursos cuyos requerimientos coinciden con al menos una de tus habilidades y para los que tienes los años de experiencia que piden. En cada curso ves qué habilidades cumples y cuáles te faltan. Un curso que se cruza con tu horario no se puede marcar." />
+      </p>
       <TablaCursos filas={cursos.map(c => ({ key: c.id, c }))} seleccion={s} vacio="No hay cursos disponibles con estos filtros."
         estado={({ c }) => (c.cruce
           ? (
@@ -383,18 +392,30 @@ function Disponibles({ ident, nombre, cursos, onHecho, onError }) {
               <div className="asignia-celda">
                 <Badge e={{ ...B.rechazado, label: 'Se cruza con tu horario' }} />
                 <span className="asignia-dato">"Con {c.cruce}"</span>
-                <Coincidencia m={c.coincidencia} compacto />
+                <PerfilAplica m={c.coincidencia} />
               </div>
             </td>
           )
           : (
             <td data-label="Estado">
               <div className="asignia-celda">
-                <Badge e={B.disponible} />
-                <Coincidencia m={c.coincidencia} compacto />
+                <PerfilAplica m={c.coincidencia} />
               </div>
             </td>
           ))} />
+      <div className="asignia-barra-fija" role="region" aria-label="Postulación">
+        <span>
+          {s.sel.length
+            ? <><strong>{s.sel.length} curso{s.sel.length !== 1 ? 's' : ''} elegido{s.sel.length !== 1 ? 's' : ''}</strong> · {fmtH(horasDe(seleccionados))} semanales{carga?.max ? ` · tu carga quedaría en ${fmtH(carga.horas + horasDe(seleccionados))} de ${fmtH(carga.max)}` : ''}
+              {carga?.max > 0 && carga.horas + horasDe(seleccionados) > carga.max && (
+                <span className="asignia-carga-texto asignia-carga-minimo"> · supera el máximo de tu nivel; el líder puede no aprobarlas todas</span>
+              )}</>
+            : 'Marca los cursos a los que te quieres postular.'}
+        </span>
+        <button className="btn-primary" disabled={!s.sel.length} onClick={() => setModal(true)}>
+          <Send size={15} /> {s.sel.length ? `Postularme a ${s.sel.length} curso${s.sel.length !== 1 ? 's' : ''}` : 'Postularme'}
+        </button>
+      </div>
 
       {modal && (
         <ConfirmarModal titulo="Enviar postulación" confirmar="Sí, postularme" cursos={seleccionados}
@@ -420,6 +441,15 @@ const VISTAS = [
   { v: 'rechazados', label: 'Rechazados', clase: TONOS.rechazado.tarjeta },
 ]
 
+// Tooltip de cada tarjeta de estado.
+const AYUDA_ESTADO = {
+  responder: 'Cursos que el líder te asignó y esperan que los aceptes o rechaces.',
+  aceptados: 'Cursos que aceptaste o que te aprobaron por postulación.',
+  revision: 'Postulaciones que el líder del programa todavía está revisando.',
+  disponibles: 'Cursos sin profesor que aplican a tu perfil y a los que te puedes postular.',
+  rechazados: 'Asignaciones que rechazaste y postulaciones que no quedaron.',
+}
+
 const AYUDA = {
   aceptados: 'Cursos que aceptaste o que te aprobaron por postulación.',
   revision: 'Postulaciones que el líder del programa todavía está revisando.',
@@ -435,6 +465,7 @@ export default function AsigniaProfesor() {
   const [f, setF] = useState(SIN_FILTROS)
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
+  const [sinCruces, setSinCruces] = useState(false)
 
   const cargarDisponibles = useCallback((i) => listarDisponibles(i)
     .then(r => setDisponibles(r.cursos))
@@ -465,7 +496,7 @@ export default function AsigniaProfesor() {
   // Al entrar: "Por responder" si hay pendientes, si no "Disponibles".
   const vistaActual = vista || (listas?.responder.length ? 'responder' : 'disponibles')
   // Inicio = las pestañas por estado (listado de cursos); Mi horario y Mis postulaciones son vistas aparte.
-  const esInicio = !['horario', 'postulaciones', 'calificacion'].includes(vistaActual)
+  const esInicio = !['horario', 'postulaciones', 'calificacion', 'habilidades'].includes(vistaActual)
 
   const salir = () => { setIdent(null); setDatos(null); setDisponibles(null); setVista(null); setF(SIN_FILTROS); setError(''); setOk('') }
   const hecho = (msg) => { setError(''); setOk(msg); recargar() }
@@ -513,7 +544,7 @@ export default function AsigniaProfesor() {
           </div>
           <div className="asignia-header-acciones">
             <div className="asignia-usuario" aria-label="Usuario">
-              <AvatarProfesor url={datos.perfil?.url_imagen_perfil} nombre={datos.nombre} tamano={40} />
+              <AvatarProfesor url={datos.perfil?.url_imagen_perfil} nombre={datos.nombre} tamano={64} ampliable />
               <span>
                 <strong>{datos.nombre || 'Profesor'}</strong>
                 <span className="asignia-dato">{ident.correo.toLowerCase()}</span>
@@ -523,13 +554,29 @@ export default function AsigniaProfesor() {
           </div>
         </div>
 
-        <TutorVirtual ident={ident} />
-        {datos.perfil?.nivel && datos.perfil.alerta && (
-          <div className="asignia-tutor">
-            <span>Tu nivel académico:</span>
-            <AlertaHoras nivel={datos.perfil.nivel} horas={datos.perfil.horas} alerta={datos.perfil.alerta} />
+        <section className="asignia-banda" aria-label="Tu perfil este semestre">
+          <div>
+            <span className="asignia-banda-etq">Tu carga
+              {' '}<Ayuda texto="Horas semanales de tus cursos aceptados y por responder. Tu nivel académico define el rango de horas que puedes tener." /></span>
+            <BarraCarga horas={datos.perfil?.horas || 0} cursos={listas.aceptados.length + listas.responder.length} nivel={datos.perfil?.nivel} alerta={datos.perfil?.alerta} />
           </div>
-        )}
+          <div>
+            <span className="asignia-banda-etq">Si te aprueban lo pendiente
+              {' '}<Ayuda texto="Suma las horas semanales de tus cursos aceptados, los que están por responder y las postulaciones en revisión." /></span>
+            <span className="asignia-banda-num">{fmtH(totalPosible)}</span>
+            <span className="asignia-dato">{fmtH(horasDe(listas.aceptados) + horasDe(listas.responder))} asignadas + {fmtH(horasDe(listas.revision))} en revisión</span>
+          </div>
+          <div>
+            <span className="asignia-banda-etq">Tus habilidades</span>
+            <span className="asignia-banda-num">{datos.perfil?.habilidades?.length || 0}</span>
+            <button type="button" className="asignia-enlace" onClick={() => cambiarVista('habilidades')}>Editar habilidades y niveles</button>
+          </div>
+          <div>
+            <span className="asignia-banda-etq">Tutor Virtual
+              {' '}<Ayuda texto="Tutor Virtual es el curso de Moodle que certifica tu formación como tutor en entornos virtuales. Si no lo tienes, pide aquí tu matrícula y el administrador te inscribe." /></span>
+            <TutorVirtual ident={ident} />
+          </div>
+        </section>
 
         {datos.periodo && (
           <nav className="section-nav" aria-label="Navegación del profesor">
@@ -537,9 +584,11 @@ export default function AsigniaProfesor() {
               { v: 'inicio', label: 'Inicio', icono: <Home size={16} />, activo: esInicio, ir: () => cambiarVista(null) },
               { v: 'horario', label: 'Mi horario', icono: <CalendarDays size={16} />, activo: vistaActual === 'horario', ir: () => cambiarVista('horario') },
               { v: 'postulaciones', label: `Mis postulaciones (${datos.postulaciones.length})`, icono: <ClipboardList size={16} />, activo: vistaActual === 'postulaciones', ir: () => cambiarVista('postulaciones') },
-              { v: 'calificacion', label: 'Mi calificación', icono: <Star size={16} />, activo: vistaActual === 'calificacion', ir: () => cambiarVista('calificacion') },
+              { v: 'calificacion', label: 'Mi seguimiento', icono: <ClipboardCheck size={16} />, activo: vistaActual === 'calificacion', ir: () => cambiarVista('calificacion'), ayuda: 'Seguimiento VISOR de tus cursos por periodo, de 0 a 100.' },
+              { v: 'habilidades', label: `Mis habilidades (${datos.perfil?.habilidades?.length || 0})`, icono: <ListChecks size={16} />, activo: vistaActual === 'habilidades', ir: () => cambiarVista('habilidades'), ayuda: 'Marca tus habilidades y su nivel de 1 a 10: con ellas se calculan los cursos que aplican a tu perfil.' },
             ].map(n => (
-              <button key={n.v} type="button" className={`section-nav-tab${n.activo ? ' active' : ''}`} aria-current={n.activo ? 'page' : undefined} onClick={n.ir}>
+              <button key={n.v} type="button" className={`section-nav-tab${n.activo ? ' active' : ''}`} aria-current={n.activo ? 'page' : undefined} onClick={n.ir}
+                title={n.ayuda || ({ inicio: 'Tus cursos por estado: por responder, aceptados, en revisión, disponibles y rechazados.', horario: 'Tu horario semanal con los cursos que tienes y las postulaciones en revisión.', postulaciones: 'Todas tus postulaciones del periodo y en qué estado van.' })[n.v]}>
                 {n.icono} {n.label}
               </button>
             ))}
@@ -549,21 +598,15 @@ export default function AsigniaProfesor() {
         {datos.periodo && (
           <>
             {esInicio && (
-            <div className="asignia-estados asignia-estados-profesor" role="group" aria-label="Filtrar por estado">
+            <div className="asignia-tabs-estado" role="group" aria-label="Cursos por estado">
               {VISTAS.map(t => (
-                <button key={t.v} type="button" className={`asignia-estado ${t.clase}${vistaActual === t.v ? ' activo' : ''}`}
-                  aria-pressed={vistaActual === t.v} onClick={() => cambiarVista(t.v)}>
-                  <span className="asignia-estado-num">{t.v === 'disponibles' && disponibles === null ? '…' : conteo[t.v].length}</span>
-                  <span>{t.label}</span>
-                  <span className="asignia-dato">{fmtH(horasDe(conteo[t.v]))} semanales</span>
+                <button key={t.v} type="button" className={`asignia-tab-estado${vistaActual === t.v ? ' activo' : ''}`}
+                  aria-pressed={vistaActual === t.v} onClick={() => cambiarVista(t.v)}
+                  title={`${AYUDA_ESTADO[t.v]} ${fmtH(horasDe(conteo[t.v]))} semanales.`}>
+                  {t.label} <strong>{t.v === 'disponibles' && disponibles === null ? '…' : conteo[t.v].length}</strong>
                 </button>
               ))}
             </div>
-            )}
-            {esInicio && (
-              <p className="asignia-ayuda asignia-total-posible">
-                Carga posible: <strong>{fmtH(totalPosible)}</strong> semanales si aceptas lo pendiente y te aprueban lo que está en revisión.
-              </p>
             )}
 
             {error && <div className="public-form-error" role="alert">{error}</div>}
@@ -571,14 +614,19 @@ export default function AsigniaProfesor() {
 
             {vistaActual === 'horario' && <MiHorario ident={ident} nombre={datos.nombre} />}
             {vistaActual === 'calificacion' && <MiCalificacion ident={ident} />}
-            {!['horario', 'calificacion'].includes(vistaActual) && <Filtros f={f} setF={setF} cursos={todosLosCursos} total={filasVista.length} />}
+            {vistaActual === 'habilidades' && <MisHabilidades ident={ident} perfil={datos.perfil} onGuardado={recargar} />}
+            {!['horario', 'calificacion', 'habilidades'].includes(vistaActual) && (
+              <Filtros f={f} setF={setF} cursos={todosLosCursos} total={filasVista.length}
+                ocultarCruces={vistaActual === 'disponibles' ? { valor: sinCruces, set: setSinCruces } : null} />
+            )}
 
             {vistaActual === 'responder' && (
               <PorResponder ident={ident} cursos={filasVista} aceptadas={horasDe(listas.aceptados)} onHecho={hecho} onError={fallo} />
             )}
             {vistaActual === 'disponibles' && (disponibles === null
               ? <div className="loading-box"><span className="loader"></span>Cargando cursos disponibles...</div>
-              : <Disponibles ident={ident} nombre={datos.nombre} cursos={filasVista} onHecho={hecho} onError={fallo} />)}
+              : <Disponibles ident={ident} nombre={datos.nombre} cursos={sinCruces ? filasVista.filter(c => !c.cruce) : filasVista}
+                  carga={{ horas: datos.perfil?.horas || 0, max: Number(datos.perfil?.nivel?.max_horas) || 0 }} onHecho={hecho} onError={fallo} />)}
             {vistaActual === 'aceptados' && (
               <>
                 <p className="asignia-ayuda asignia-barra">{AYUDA.aceptados}</p>
