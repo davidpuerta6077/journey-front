@@ -120,6 +120,7 @@ export default function AsigniaPostulaciones({ periodo, puedeDecidir, onCambio }
                       <div className="asignia-celda">
                         <span>{p.nombre}</span>
                         <span className="asignia-dato">CC {p.documento} · {p.correo}</span>
+                        <span className="asignia-dato">Calificación SICAU: {p.calificacion_sicau ?? 'sin registrar'}</span>
                         <Coincidencia m={p.coincidencia} compacto />
                         <span><VerCalificacion profesor={p} periodo={periodo} /></span>
                       </div>
