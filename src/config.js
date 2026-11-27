@@ -7,14 +7,14 @@ const config = {
         url_base: apiUrl,
         url_apigateway: apiUrl,
     }, 
-    aws: {
-        redirect_uri: "http://localhost:5173",
-        backend_uri: apiUrl,
-    }
     // aws: {
-    //     redirect_uri: "https://bravohub.pascualbravovirtual.edu.co",
+    //     redirect_uri: "http://localhost:5173",
     //     backend_uri: apiUrl,
     // }
+    aws: {
+        redirect_uri: "https://bravohubtest.pascualbravovirtual.edu.co",
+        backend_uri: apiUrl,
+    }
 }
 
 export default config
